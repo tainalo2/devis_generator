@@ -1,6 +1,8 @@
 :root {
     --main-bg-color: white;
     --main-second-color: black;
+    --main-tier_color: rgb(233, 232, 232);
+    --main-quater_color: rgb(53, 53, 53);
     --error-color: red;
     --valid-color: rgb(0, 204, 0);
     --filter-main-color-svg: invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%);
@@ -135,6 +137,28 @@ textarea::-webkit-scrollbar-thumb {
     transform: translateX(-100%);
 }
 
+#toggle_tva_label {
+    background: var(--main-tier_color);
+    border-color: var(--main-second-color);
+}
+
+#toggle_tva_label:after {
+    background: var(--main-second-color);
+}
+
+#switch_tva:checked+#toggle_tva_label {
+    background: var(--valid-color);
+}
+
+#switch_tva:checked+#toggle_tva_label:after {
+    left: calc(100% - 2px);
+    transform: translateX(-100%);
+}
+
+#switch_tva:checked~#tva_text {
+    opacity: 1;
+}
+
 .basic_toggle_label:active:after {
     width: 1rem;
 }
@@ -148,7 +172,7 @@ textarea::-webkit-scrollbar-thumb {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 3rem;
+    gap: 2rem;
 }
 
 .section {
@@ -163,8 +187,7 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 .mid_section {
-    width: 35%;
-    max-width: 300px;
+    flex: 1;
     min-width: 200px;
 }
 
@@ -416,8 +439,8 @@ textarea::-webkit-scrollbar-thumb {
     margin: 0px;
 }
 
-.names_devis_columns{
-    font-size: 1.5rem;
+.names_devis_columns {
+    font-size: 1.2rem;
     font-weight: 600;
 }
 
@@ -433,17 +456,30 @@ textarea::-webkit-scrollbar-thumb {
     margin: 0;
 }
 
-.devis_description {
+.devis_description,
+.name_description {
     width: 60%;
 }
 
-.devis_quantity {
+.devis_quantity,
+.name_qty {
     width: 10%;
 }
 
 .devis_price,
-.devis_price_total {
+.devis_price_total,
+.name_prix,
+.name_total {
     width: 15%;
+}
+
+.devis_price_total {
+    background-color: var(--main-tier_color);
+}
+
+.name_img {
+    width: 1.2rem;
+    margin-right: 0.5%;
 }
 
 .svg_devis_line_dots {
@@ -484,10 +520,136 @@ textarea::-webkit-scrollbar-thumb {
     margin: 0;
 }
 
+.section_date {
+    min-width: 160px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background-color: white;
+    padding: 2px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.section_date>.input_container {
+    width: auto;
+}
+
+.section_price {
+    max-width: 250px;
+}
+
+.all_prices_container {
+    display: flex;
+}
+
+.display_flex_center * {
+    margin: 0px;
+}
+
+.price_indicator_container {
+    display: flex;
+    text-align: right;
+    justify-content: flex-end;
+    align-items: flex-end;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.price_indicator {
+    font-weight: 700;
+    font-size: 25px;
+}
+
+#price_indicator_ttc {
+    text-decoration: line-through;
+}
+
+#tva_container {
+    opacity: 0.5;
+}
+
+.display_flex_center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+#tva_text {
+    opacity: 0.6;
+}
+
+#input_tva {
+    overflow: hidden;
+    margin-top: 0;
+    height: 0;
+}
+
+#canvas1 {
+    width: 100%;
+    height: 100%;
+    background-color: var(--main-tier_color);
+    border-radius: 5px;
+}
+
+#canvas1:hover {
+    cursor: url(draw.png), auto;
+}
+
+.button_basic {
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: fit-content;
+    text-align: center;
+    border-radius: 999px;
+    background-color: var(--main-second-color);
+    border: solid 3px var(--main-second-color);
+    color: var(--main-bg-color);
+    font-weight: 600;
+    cursor: pointer;
+    transform: scale(1);
+    transition: all 0.1s ease-out;
+}
+
+.button_basic:hover {
+    transform: scale(1.05);
+}
+
+.button_basic:active {
+    transform: scale3d(1, 0.9, 1);
+}
+
 .input_error {
     border-color: var(--error-color);
 }
 
 .input_valid {
     border-color: var(--valid-color);
+}
+
+footer {
+    margin: 0;
+    background-color: var(--main-second-color);
+    color: var(--main-bg-color);
+    justify-content: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    display: flex;
+    padding-bottom: 2rem;
+    padding-top: 0.5rem;
+}
+
+footer * {
+    margin: 0;
+}
+
+.footer_container {
+    display: flex;
+    justify-content: space-between;
+    max-width: 900px;
+    width: 100%;
+
+
 }

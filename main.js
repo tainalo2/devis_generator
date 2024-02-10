@@ -4,18 +4,25 @@ const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
 const regexNumber = new RegExp("[0-9]");
 const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
+let signaturePad1;
 
 function toggleLightMode(element) {
     if (element.checked) {
         document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
         document.querySelector(':root').style.setProperty('--main-second-color', 'black');
+        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(248, 248, 248)');
+        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
         document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        signaturePad1.penColor = "black";
     } else {
         document.querySelector(':root').style.setProperty('--main-bg-color', 'black');
         document.querySelector(':root').style.setProperty('--main-second-color', 'white');
+        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
+        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(248, 248, 248)');
         document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        signaturePad1.penColor = "white";
     }
 }
 
@@ -99,16 +106,6 @@ function phoneOnInput(element) {
         element.value = value.slice(0, -1) + '-' + value.slice(-1);
     }
 }
-
-/*function swapNode(element) {
-    console.log("click");
-
-    console.log(element.parentNode);
-    console.log(element.parentNode.parentNode);
-    console.log(element.parentNode.previousElementSibling);
-
-    element.parentNode.parentNode.insertBefore(element.parentNode, element.parentNode.previousElementSibling);
-}*/
 
 let placeholder;
 let prevEle;
@@ -201,6 +198,13 @@ const swap = function (nodeA, nodeB) {
     // Move `nodeB` to before the sibling of `nodeA`
     parentA.insertBefore(nodeB, siblingA);
 };
+function resizeCanvas(canvas, pad) {
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = canvas.offsetWidth * ratio;
+    canvas.height = canvas.offsetHeight * ratio;
+    canvas.getContext("2d").scale(ratio, ratio);
+    pad.clear(); // otherwise isEmpty() might return incorrect value
+}
 
 window.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.svg_devis_line_dots').forEach(dots => {
@@ -211,8 +215,14 @@ window.addEventListener('DOMContentLoaded', function () {
             console.log("prout2");
             //event.target.querySelector('.devis_trash').style.fitler = "invert(12%) sepia(99%) saturate(6471%) hue-rotate(356deg) brightness(110%) contrast(112%);";
             event.target.style.background = "red";
+
         });
     })
+    signaturePad1 = new SignaturePad(document.querySelector("#canvas1"));
+    resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+    window.addEventListener("resize", function (e) {
+        resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+    });
 });
 
 window.addEventListener('mousemove', (event) => {
@@ -242,3 +252,41 @@ function onElement(element) {
         return false;
     }
 }
+
+function priceCalc(element) {
+    var parent = element.parentElement;
+    var quantity = parent.querySelector('.devis_quantity').value;
+    var price = parent.querySelector('.devis_price').value;
+    var totalLine = 0;
+    if (quantity > 0 && price > 0 && quantity != "" && price != "") {
+        totalLine = quantity * price;
+    }
+    parent.querySelector('.devis_price_total').innerHTML = totalLine + "€"
+
+    var totalDevis = 0;
+    parent.parentElement.childNodes.forEach((line) => {
+        if (line.className == 'devis_line') {
+            totalDevis = totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", ""));
+        }
+    })
+    document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
+    document.getElementById("price_indicator_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+}
+
+function tvaCheck(element) {
+    if (element.checked) {
+        document.getElementById('price_indicator_ttc').style.textDecoration = "none";
+        document.getElementById('tva_container').style.opacity = "1";
+        document.getElementById('input_tva').style.height = "auto";
+        document.getElementById('input_tva').style.marginTop = "1rem";
+        document.getElementById('input_tva').style.overflow = "visible";
+
+    } else {
+        document.getElementById('price_indicator_ttc').style.textDecoration = "line-through";
+        document.getElementById('tva_container').style.opacity = "0.5";
+        document.getElementById('input_tva').style.height = "0";
+        document.getElementById('input_tva').style.marginTop = "0";
+        document.getElementById('input_tva').style.overflow = "hidden";
+    }
+}
+
