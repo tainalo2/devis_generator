@@ -2,20 +2,13 @@ const regexFirstLastName = new RegExp("([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+");
 const regexSiren = new RegExp("^\\d{9}$");
 const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
 const regexNumber = new RegExp("[0-9]");
+const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
 const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 let signaturePad1;
 
 function toggleLightMode(element) {
     if (element.checked) {
-        document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
-        document.querySelector(':root').style.setProperty('--main-second-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(248, 248, 248)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        signaturePad1.penColor = "black";
-    } else {
         document.querySelector(':root').style.setProperty('--main-bg-color', 'black');
         document.querySelector(':root').style.setProperty('--main-second-color', 'white');
         document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
@@ -23,77 +16,77 @@ function toggleLightMode(element) {
         document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         signaturePad1.penColor = "white";
+    } else {
+        document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
+        document.querySelector(':root').style.setProperty('--main-second-color', 'black');
+        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(248, 248, 248)');
+        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
+        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        signaturePad1.penColor = "black";
     }
 }
 
 function input_error(element) {
-    console.log("input error launched")
     var value = element.value.trim();
-    var error_element = element.parentElement.querySelector('.error_container');
+    //var error_element = element.parentElement.querySelector('.error_container');
     if (element.id == "input_firstName" || element.id == "input_name") {
         if (value != "" && regexFirstLastName.test(value)) {
-            element.classList.remove("input_error");
-            element.classList.add("input_valid");
-            error_element.style.paddingTop = "0rem";
-            error_element.style.height = "0";
+            showHideError(true, element)
         } else {
-            element.classList.add("input_error");
-            element.classList.remove("input_valid");
-            error_element.style.paddingTop = "1.2rem";
-            error_element.style.height = "auto";
+            showHideError(false, element)
         }
     } else if (element.id == "input_address") {
         if (value != "") {
-            element.classList.remove("input_error");
-            element.classList.add("input_valid");
-            error_element.style.paddingTop = "0rem";
-            error_element.style.height = "0";
+            showHideError(true, element)
         } else {
-            element.classList.add("input_error");
-            element.classList.remove("input_valid");
-            error_element.style.paddingTop = "1.2rem";
-            error_element.style.height = "auto";
+            showHideError(false, element)
         }
     } else if (element.id == "input_siren") {
         if (value != "" && regexSiren.test(value)) {
-            element.classList.remove("input_error");
-            element.classList.add("input_valid");
-            error_element.style.paddingTop = "0rem";
-            error_element.style.height = "0";
+            showHideError(true, element)
         } else {
-            element.classList.add("input_error");
-            element.classList.remove("input_valid");
-            error_element.style.paddingTop = "1.2rem";
-            error_element.style.height = "auto";
+            showHideError(false, element)
         }
     } else if (element.id == "input_email" || element.id == "input_customer_email") {
         if (value != "" && regexEmail.test(value)) {
-            element.classList.remove("input_error");
-            element.classList.add("input_valid");
-            error_element.style.paddingTop = "0rem";
-            error_element.style.height = "0";
+            showHideError(true, element)
         } else {
-            element.classList.add("input_error");
-            element.classList.remove("input_valid");
-            error_element.style.paddingTop = "1.2rem";
-            error_element.style.height = "auto";
+            showHideError(false, element)
         }
     } else if (element.id == "input_phone_number_customer") {
-        console.log(regexPhoneNumber.test(value));
+        element = element.parentElement;
         var error_element = element.parentElement.parentElement.querySelector('.error_container');
         if (value != "" && regexPhoneNumber.test(value)) {
-            element.parentElement.classList.remove("input_error");
-            element.parentElement.classList.add("input_valid");
-            error_element.style.paddingTop = "0rem";
-            error_element.style.height = "0";
+            showHideError(true, element)
         } else {
-            element.parentElement.classList.add("input_error");
-            element.parentElement.classList.remove("input_valid");
-            error_element.style.paddingTop = "1.2rem";
-            error_element.style.height = "auto";
+            showHideError(false, element)
+        }
+    } else if (element.id == "input_indemnite") {
+        value = value.replace("%", "");
+        if (parseFloat(value) >= 15.21 && regexIntFloat.test(value)) {
+            showHideError(true, element)
+        } else {
+            showHideError(false, element)
         }
     }
 
+}
+
+function showHideError(status, element) {
+    console.log(element);
+    var error_element = element.parentElement.querySelector('.error_container');
+    if (status) {
+        element.classList.remove("input_error");
+        element.classList.add("input_valid");
+        error_element.style.paddingTop = "0rem";
+        error_element.style.height = "0";
+    } else {
+        element.classList.add("input_error");
+        element.classList.remove("input_valid");
+        error_element.style.paddingTop = "1.2rem";
+        error_element.style.height = "auto";
+    }
 }
 
 function phoneOnInput(element) {
@@ -223,6 +216,8 @@ window.addEventListener('DOMContentLoaded', function () {
     window.addEventListener("resize", function (e) {
         resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
     });
+    document.getElementById('date_emission').valueAsDate = new Date();
+    document.getElementById('date_paiement').valueAsDate = new Date();
 });
 
 window.addEventListener('mousemove', (event) => {
@@ -231,7 +226,7 @@ window.addEventListener('mousemove', (event) => {
 });
 
 function addDevisLine() {
-    var firstLine_node = document.getElementById("devis_line_1");
+    var firstLine_node = document.getElementById("first_devis_lines_container").firstElementChild;
     var cloneLine_node = firstLine_node.cloneNode(true);
     console.log(cloneLine_node);
     document.getElementById('first_devis_lines_container').appendChild(cloneLine_node);
@@ -271,6 +266,11 @@ function priceCalc(element) {
     })
     document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
     document.getElementById("price_indicator_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+    if (totalDevis <= 150){
+        document.getElementById("toggle_tva").style.display = "none";
+    } else {
+        document.getElementById("toggle_tva").style.display = "flex";
+    }
 }
 
 function tvaCheck(element) {
