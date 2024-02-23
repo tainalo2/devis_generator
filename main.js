@@ -1,3 +1,6 @@
+window.jsPDF = window.jspdf.jsPDF
+window.html2canvas = html2canvas;
+
 const regexFirstLastName = new RegExp("([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+");
 const regexSiren = new RegExp("^\\d{9}$");
 const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
@@ -216,8 +219,17 @@ window.addEventListener('DOMContentLoaded', function () {
     window.addEventListener("resize", function (e) {
         resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
     });
+
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = new Date();
+
+    /*document.getElementById("button_generatePDF").addEventListener('click', function () {
+        console.log("prout");
+        var element = document.getElementById("section_price");
+        var pdf = new jsPDF();
+        pdf.html(element);
+        pdf.save("fileSignature");
+    });*/
 });
 
 window.addEventListener('mousemove', (event) => {
@@ -266,27 +278,80 @@ function priceCalc(element) {
     })
     document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
     document.getElementById("price_indicator_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
-    if (totalDevis <= 150){
+    if (totalDevis <= 150) {
         document.getElementById("toggle_tva").style.display = "none";
     } else {
         document.getElementById("toggle_tva").style.display = "flex";
     }
 }
 
-function tvaCheck(element) {
-    if (element.checked) {
-        document.getElementById('price_indicator_ttc').style.textDecoration = "none";
-        document.getElementById('tva_container').style.opacity = "1";
-        document.getElementById('input_tva').style.height = "auto";
-        document.getElementById('input_tva').style.marginTop = "1rem";
-        document.getElementById('input_tva').style.overflow = "visible";
-
-    } else {
-        document.getElementById('price_indicator_ttc').style.textDecoration = "line-through";
-        document.getElementById('tva_container').style.opacity = "0.5";
-        document.getElementById('input_tva').style.height = "0";
-        document.getElementById('input_tva').style.marginTop = "0";
-        document.getElementById('input_tva').style.overflow = "hidden";
+function toglleCheck(element) {
+    if (element.id == "switch_tva") {
+        if (element.checked) {
+            document.getElementById('price_indicator_ttc').style.textDecoration = "none";
+            document.getElementById('tva_container').style.opacity = "1";
+            //document.getElementById('input_tva').style.height = "auto";
+            //document.getElementById('input_tva').style.marginTop = "1rem";
+            //document.getElementById('input_tva').style.overflow = "visible";
+    
+        } else {
+            document.getElementById('price_indicator_ttc').style.textDecoration = "line-through";
+            document.getElementById('tva_container').style.opacity = "0.5";
+            //document.getElementById('input_tva').style.height = "0";
+            //document.getElementById('input_tva').style.marginTop = "0";
+            //document.getElementById('input_tva').style.overflow = "hidden";
+        }
+    } else if (element.id == "switch_artisan") {
+        if (element.checked) {
+            document.getElementById('input_artisan_rm').style.height = "auto";
+            document.getElementById('input_artisan_rm').style.marginTop = "1rem";
+            document.getElementById('input_artisan_rm').style.overflow = "visible";
+        } else {
+            document.getElementById('input_artisan_rm').style.height = "0";
+            document.getElementById('input_artisan_rm').style.marginTop = "0";
+            document.getElementById('input_artisan_rm').style.overflow = "hidden";
+        }
+        
+    } else if (element.id == "switch_commerce") {
+        if (element.checked) {
+            document.getElementById('input_commercial_rcs').style.height = "auto";
+            document.getElementById('input_commercial_rcs').style.marginTop = "1rem";
+            document.getElementById('input_commercial_rcs').style.overflow = "visible";
+        } else {
+            document.getElementById('input_commercial_rcs').style.height = "0";
+            document.getElementById('input_commercial_rcs').style.marginTop = "0";
+            document.getElementById('input_commercial_rcs').style.overflow = "hidden";
+        }
     }
+    
 }
 
+function generatePDF() {
+    var element = document.getElementById("absolute_to_generate");
+    var signature = document.getElementById('canvas1');
+    var signature_width = signature.width / (signature.height/50);
+    var pdf = new jsPDF('p', 'pt', 'a4');
+    //width 600px for A4 page
+    document.getElementById("absolute_to_generate").style.display = "block";
+    pdf.html(element)
+        .then(() => {
+            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop+document.getElementById('section_to_generate_id_retard').offsetHeight+40, signature_width, 80, "signature", "NONE", 10);
+            pdf.setFontSize(12);
+            pdf.setTextColor(255,255,255);
+            console.log(pdf.getFontList());
+            pdf.setFont('Helvetica', 'bold')
+            pdf.textWithLink('Payer en ligne', document.getElementById('section_to_generate_internet_paiement_button').offsetLeft+10, getElementOffset(document.getElementById('section_to_generate_internet_paiement_button')).top+16.5, { url: 'http://www.google2.com' });
+            pdf.save('fileName.pdf');
+            document.getElementById("absolute_to_generate").style.display = "none";
+        }
+
+        );
+}
+
+function getElementOffset(element) {
+    const boundingRect = element.getBoundingClientRect();
+    return {
+      left: boundingRect.left + window.scrollX,
+      top: boundingRect.top + window.scrollY
+    };
+}
