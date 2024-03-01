@@ -222,14 +222,6 @@ window.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = new Date();
-
-    /*document.getElementById("button_generatePDF").addEventListener('click', function () {
-        console.log("prout");
-        var element = document.getElementById("section_price");
-        var pdf = new jsPDF();
-        pdf.html(element);
-        pdf.save("fileSignature");
-    });*/
 });
 
 window.addEventListener('mousemove', (event) => {
@@ -327,11 +319,82 @@ function toglleCheck(element) {
 }
 
 function generatePDF() {
+    // Modify all PDF values with inputs
+
+    //global infos
+    var inputDate = new Date(document.getElementById("date_emission").value);
+    inputDate = inputDate.toLocaleDateString('en-GB');
+    document.getElementById("header_to_generate_date_value").innerHTML = inputDate;
+
+    //worker infos
+    document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName").value + " " + document.getElementById("input_lastName").value;
+    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address").textContent.trim();
+    document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren").value;
+    if (document.getElementById("toggle_commercant_label").checked) {
+        document.getElementById("section_to_generate_id_worker_rcs").style.display = "block";
+        document.getElementById("section_to_generate_id_worker_rcs_value") = document.getElementById("input_rcs").value;
+    }
+    if (document.getElementById("toggle_artisan_label").checked) {
+        document.getElementById("section_to_generate_id_worker_rm").style.display = "block";
+        document.getElementById("section_to_generate_id_worker_rm_value") = document.getElementById("input_rm").value;
+    }
+
+    //customer infos
+    document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_customer_name").value;
+    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_customer_address").textContent.trim();
+    document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_customer_siren").value;
+
+    //devis elements
+    var totalDevis = 0;
+    var firstLine_node = document.getElementById("section_devis_to_generate_line_1");
+    var cloneLine_node;
+    document.getElementById("first_devis_lines_container").childNodes.forEach((line) => {
+        if (line.className == 'devis_line' && line.querySelector(".devis_description").textContent.trim() != "" && line.querySelector(".devis_price").value != "" && line.querySelector(".devis_quantity").value != "") {
+            totalDevis = totalDevis + parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value);
+            cloneLine_node = firstLine_node.cloneNode(true);
+            document.getElementById("section_devis_to_generate").appendChild(cloneLine_node);
+            cloneLine_node.removeAttribute('id');
+            cloneLine_node.style.display = "flex";
+
+            cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").textContent.trim();
+            cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").innerHTML = line.querySelector(".devis_quantity").value;
+            cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = line.querySelector(".devis_price").value + "€";
+            cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value) + "€";
+        }
+        document.getElementById("section_devis_to_generate_line_1").style.display = "none";
+        document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis + "€";
+        if (document.getElementById("switch_tva").checked) {
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "block";
+        } else {
+            document.getElementById("section_to_generate_id_tva").innerHTML = "0%";
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis + "€";
+            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "none";
+        }
+    });
+
+    //date infos
+    document.getElementById("section_to_generate_id_taux_interet").innerHTML = document.getElementById("input_indemnite").value;
+    inputDate = new Date(document.getElementById("date_paiement").value);
+    inputDate = inputDate.toLocaleDateString('en-GB');
+    document.getElementById("section_to_generate_id_date_limit").innerHTML = inputDate;
+
+    //payements infos
+    if (document.getElementById("input_iban").value.trim() != "" || document.getElementById("input_payement_link").value.trim() != "") {
+        document.getElementById("section_to_generate_info_paiement").style.display = "flex";
+    }
+    if (document.getElementById("input_iban").value.trim() != "" ) {
+        document.getElementById("section_to_generate_label_iban").innerHTML = document.getElementById("input_iban").value;
+        document.getElementById("section_to_generate_label_iban_name").innerHTML = document.getElementById("input_firstName").value + " " + document.getElementById("input_lastName").value;
+
+    }
+    
+    //pdf generation
     var element = document.getElementById("absolute_to_generate");
     var signature = document.getElementById('canvas1');
     var signature_width = signature.width / (signature.height/50);
     var pdf = new jsPDF('p', 'pt', 'a4');
-    //width 600px for A4 page
+    //width 600px * 849px for A4 page
     document.getElementById("absolute_to_generate").style.display = "block";
     pdf.html(element)
         .then(() => {
