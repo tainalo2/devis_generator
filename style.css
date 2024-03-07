@@ -203,6 +203,22 @@ textarea::-webkit-scrollbar-thumb {
     align-items: center;
 }
 
+#title_devis {
+    border: 0px;
+    box-shadow: none;
+    padding: 0px;
+    flex-direction: initial;
+    gap: 10px;
+}
+
+#devis_title_container {
+    flex: 3;
+}
+
+#devis_number_container {
+    flex: 1;
+}
+
 .main_color_svg {
     filter: var(--filter-main-color-svg)
 }
@@ -740,12 +756,12 @@ footer p {
     align-items: end;
 }
 
-.header_to_generate_title {
+#header_to_generate_title {
     font-weight: bold;
     font-size: 24px;
 }
 
-.header_to_generate_subtitle {
+#header_to_generate_subtitle {
     font-weight: bolder;
     font-size: 14px;
 }
@@ -870,8 +886,8 @@ footer p {
     margin-bottom: 5px;
 }
 
-.section_to_generate_info_paiement_iban_container {
-    display: flex;
+#section_to_generate_info_paiement_iban_container {
+    display: none;
     gap: 40px;
 }
 
@@ -890,6 +906,7 @@ footer p {
     border-radius: 100px;
     font-size: 12px;
     font-weight: bold;
+    display: none;
 }
 
 #section_devis_to_generate_tva_exempt_text {

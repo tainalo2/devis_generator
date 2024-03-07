@@ -1,8 +1,10 @@
 window.jsPDF = window.jspdf.jsPDF
 window.html2canvas = html2canvas;
 
-const regexFirstLastName = new RegExp("([A-ZÀ-ÿ][-,a-z. ']+[ ]*)+");
+const regexFirstName = new RegExp("^[a-zA-Z\u00C0-\u024F\-]+$");
+const regexLastName = new RegExp("^[a-zA-Z\u00C0-\u024F\- ]+$");
 const regexSiren = new RegExp("^\\d{9}$");
+const regexCompanyName = new RegExp("^[\w\s'àéèù'-\u00C0-\u024F]+$");
 const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
 const regexNumber = new RegExp("[0-9]");
 const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
@@ -30,37 +32,66 @@ function toggleLightMode(element) {
     }
 }
 
-function input_error(element) {
+function inputError(element) {
     var value = element.value.trim();
-    //var error_element = element.parentElement.querySelector('.error_container');
-    if (element.id == "input_firstName" || element.id == "input_name") {
-        if (value != "" && regexFirstLastName.test(value)) {
+    if (element.classList.contains('input_firstName')) {
+        if (value == "") {
+
+        } else if (value != "" && regexFirstName.test(value)) {
             showHideError(true, element)
         } else {
             showHideError(false, element)
         }
-    } else if (element.id == "input_address") {
+    } else if (element.classList.contains('input_lastName')) {
+        if (value == "") {
+
+        } else if (value != "" && regexLastName.test(value)) {
+            showHideError(true, element)
+        } else {
+            showHideError(false, element)
+        }
+    } else if (element.classList.contains('input_jecéplu')) {
         if (value != "") {
             showHideError(true, element)
         } else {
             showHideError(false, element)
         }
-    } else if (element.id == "input_siren") {
-        if (value != "" && regexSiren.test(value)) {
+    } else if (element.classList.contains('input_siren')) {
+        if (value == "") {
+
+        } else if (value != "" && regexSiren.test(value)) {
             showHideError(true, element)
         } else {
             showHideError(false, element)
         }
-    } else if (element.id == "input_email" || element.id == "input_customer_email") {
-        if (value != "" && regexEmail.test(value)) {
+    } else if (element.classList.contains('input_email')) {
+        if (value == "") {
+
+        } else if (value != "" && regexEmail.test(value)) {
             showHideError(true, element)
         } else {
             showHideError(false, element)
         }
-    } else if (element.id == "input_phone_number_customer") {
+    } else if (element.classList.contains("input_phone_number")) {
+        if (!regexNumber.test(value.slice(-1)) || value.length > 14) {
+            element.value = value.slice(0, -1);
+        } else if (regexTwoNumbers.test(value.slice(-3))) {
+            element.value = value.slice(0, -1) + '-' + value.slice(-1);
+        }
+        
+        var value = element.value.trim();
         element = element.parentElement;
-        var error_element = element.parentElement.parentElement.querySelector('.error_container');
-        if (value != "" && regexPhoneNumber.test(value)) {
+        if (value == "") {
+
+        } else if (regexPhoneNumber.test(value)) {
+            showHideError(true, element)
+        } else {
+            showHideError(false, element)
+        }
+    } else if (element.classList.contains('input_company_name')) {
+        if (value == "") {
+
+        } else if (value != "" && regexCompanyName.test(value)) {
             showHideError(true, element)
         } else {
             showHideError(false, element)
@@ -77,29 +108,23 @@ function input_error(element) {
 }
 
 function showHideError(status, element) {
-    console.log(element);
     var error_element = element.parentElement.querySelector('.error_container');
     if (status) {
         element.classList.remove("input_error");
         element.classList.add("input_valid");
         error_element.style.paddingTop = "0rem";
         error_element.style.height = "0";
-    } else {
+    } else if (status == false) {
         element.classList.add("input_error");
         element.classList.remove("input_valid");
         error_element.style.paddingTop = "1.2rem";
         error_element.style.height = "auto";
-    }
-}
-
-function phoneOnInput(element) {
-    var value = element.value.trim();
-    console.log(value);
-    console.log(value.slice(-2));
-    if (!regexNumber.test(value.slice(-1)) || value.length > 14) {
-        element.value = value.slice(0, -1);
-    } else if (regexTwoNumbers.test(value.slice(-3))) {
-        element.value = value.slice(0, -1) + '-' + value.slice(-1);
+    } else if (status == null) {
+        error_element.style.paddingTop = "0rem";
+        error_element.style.height = "0";
+        if (element.classList.contains('input_valid')) {
+            element.classList.remove("input_valid");
+        }
     }
 }
 
@@ -194,6 +219,7 @@ const swap = function (nodeA, nodeB) {
     // Move `nodeB` to before the sibling of `nodeA`
     parentA.insertBefore(nodeB, siblingA);
 };
+
 function resizeCanvas(canvas, pad) {
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     canvas.width = canvas.offsetWidth * ratio;
@@ -208,8 +234,6 @@ window.addEventListener('DOMContentLoaded', function () {
     })
     document.querySelectorAll('.devis_line_buttons_container').forEach(trash => {
         trash.addEventListener('dragenter', (event) => {
-            console.log("prout2");
-            //event.target.querySelector('.devis_trash').style.fitler = "invert(12%) sepia(99%) saturate(6471%) hue-rotate(356deg) brightness(110%) contrast(112%);";
             event.target.style.background = "red";
 
         });
@@ -220,8 +244,10 @@ window.addEventListener('DOMContentLoaded', function () {
         resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
     });
 
+    var datePlus30 = new Date();
+    datePlus30.setDate(datePlus30.getDate() + 30);
     document.getElementById('date_emission').valueAsDate = new Date();
-    document.getElementById('date_paiement').valueAsDate = new Date();
+    document.getElementById('date_paiement').valueAsDate = datePlus30;
 });
 
 window.addEventListener('mousemove', (event) => {
@@ -232,9 +258,7 @@ window.addEventListener('mousemove', (event) => {
 function addDevisLine() {
     var firstLine_node = document.getElementById("first_devis_lines_container").firstElementChild;
     var cloneLine_node = firstLine_node.cloneNode(true);
-    console.log(cloneLine_node);
     document.getElementById('first_devis_lines_container').appendChild(cloneLine_node);
-    console.log(cloneLine_node.getElementsByClassName("svg_devis_line_dots"));
     cloneLine_node.querySelector(".devis_description").innerHTML = "";
     cloneLine_node.querySelector(".devis_quantity").value = "";
     cloneLine_node.querySelector(".devis_price").value = "";
@@ -282,54 +306,52 @@ function toglleCheck(element) {
         if (element.checked) {
             document.getElementById('price_indicator_ttc').style.textDecoration = "none";
             document.getElementById('tva_container').style.opacity = "1";
-            //document.getElementById('input_tva').style.height = "auto";
-            //document.getElementById('input_tva').style.marginTop = "1rem";
-            //document.getElementById('input_tva').style.overflow = "visible";
-    
+
         } else {
             document.getElementById('price_indicator_ttc').style.textDecoration = "line-through";
             document.getElementById('tva_container').style.opacity = "0.5";
-            //document.getElementById('input_tva').style.height = "0";
-            //document.getElementById('input_tva').style.marginTop = "0";
-            //document.getElementById('input_tva').style.overflow = "hidden";
         }
     } else if (element.id == "switch_artisan") {
         if (element.checked) {
-            document.getElementById('input_artisan_rm').style.height = "auto";
-            document.getElementById('input_artisan_rm').style.marginTop = "1rem";
-            document.getElementById('input_artisan_rm').style.overflow = "visible";
+            document.getElementById('input_container_artisan_rm_worker').style.height = "auto";
+            document.getElementById('input_container_artisan_rm_worker').style.marginTop = "1rem";
+            document.getElementById('input_container_artisan_rm_worker').style.overflow = "visible";
         } else {
-            document.getElementById('input_artisan_rm').style.height = "0";
-            document.getElementById('input_artisan_rm').style.marginTop = "0";
-            document.getElementById('input_artisan_rm').style.overflow = "hidden";
+            document.getElementById('input_container_artisan_rm_worker').style.height = "0";
+            document.getElementById('input_container_artisan_rm_worker').style.marginTop = "0";
+            document.getElementById('input_container_artisan_rm_worker').style.overflow = "hidden";
         }
-        
+
     } else if (element.id == "switch_commerce") {
         if (element.checked) {
-            document.getElementById('input_commercial_rcs').style.height = "auto";
-            document.getElementById('input_commercial_rcs').style.marginTop = "1rem";
-            document.getElementById('input_commercial_rcs').style.overflow = "visible";
+            document.getElementById('input_container_commercant_rcs_worker').style.height = "auto";
+            document.getElementById('input_container_commercant_rcs_worker').style.marginTop = "1rem";
+            document.getElementById('input_container_commercant_rcs_worker').style.overflow = "visible";
         } else {
-            document.getElementById('input_commercial_rcs').style.height = "0";
-            document.getElementById('input_commercial_rcs').style.marginTop = "0";
-            document.getElementById('input_commercial_rcs').style.overflow = "hidden";
+            document.getElementById('input_container_commercant_rcs_worker').style.height = "0";
+            document.getElementById('input_container_commercant_rcs_worker').style.marginTop = "0";
+            document.getElementById('input_container_commercant_rcs_worker').style.overflow = "hidden";
         }
     }
-    
+
 }
 
 function generatePDF() {
     // Modify all PDF values with inputs
 
     //global infos
+    document.getElementById("header_to_generate_subtitle").innerHTML = document.getElementById("input_devis_title").value.trim();
     var inputDate = new Date(document.getElementById("date_emission").value);
-    inputDate = inputDate.toLocaleDateString('en-GB');
-    document.getElementById("header_to_generate_date_value").innerHTML = inputDate;
+    var inputDateFrenchFormat = inputDate.toLocaleDateString('en-GB');
+    document.getElementById("header_to_generate_date_value").innerHTML = inputDateFrenchFormat;
+    var billNumber = (document.getElementById("input_devis_number").value.toString().length == 1 ? "00" : document.getElementById("input_devis_number").value.toString().length == 2 ? "0" : "") + document.getElementById("input_devis_number").value.toString();
+    var month = (parseInt(inputDate.getMonth()) + 1).toString();
+    document.getElementById("header_to_generate_number").innerHTML = "N°" + inputDate.getFullYear() + (month.length == 1 ? "0" : "") + month + (inputDate.getDate().toString().length == 1 ? "0" : "") + inputDate.getDate() + billNumber;
 
     //worker infos
-    document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName").value + " " + document.getElementById("input_lastName").value;
-    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address").textContent.trim();
-    document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren").value;
+    document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
+    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").textContent.trim();
+    document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren_worker").value;
     if (document.getElementById("toggle_commercant_label").checked) {
         document.getElementById("section_to_generate_id_worker_rcs").style.display = "block";
         document.getElementById("section_to_generate_id_worker_rcs_value") = document.getElementById("input_rcs").value;
@@ -340,9 +362,9 @@ function generatePDF() {
     }
 
     //customer infos
-    document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_customer_name").value;
-    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_customer_address").textContent.trim();
-    document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_customer_siren").value;
+    document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_name_customer").value;
+    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").textContent.trim();
+    document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_siren_customer").value;
 
     //devis elements
     var totalDevis = 0;
@@ -363,13 +385,13 @@ function generatePDF() {
         }
         document.getElementById("section_devis_to_generate_line_1").style.display = "none";
         document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis + "€";
-        if (document.getElementById("switch_tva").checked) {
+        if (document.getElementById("switch_tva").checked && totalDevis > 150) {
             document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
-            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "block";
+            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "none";
         } else {
             document.getElementById("section_to_generate_id_tva").innerHTML = "0%";
             document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis + "€";
-            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "none";
+            document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "block";
         }
     });
 
@@ -383,38 +405,41 @@ function generatePDF() {
     if (document.getElementById("input_iban").value.trim() != "" || document.getElementById("input_payement_link").value.trim() != "") {
         document.getElementById("section_to_generate_info_paiement").style.display = "flex";
     }
-    if (document.getElementById("input_iban").value.trim() != "" ) {
+    if (document.getElementById("input_iban").value.trim() != "") {
+        document.getElementById("section_to_generate_info_paiement_iban_container").style.display = "flex";
+        document.getElementById("section_to_generate_label_iban_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
         document.getElementById("section_to_generate_label_iban").innerHTML = document.getElementById("input_iban").value;
-        document.getElementById("section_to_generate_label_iban_name").innerHTML = document.getElementById("input_firstName").value + " " + document.getElementById("input_lastName").value;
-
     }
-    
+    if (document.getElementById("input_payement_link").value.trim() != "") {
+        document.getElementById("section_to_generate_internet_paiement_button").style.display = "block";
+    }
+
     //pdf generation
     var element = document.getElementById("absolute_to_generate");
     var signature = document.getElementById('canvas1');
-    var signature_width = signature.width / (signature.height/50);
+    var signature_width = signature.width / (signature.height / 50);
     var pdf = new jsPDF('p', 'pt', 'a4');
     //width 600px * 849px for A4 page
     document.getElementById("absolute_to_generate").style.display = "block";
     pdf.html(element)
         .then(() => {
-            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop+document.getElementById('section_to_generate_id_retard').offsetHeight+40, signature_width, 80, "signature", "NONE", 10);
+            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop + document.getElementById('section_to_generate_id_retard').offsetHeight + 40, signature_width, 80, "signature", "NONE", 10);
             pdf.setFontSize(12);
-            pdf.setTextColor(255,255,255);
-            console.log(pdf.getFontList());
+            pdf.setTextColor(255, 255, 255);
             pdf.setFont('Helvetica', 'bold')
-            pdf.textWithLink('Payer en ligne', document.getElementById('section_to_generate_internet_paiement_button').offsetLeft+10, getElementOffset(document.getElementById('section_to_generate_internet_paiement_button')).top+16.5, { url: 'http://www.google2.com' });
+            if (document.getElementById("input_payement_link").value.trim() != "") {
+                pdf.textWithLink('Payer en ligne', document.getElementById('section_to_generate_internet_paiement_button').offsetLeft + 10, getElementOffset(document.getElementById('section_to_generate_internet_paiement_button')).top + 16.5, { url: document.getElementById("input_payement_link").value.trim() });
+            }
             pdf.save('fileName.pdf');
             document.getElementById("absolute_to_generate").style.display = "none";
         }
-
         );
 }
 
 function getElementOffset(element) {
     const boundingRect = element.getBoundingClientRect();
     return {
-      left: boundingRect.left + window.scrollX,
-      top: boundingRect.top + window.scrollY
+        left: boundingRect.left + window.scrollX,
+        top: boundingRect.top + window.scrollY
     };
 }
