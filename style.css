@@ -512,10 +512,10 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 .svg_devis_line_dots {
-    height: 2rem;
+    height: 1.8rem;
     filter: var(--filter-main-color-svg);
     margin-left: 1%;
-    margin-right: 1%;
+    margin-right: 1.2%;
     cursor: grab;
 }
 
@@ -1072,6 +1072,10 @@ footer p {
 
     .lightMode_svg {
         width: 1rem;
+    }
+
+    .svg_devis_line_dots {
+        margin-right: 1.4%;
     }
 
 }
