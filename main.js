@@ -1,3 +1,4 @@
+//code by tainalo2
 window.jsPDF = window.jspdf.jsPDF
 window.html2canvas = html2canvas;
 
@@ -78,7 +79,7 @@ function inputError(element) {
         } else if (regexTwoNumbers.test(value.slice(-3))) {
             element.value = value.slice(0, -1) + '-' + value.slice(-1);
         }
-        
+
         var value = element.value.trim();
         element = element.parentElement;
         if (value == "") {
@@ -229,25 +230,36 @@ function resizeCanvas(canvas, pad) {
 }
 
 window.addEventListener('DOMContentLoaded', function () {
+    document.getElementById("switch_toggle_light").addEventListener("click", () => {
+        toggleLightMode(document.getElementById("switch_toggle_light"));
+    },
+        false)
     document.querySelectorAll('.svg_devis_line_dots').forEach(dots => {
         dots.addEventListener('mousedown', DragOn);
-    })
+    });
     document.querySelectorAll('.devis_line_buttons_container').forEach(trash => {
         trash.addEventListener('dragenter', (event) => {
             event.target.style.background = "red";
 
         });
-    })
-    signaturePad1 = new SignaturePad(document.querySelector("#canvas1"));
-    resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
-    window.addEventListener("resize", function (e) {
-        resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
     });
 
     var datePlus30 = new Date();
     datePlus30.setDate(datePlus30.getDate() + 30);
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
+
+    if (localStorage.getItem("image_animate_angry") === null) {
+        console.log("No infinite scroll");
+    }
+});
+
+window.addEventListener('load', function () {
+    signaturePad1 = new SignaturePad(document.querySelector("#canvas1"));
+    resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+    window.addEventListener("resize", function (e) {
+        resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+    });
 });
 
 window.addEventListener('mousemove', (event) => {

@@ -630,10 +630,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 5px;
 }
 
-#canvas1:hover {
-    cursor: url(draw.png), auto;
-}
-
 .button_basic {
     height: fit-content;
     display: flex;
@@ -1019,7 +1015,7 @@ footer p {
         font-size: 10px;
     }
 
-    h5 {
+    .footer_title {
         font-size: 12px;
     }
 
