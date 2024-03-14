@@ -245,13 +245,23 @@ async function URLtoBase64(url) {
 }
 
 window.addEventListener('DOMContentLoaded', async function () {
+
     document.getElementById("switch_toggle_light").addEventListener("click", () => {
         toggleLightMode(document.getElementById("switch_toggle_light"));
-    },
-        false)
+    }, false);
+
+    //document.getElementById("input_firstName_worker").addEventListener('input', () => { inputError(document.getElementById("input_firstName_worker")) });
+
+    document.querySelectorAll('.input_input').forEach(input => {
+        input.addEventListener('input', () => { inputError(input) });
+        input.addEventListener('focus', () => { inputError(input) });
+        input.addEventListener('focusOut', () => { inputError(input) });
+    });
+
     document.querySelectorAll('.svg_devis_line_dots').forEach(dots => {
         dots.addEventListener('mousedown', DragOn);
     });
+
     document.querySelectorAll('.devis_line_buttons_container').forEach(trash => {
         trash.addEventListener('dragenter', (event) => {
             event.target.style.background = "red";
@@ -264,6 +274,10 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
+
+
+
+    //Check localStorage + set default
     //localStorage.clear();
     if (localStorage.getItem("image_animate_angry") === null) {
         localStorage.setItem("image_animate_angry", await URLtoBase64('animate_angry.png'));
