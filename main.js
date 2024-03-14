@@ -252,11 +252,29 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     //document.getElementById("input_firstName_worker").addEventListener('input', () => { inputError(document.getElementById("input_firstName_worker")) });
 
-    document.querySelectorAll('.input_input').forEach(input => {
-        input.addEventListener('input', () => { inputError(input) });
-        input.addEventListener('focus', () => { inputError(input) });
-        input.addEventListener('focusOut', () => { inputError(input) });
+    document.querySelectorAll('.input_input').forEach(element => {
+        element.addEventListener('input', () => { inputError(element) });
+        element.addEventListener('focus', () => { inputError(element) });
+        element.addEventListener('focusout', () => { showHideError(null, element) });
     });
+
+    document.querySelectorAll('.input_phone_number').forEach(element => {
+        element.addEventListener('input', () => { inputError(element) });
+        element.addEventListener('focus', () => { inputError(element) });
+        element.addEventListener('focusout', () => { showHideError(null, element.parentElement) });
+    });
+
+    document.querySelectorAll('.devis_add_button_icon').forEach(element => {
+        element.addEventListener('click', () => { addDevisLine() });
+    });
+
+    document.querySelectorAll('.invert_toggle_input').forEach(element => {
+        element.addEventListener('click', () => { toglleCheck(element) });
+    });
+
+    document.getElementById("button_clear_signature").addEventListener('click', () => { signaturePad1.clear(); });
+
+    document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
 
     document.querySelectorAll('.svg_devis_line_dots').forEach(dots => {
         dots.addEventListener('mousedown', DragOn);

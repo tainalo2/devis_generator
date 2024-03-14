@@ -8,10 +8,12 @@
     <title>Devis generator</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <meta name="description" content="Générateur de devis/facture pour micro-entrepreneur. Gratuit et open-source.">
-    <link rel="icon" href="data:image/png;base64,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" />
+    <link rel="icon"
+        href="data:image/png;base64,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" />
     <link rel='stylesheet' type='text/css' media='screen' href='/style.css'>
-    <link rel="canonical" href="https://devisgenerator.fr"/>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js" nonce=""></script>
+    <link rel="canonical" href="https://devisgenerator.fr" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"
+        nonce=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" nonce=""></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" nonce=""></script>
     <script type="text/javascript" src="/main.js" nonce=""></script>
@@ -24,9 +26,7 @@
                 <h1>
                     Devis generator
                 </h1>
-                <img id="main_title_img"
-                    src="/animate_writing.png"
-                    alt="Writing Hand" />
+                <img id="main_title_img" src="/animate_writing.png" alt="Writing Hand" />
             </div>
             <div class="navBar">
                 <div class="lightMode_container">
@@ -64,8 +64,8 @@
                                 fill="#0F0F0F"></path>
                         </g>
                     </svg>
-                    <input class="basic_toggle_input" type="checkbox" id="switch_toggle_light"
-                        /><label class="basic_toggle_label" for="switch_toggle_light">Toggle</label>
+                    <input class="basic_toggle_input" type="checkbox" id="switch_toggle_light" /><label
+                        class="basic_toggle_label" for="switch_toggle_light">Toggle</label>
 
                     <svg class="lightMode_svg invert_svg" viewBox="0 0 24 24" fill="none"
                         xmlns="http://www.w3.org/2000/svg">
@@ -106,7 +106,7 @@
             <div class="section" id="title_devis">
                 <label class="input_container" id="devis_title_container">
                     <input type="text" class="input_input" id="input_devis_title" required
-                        onfocusout="inputError(this)" />
+                         />
                     <span class="input_title">Titre de la facture/devis</span>
                     <div class="help_container">
                         <svg class="input_info_svg main_color_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -150,14 +150,12 @@
                         <p class="error_text">
                             Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                         </p>
-                        <img class="error_img"
-                            src="/animate_angry.png"
-                            alt="Angry Face" width="25" height="25" />
+                        <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                     </div>
                 </label>
                 <label class="input_container" id="devis_number_container">
                     <input type="number" class="input_input" id="input_devis_number" required
-                        onfocusout="inputError(this)" min="1" />
+                         min="1" />
                     <span class="input_title">Numéro</span>
                     <div class="help_container">
                         <svg class="input_info_svg main_color_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -201,9 +199,7 @@
                         <p class="error_text">
                             Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                         </p>
-                        <img class="error_img"
-                            src="/animate_angry.png"
-                            alt="Angry Face" width="25" height="25" />
+                        <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                     </div>
                 </label>
             </div>
@@ -236,7 +232,7 @@
                 <option value="Hervé Coz">Hervé Coz</option>
             </select>
             <label class="input_container" id="input_container_firstName_worker">
-                <input type="text" class="input_input input_firstName" id="input_firstName_worker" required/>
+                <input type="text" class="input_input input_firstName" id="input_firstName_worker" required />
                 <span class="input_title">Prénom</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -280,15 +276,12 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
             <label class="input_container" id="input_container_lastName_worker">
-                <input type="text" class="input_input input_lastName" id="input_lastName_worker" required
-                     />
+                <input type="text" class="input_input input_lastName" id="input_lastName_worker" required />
                 <span class="input_title">Nom</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -332,9 +325,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_phone_worker">
@@ -344,8 +335,7 @@
                         <option value="+44">+44</option>
                         <option value="+55">+55</option>
                     </select><input type="tel" class="input_phone_number" id="input_phone_number_worker"
-                        oninput="inputError(this)" onfocusout="showHideError(null, this.parentElement)"
-                        onfocus="inputError(this)">
+                        >
                 </label>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -370,14 +360,12 @@
                     <p class="error_text">
                         Choisissez un préfixe puis saisissez les 10 chiffres du numéro.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_address_worker">
                 <span id="input_address_worker" class="input_input textarea input_address" role="textbox"
-                    contenteditable required onfocusout="inputError(this)"></span>
+                    contenteditable required ></span>
                 <span class="input_title">Adresse</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -421,14 +409,11 @@
                     <p class="error_text">
                         Putain v'la l'erreur mon fréro c'est tendu !
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_siren_worker">
-                <input type="text" class="input_input input_siren" id="input_siren_worker" required
-                     />
+                <input type="text" class="input_input input_siren" id="input_siren_worker" required />
                 <span class="input_title">SIREN</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -472,27 +457,25 @@
                     <p class="error_text">
                         Le SIREN se compose de 9 chiffres.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <div class="display_flex_start" id="check_container_artisan">
-                <input class="invert_toggle_input" type="checkbox" id="switch_artisan" onclick="toglleCheck(this)" />
+                <input class="invert_toggle_input" type="checkbox" id="switch_artisan" />
                 <label class="invert_toggle_label" id="toggle_artisan_label" for="switch_artisan">artisan</label>
                 <div class="toggle_title" id="artisan_text">
                     Artisan
                 </div>
             </div>
             <div class="display_flex_start" id="check_container_commercant">
-                <input class="invert_toggle_input" type="checkbox" id="switch_commerce" onclick="toglleCheck(this)" />
+                <input class="invert_toggle_input" type="checkbox" id="switch_commerce" />
                 <label class="invert_toggle_label" id="toggle_commercant_label" for="switch_commerce">commerçant</label>
                 <div class="toggle_title" id="artisan_text">
                     Commerçant
                 </div>
             </div>
             <label class="input_container hide_input" id="input_container_artisan_rm_worker">
-                <input type="text" class="input_input" id="input_rm" required onfocusout="inputError(this)" />
+                <input type="text" class="input_input" id="input_rm" required  />
                 <span class="input_title">RM</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -536,13 +519,11 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container hide_input" id="input_container_commercant_rcs_worker">
-                <input type="text" class="input_input" id="input_rcs" required onfocusout="inputError(this)" />
+                <input type="text" class="input_input" id="input_rcs" required />
                 <span class="input_title">RCS</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -586,9 +567,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>
@@ -622,8 +601,7 @@
                 <option value="Client 2">Client 2</option>
             </select>
             <label class="input_container" id="input_container_name_customer">
-                <input type="text" class="input_input input_company_name" id="input_name_customer" required
-                     />
+                <input type="text" class="input_input input_company_name" id="input_name_customer" required />
                 <span class="input_title">Nom d'entreprise</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -667,15 +645,13 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
             <label class="input_container" id="input_container_address_customer">
                 <span id="input_address_customer" class="input_input textarea" role="textbox" contenteditable required
-                    onfocusout="inputError(this)"></span>
+                    ></span>
                 <span class="input_title">Adresse</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -719,9 +695,7 @@
                     <p class="error_text">
                         Putain v'la l'erreur mon fréro c'est tendu !
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_phone_customer">
@@ -731,8 +705,7 @@
                         <option value="+44">+44</option>
                         <option value="+55">+55</option>
                     </select><input type="tel" class="input_phone_number" id="input_phone_number_customer"
-                        oninput="inputError(this)" onfocusout="showHideError(null, this.parentElement)"
-                        onfocus="inputError(this)" />
+                         />
                 </label>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -757,14 +730,11 @@
                     <p class="error_text">
                         Choisissez un préfixe puis saisissez les 10 chiffres du numéro.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_email_customer">
-                <input type="text" class="input_input input_email" id="input_email_customer" required
-                     />
+                <input type="text" class="input_input input_email" id="input_email_customer" required />
                 <span class="input_title">E-mail</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -789,14 +759,11 @@
                     <p class="error_text">
                         Veuillez saisir un email valide, '.', '-', '@' sont autorisés.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_siren_customer">
-                <input type="text" class="input_input input_siren" id="input_siren_customer" required
-                     />
+                <input type="text" class="input_input input_siren" id="input_siren_customer" required />
                 <span class="input_title">SIREN</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -840,9 +807,7 @@
                     <p class="error_text">
                         Le SIREN se compose de 9 chiffres.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>
@@ -905,7 +870,7 @@
             <div class="devis_lines_container" id="first_devis_lines_container">
                 <div class="devis_line">
                     <span class="input_input textarea devis_description" role="textbox" contenteditable required
-                        onfocusout="inputError(this)"></span>
+                       ></span>
                     <input type="text" class="input_input devis_quantity" required oninput="priceCalc(this)" />
                     <input type="text" class="input_input devis_price" required oninput="priceCalc(this)" />
                     <span class="input_input devis_price_total">0€</span>
@@ -930,7 +895,7 @@
             </div>
 
             <div class="devis_line_buttons_container">
-                <svg class="devis_add_button_icon main_color_svg" onclick="addDevisLine()" viewBox="0 0 24 24"
+                <svg class="devis_add_button_icon main_color_svg" viewBox="0 0 24 24"
                     fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -943,7 +908,7 @@
                             fill="#0F0F0F"></path>
                     </g>
                 </svg>
-                <svg class="devis_trash" ondragenter='console.log("prout2")' viewBox="0 0 24 24" fill="none"
+                <svg class="devis_trash" viewBox="0 0 24 24" fill="none"
                     xmlns="http://www.w3.org/2000/svg">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -998,7 +963,7 @@
             </h2>
             <label class="input_container">
                 <input class="input_input" type="date" id="date_emission" placeholder="dd-mm-yyyy" name="trip-start"
-                    required onfocusout="inputError(this)" />
+                    required  />
                 <span class="input_title">Emission</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -1041,7 +1006,7 @@
             </label>
             <label class="input_container">
                 <input class="input_input" type="date" id="date_paiement" placeholder="DD-MM-YYYY" value="16-07-1997"
-                    name="trip-start" required onfocusout="inputError(this)" />
+                    name="trip-start" required />
                 <span class="input_title">Limite paiement</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -1085,7 +1050,7 @@
                 </div>
             </label>
             <label class="input_container">
-                <input type="text" class="input_input" id="input_indemnite" required onfocusout="inputError(this)"
+                <input type="text" class="input_input" id="input_indemnite" required 
                     value="15.21%" />
                 <span class="input_title">Taux indemnités</span>
                 <div class="help_container">
@@ -1131,9 +1096,7 @@
                     <p class="error_text">
                         Le taux d'indemnités minimum pour le premier semestre 2024 est 15.21%
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -1165,14 +1128,14 @@
             </div>
 
             <div class="display_flex_center" id="toggle_tva">
-                <input class="invert_toggle_input" type="checkbox" id="switch_tva" onclick="toglleCheck(this)" />
+                <input class="invert_toggle_input" type="checkbox" id="switch_tva" />
                 <label class="invert_toggle_label" id="toggle_tva_label" for="switch_tva">tva</label>
                 <div class="toggle_title">
                     Application de la TVA
                 </div>
             </div>
             <label class="input_container hide_input" id="input_tva_label">
-                <input type="text" class="input_input" id="input_tva" required onfocusout="inputError(this)" />
+                <input type="text" class="input_input" id="input_tva" required />
                 <span class="input_title">Num. TVA</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -1197,9 +1160,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -1220,7 +1181,7 @@
                 Signature
             </h2>
             <canvas id="canvas1" width=200 height=200></canvas>
-            <div class="button_basic" onclick="signaturePad1.clear();">
+            <div id="button_clear_signature" class="button_basic">
                 <svg class="button_svg invert_svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -1261,7 +1222,7 @@
                 Paiement
             </h2>
             <label class="input_container">
-                <input type="text" class="input_input" id="input_iban" required onfocusout="inputError(this)" />
+                <input type="text" class="input_input" id="input_iban" required />
                 <span class="input_title">IBAN</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -1286,14 +1247,12 @@
                     <p class="error_text">
                         Mauvais format d'IBAN
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container">
                 <input type="text" class="input_input" id="input_payement_link" required
-                    onfocusout="inputError(this)" />
+                     />
                 <span class="input_title">Lien de paiement en ligne</span>
                 <div class="help_container">
                     <svg class="input_info_svg main_color_svg" viewBox="0 0 24 24" fill="none"
@@ -1318,15 +1277,13 @@
                     <p class="error_text">
                         Mauvais format d'IBAN
                     </p>
-                    <img class="error_img"
-                        src="/animate_angry.png"
-                        alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>
 
         <div class="full_section display_flex_center" id="button_pdf_generation">
-            <div class="button_basic" id="button_generatePDF" onclick="generatePDF()">
+            <div class="button_basic" id="button_generatePDF">
                 <svg class="button_svg invert_svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
                     <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
@@ -1342,296 +1299,292 @@
     </div>
 
     <div id="absolute_to_generate">
-            <div class="header_to_generate">
-                <div class="header_to_generate_container">
-                    <div id="header_to_generate_title">Facture</div>
-                    <div id="header_to_generate_subtitle">Développement d'un site web</div>
-                </div>
-                <div class="header_to_generate_container text_end">
-                    <div class="header_to_generate_date">Date d'émission : <span
-                            id="header_to_generate_date_value">18/02/2024</span></div>
-                    <div id="header_to_generate_number">N°202402181</div>
-                </div>
-
+        <div class="header_to_generate">
+            <div class="header_to_generate_container">
+                <div id="header_to_generate_title">Facture</div>
+                <div id="header_to_generate_subtitle">Développement d'un site web</div>
             </div>
-            <div class="section_to_generate_container">
-                <div class="section_to_generate" id="section_worker_to_generate">
-                    <div class="section_to_generate_title">Prestataire</div>
-                    <div>
-                        <span class="section_to_generate_label">Prénom Nom :</span>
-                        <span id="section_to_generate_id_worker_name">John DOE</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element">
-                        <span class="section_to_generate_label">Tel:</span>
-                        <span id="section_to_generate_id_worker_phone">123-456-7890</span>
-                    </div>
-                    <div>
-                        <span class="section_to_generate_label">Adresse :</span>
-                        <span id="section_to_generate_id_worker_address">123 Main Street, Anytown, USA</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element">
-                        <span class="section_to_generate_label">E-mail :</span>
-                        <span id="section_to_generate_id_worker_email">gQsXz@example.com</span>
-                    </div>
-                    <div>
-                        <span class="section_to_generate_label">SIREN :</span>
-                        <span id="section_to_generate_id_worker_siren">123456789</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element" id="section_to_generate_id_worker_rm">
-                        <span class="section_to_generate_label">RM :</span>
-                        <span id="section_to_generate_id_worker_rm_value">123456789</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element" id="section_to_generate_id_worker_rcs">
-                        <span class="section_to_generate_label">RCS :</span>
-                        <span id="section_to_generate_id_worker_rcs_value">123456789</span>
-                    </div>
-                </div>
-                <div class="section_to_generate" id="section_worker_to_generate">
-                    <div class="section_to_generate_title">Client</div>
-                    <div>
-                        <span class="section_to_generate_label">Entreprise :</span>
-                        <span id="section_to_generate_id_customer_name">John</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element">
-                        <span class="section_to_generate_label">Tel:</span>
-                        <span id="section_to_generate_id_customer_phone">123-456-7890</span>
-                    </div>
-                    <div>
-                        <span class="section_to_generate_label">Adresse :</span>
-                        <span id="section_to_generate_id_customer_address">123 Main Street, Anytown, USA</span>
-                    </div>
-                    <div class="section_to_generate_bonus_element">
-                        <span class="section_to_generate_label">E-mail :</span>
-                        <span id="section_to_generate_id_customer_email">gQsXz@example.com</span>
-                    </div>
-                    <div>
-                        <span class="section_to_generate_label">SIREN :</span>
-                        <span id="section_to_generate_id_customer_siren">123456789</span>
-                    </div>
-                </div>
-            </div>
-            <div class="section_to_generate" id="section_devis_to_generate">
-                <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_labels">
-                    <div class="section_devis_to_generate_line_description">Description</div>
-                    <div class="section_devis_to_generate_line_quantity">Quantité</div>
-                    <div class="section_devis_to_generate_line_unit_price">Prix</div>
-                    <div class="section_devis_to_generate_line_total_price">Prix total</div>
-                </div>
-                <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_1">
-                    <div class="section_devis_to_generate_line_description">Voici une superbe description prout</div>
-                    <div class="section_devis_to_generate_line_quantity">2</div>
-                    <div class="section_devis_to_generate_line_unit_price">14€</div>
-                    <div class="section_devis_to_generate_line_total_price">28€</div>
-                </div>
-            </div>
-            <div class="section_to_generate_container">
-                <div class="section_to_generate" id="section_to_generate_id_retard">
-                    <div class="section_to_generate_title">Modalités de retard</div>
-                    <div><span class="section_to_generate_label">Date limite de paiement :</span><span
-                            id="section_to_generate_id_date_limit">18/02/2024</span></div>
-                    <div><span class="section_to_generate_label">Taux d'interet :</span><span
-                            id="section_to_generate_id_taux_interet">15,21%</span></div>
-                </div>
-                <div class="section_to_generate">
-                    <div class="section_to_generate_title">Somme à régler</div>
-                    <div class="section_devis_to_generate_line">
-                        <div>
-                            Total HTC
-                        </div>
-                        <div id="section_to_generate_id_total_htc">
-                            28€
-                        </div>
-                    </div>
-                    <div class="section_devis_to_generate_line">
-                        <div>
-                            TVA
-                        </div>
-                        <div id="section_to_generate_id_tva">
-                            20%
-                        </div>
-                    </div>
-                    <div class="section_devis_to_generate_line" id="section_total_ttc">
-                        <div>
-                            Total TTC
-                        </div>
-                        <div id="section_to_generate_id_total_ttc">
-                            28€
-                        </div>
-                    </div>
-                    <div id="section_devis_to_generate_tva_exempt_text">
-                        TVA non applicable, article 293B du code général des impôts
-                    </div>
-                </div>
+            <div class="header_to_generate_container text_end">
+                <div class="header_to_generate_date">Date d'émission : <span
+                        id="header_to_generate_date_value">18/02/2024</span></div>
+                <div id="header_to_generate_number">N°202402181</div>
             </div>
 
-            <div id="section_to_generate_signature"></div>
-            <div id="section_to_generate_info_paiement">
-                <div class="section_to_generate_info_paiement_iban">
-                    <div class="section_to_generate_info_paiement_iban_title">
-                        Paiement par virement bancaire
-                    </div>
-                    <div id="section_to_generate_info_paiement_iban_container">
-                        <div class="section_to_generate_info_paiement_iban_name">
-                            <div class="section_to_generate_label_paiement">Nom associé</div>
-                            <div id="section_to_generate_label_iban_name">
-                                John Doe
-                            </div>
-                        </div>
-                        <div class="section_to_generate_info_paiement_iban_number">
-                            <div class="section_to_generate_label_paiement">IBAN</div>
-                            <div id="section_to_generate_label_iban">
-                                FR1420041010050500013
-                            </div>
-                        </div>
-                    </div>
+        </div>
+        <div class="section_to_generate_container">
+            <div class="section_to_generate" id="section_worker_to_generate">
+                <div class="section_to_generate_title">Prestataire</div>
+                <div>
+                    <span class="section_to_generate_label">Prénom Nom :</span>
+                    <span id="section_to_generate_id_worker_name">John DOE</span>
                 </div>
-                <div id="section_to_generate_internet_paiement_button">
-                    Payer en ligne
+                <div class="section_to_generate_bonus_element">
+                    <span class="section_to_generate_label">Tel:</span>
+                    <span id="section_to_generate_id_worker_phone">123-456-7890</span>
+                </div>
+                <div>
+                    <span class="section_to_generate_label">Adresse :</span>
+                    <span id="section_to_generate_id_worker_address">123 Main Street, Anytown, USA</span>
+                </div>
+                <div class="section_to_generate_bonus_element">
+                    <span class="section_to_generate_label">E-mail :</span>
+                    <span id="section_to_generate_id_worker_email">gQsXz@example.com</span>
+                </div>
+                <div>
+                    <span class="section_to_generate_label">SIREN :</span>
+                    <span id="section_to_generate_id_worker_siren">123456789</span>
+                </div>
+                <div class="section_to_generate_bonus_element" id="section_to_generate_id_worker_rm">
+                    <span class="section_to_generate_label">RM :</span>
+                    <span id="section_to_generate_id_worker_rm_value">123456789</span>
+                </div>
+                <div class="section_to_generate_bonus_element" id="section_to_generate_id_worker_rcs">
+                    <span class="section_to_generate_label">RCS :</span>
+                    <span id="section_to_generate_id_worker_rcs_value">123456789</span>
                 </div>
             </div>
+            <div class="section_to_generate" id="section_worker_to_generate">
+                <div class="section_to_generate_title">Client</div>
+                <div>
+                    <span class="section_to_generate_label">Entreprise :</span>
+                    <span id="section_to_generate_id_customer_name">John</span>
+                </div>
+                <div class="section_to_generate_bonus_element">
+                    <span class="section_to_generate_label">Tel:</span>
+                    <span id="section_to_generate_id_customer_phone">123-456-7890</span>
+                </div>
+                <div>
+                    <span class="section_to_generate_label">Adresse :</span>
+                    <span id="section_to_generate_id_customer_address">123 Main Street, Anytown, USA</span>
+                </div>
+                <div class="section_to_generate_bonus_element">
+                    <span class="section_to_generate_label">E-mail :</span>
+                    <span id="section_to_generate_id_customer_email">gQsXz@example.com</span>
+                </div>
+                <div>
+                    <span class="section_to_generate_label">SIREN :</span>
+                    <span id="section_to_generate_id_customer_siren">123456789</span>
+                </div>
+            </div>
+        </div>
+        <div class="section_to_generate" id="section_devis_to_generate">
+            <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_labels">
+                <div class="section_devis_to_generate_line_description">Description</div>
+                <div class="section_devis_to_generate_line_quantity">Quantité</div>
+                <div class="section_devis_to_generate_line_unit_price">Prix</div>
+                <div class="section_devis_to_generate_line_total_price">Prix total</div>
+            </div>
+            <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_1">
+                <div class="section_devis_to_generate_line_description">Voici une superbe description prout</div>
+                <div class="section_devis_to_generate_line_quantity">2</div>
+                <div class="section_devis_to_generate_line_unit_price">14€</div>
+                <div class="section_devis_to_generate_line_total_price">28€</div>
+            </div>
+        </div>
+        <div class="section_to_generate_container">
+            <div class="section_to_generate" id="section_to_generate_id_retard">
+                <div class="section_to_generate_title">Modalités de retard</div>
+                <div><span class="section_to_generate_label">Date limite de paiement :</span><span
+                        id="section_to_generate_id_date_limit">18/02/2024</span></div>
+                <div><span class="section_to_generate_label">Taux d'interet :</span><span
+                        id="section_to_generate_id_taux_interet">15,21%</span></div>
+            </div>
+            <div class="section_to_generate">
+                <div class="section_to_generate_title">Somme à régler</div>
+                <div class="section_devis_to_generate_line">
+                    <div>
+                        Total HTC
+                    </div>
+                    <div id="section_to_generate_id_total_htc">
+                        28€
+                    </div>
+                </div>
+                <div class="section_devis_to_generate_line">
+                    <div>
+                        TVA
+                    </div>
+                    <div id="section_to_generate_id_tva">
+                        20%
+                    </div>
+                </div>
+                <div class="section_devis_to_generate_line" id="section_total_ttc">
+                    <div>
+                        Total TTC
+                    </div>
+                    <div id="section_to_generate_id_total_ttc">
+                        28€
+                    </div>
+                </div>
+                <div id="section_devis_to_generate_tva_exempt_text">
+                    TVA non applicable, article 293B du code général des impôts
+                </div>
+            </div>
+        </div>
+
+        <div id="section_to_generate_signature"></div>
+        <div id="section_to_generate_info_paiement">
+            <div class="section_to_generate_info_paiement_iban">
+                <div class="section_to_generate_info_paiement_iban_title">
+                    Paiement par virement bancaire
+                </div>
+                <div id="section_to_generate_info_paiement_iban_container">
+                    <div class="section_to_generate_info_paiement_iban_name">
+                        <div class="section_to_generate_label_paiement">Nom associé</div>
+                        <div id="section_to_generate_label_iban_name">
+                            John Doe
+                        </div>
+                    </div>
+                    <div class="section_to_generate_info_paiement_iban_number">
+                        <div class="section_to_generate_label_paiement">IBAN</div>
+                        <div id="section_to_generate_label_iban">
+                            FR1420041010050500013
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="section_to_generate_internet_paiement_button">
+                Payer en ligne
+            </div>
+        </div>
 
     </div>
 
     <footer>
-            <div class="footer_container">
-                <div class="footer_container_devis">
-                    <h3 class="footer_title">
-                        Devis generator
-                    </h3>
-                    <div class="footer_section_content">
-                        <div class="footer_horizontal_line"></div>
-                        <div>
-                            <div class="footer_logos">
-                                <a href="https://github.com/tainalo2/devis_generator" target="_blank">
-                                    <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                        fill="#000000">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
-                                        </g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <title>github [#142]</title>
-                                            <desc>Created with Sketch.</desc>
-                                            <defs> </defs>
-                                            <g id="Page-1" stroke="none" stroke-width="1" fill="none"
-                                                fill-rule="evenodd">
-                                                <g id="Dribbble-Light-Preview"
-                                                    transform="translate(-140.000000, -7559.000000)" fill="#000000">
-                                                    <g id="icons" transform="translate(56.000000, 160.000000)">
-                                                        <path
-                                                            d="M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399"
-                                                            id="github-[#142]"> </path>
-                                                    </g>
+        <div class="footer_container">
+            <div class="footer_container_devis">
+                <h3 class="footer_title">
+                    Devis generator
+                </h3>
+                <div class="footer_section_content">
+                    <div class="footer_horizontal_line"></div>
+                    <div>
+                        <div class="footer_logos">
+                            <a href="https://github.com/tainalo2/devis_generator" target="_blank">
+                                <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    fill="#000000">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+                                    </g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <title>github [#142]</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs> </defs>
+                                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                            <g id="Dribbble-Light-Preview"
+                                                transform="translate(-140.000000, -7559.000000)" fill="#000000">
+                                                <g id="icons" transform="translate(56.000000, 160.000000)">
+                                                    <path
+                                                        d="M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399"
+                                                        id="github-[#142]"> </path>
                                                 </g>
                                             </g>
                                         </g>
-                                    </svg>
-                                </a>
+                                    </g>
+                                </svg>
+                            </a>
 
-                            </div>
-                            <p>
-                                Licence GPL3
-                            </p>
-                            <p>
-                                Exploitation commerciale interdite
-                            </p>
                         </div>
-                    </div>
-                </div>
-                <div class="footer_container_tainalo2">
-                    <h3 class="footer_title">
-                        Alexandre "tainalo2" RONGIER
-                    </h3>
-                    <div class="footer_section_content">
-                        <div class="footer_horizontal_line"></div>
-                        <div>
-                            <div class="footer_logos">
-                                <a href="https://github.com/tainalo2" target="_blank">
-                                    <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                        fill="#000000">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
-                                        </g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <title>github [#142]</title>
-                                            <desc>Created with Sketch.</desc>
-                                            <defs> </defs>
-                                            <g id="Page-1" stroke="none" stroke-width="1" fill="none"
-                                                fill-rule="evenodd">
-                                                <g id="Dribbble-Light-Preview"
-                                                    transform="translate(-140.000000, -7559.000000)" fill="#000000">
-                                                    <g id="icons" transform="translate(56.000000, 160.000000)">
-                                                        <path
-                                                            d="M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399"
-                                                            id="github-[#142]"> </path>
-                                                    </g>
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </a>
-                                <a href="https://www.linkedin.com/in/rongier-alexandre/" target="_blank">
-                                    <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                        fill="#000000">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
-                                        </g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <title>linkedin [#161]</title>
-                                            <desc>Created with Sketch.</desc>
-                                            <defs> </defs>
-                                            <g id="Page-1" stroke="none" stroke-width="1" fill="none"
-                                                fill-rule="evenodd">
-                                                <g id="Dribbble-Light-Preview"
-                                                    transform="translate(-180.000000, -7479.000000)" fill="#000000">
-                                                    <g id="icons" transform="translate(56.000000, 160.000000)">
-                                                        <path
-                                                            d="M144,7339 L140,7339 L140,7332.001 C140,7330.081 139.153,7329.01 137.634,7329.01 C135.981,7329.01 135,7330.126 135,7332.001 L135,7339 L131,7339 L131,7326 L135,7326 L135,7327.462 C135,7327.462 136.255,7325.26 139.083,7325.26 C141.912,7325.26 144,7326.986 144,7330.558 L144,7339 L144,7339 Z M126.442,7323.921 C125.093,7323.921 124,7322.819 124,7321.46 C124,7320.102 125.093,7319 126.442,7319 C127.79,7319 128.883,7320.102 128.883,7321.46 C128.884,7322.819 127.79,7323.921 126.442,7323.921 L126.442,7323.921 Z M124,7339 L129,7339 L129,7326 L124,7326 L124,7339 Z"
-                                                            id="linkedin-[#161]"> </path>
-                                                    </g>
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </a>
-                                <a href="https://www.alexandre-rongier.fr" target="_blank">
-                                    <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                                        fill="#000000">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
-                                        </g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <title>globe_network [#1294]</title>
-                                            <desc>Created with Sketch.</desc>
-                                            <defs> </defs>
-                                            <g id="Page-1" stroke="none" stroke-width="1" fill="none"
-                                                fill-rule="evenodd">
-                                                <g id="Dribbble-Light-Preview"
-                                                    transform="translate(-380.000000, -2399.000000)" fill="#000000">
-                                                    <g id="icons" transform="translate(56.000000, 160.000000)">
-                                                        <path
-                                                            d="M336.311,2256.66477 C337.577,2254.61206 338.313,2252.32917 338.507,2250.00323 L341.93,2250.00323 C341.533,2253.16786 339.289,2255.76302 336.311,2256.66477 M334.005,2256.50564 C332.565,2254.55702 331.719,2252.30815 331.495,2250.00323 L336.506,2250.00323 C336.285,2252.30715 335.442,2254.55602 334.005,2256.50564 M326.069,2250.00323 L329.493,2250.00323 C329.689,2252.33017 330.429,2254.61507 331.699,2256.66777 C328.716,2255.76903 326.467,2253.17187 326.069,2250.00323 M331.288,2241.47915 C330.176,2243.51284 329.574,2245.7457 329.467,2248.00157 L326.069,2248.00157 C326.448,2244.98106 328.512,2242.48499 331.288,2241.47915 M333.967,2240.99675 C333.976,2240.98474 333.985,2240.97273 333.994,2240.96072 C334.003,2240.97273 334.011,2240.98474 334.02,2240.99675 C335.555,2243.08749 336.393,2245.52551 336.532,2248.00157 L331.467,2248.00157 C331.603,2245.52651 332.437,2243.08949 333.967,2240.99675 M341.93,2248.00157 L338.532,2248.00157 C338.422,2245.74369 337.816,2243.50984 336.699,2241.47415 C339.482,2242.47798 341.551,2244.97606 341.93,2248.00157 M334.855,2239.03712 C328.942,2238.5347 324,2243.19858 324,2249.0024 C324,2254.43892 328.335,2258.84258 333.71,2258.99571 C339.387,2259.15984 344,2254.59505 344,2249.0024 C344,2243.84011 340.068,2239.48249 334.855,2239.03712"
-                                                            id="globe_network-[#1294]"> </path>
-                                                    </g>
-                                                </g>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </a>
-                            </div>
-                            <p>
-                                Développeur full-stack junior
-                            </p>
-                            <p>
-                                Je cherche un travail !
-                            </p>
-                        </div>
+                        <p>
+                            Licence GPL3
+                        </p>
+                        <p>
+                            Exploitation commerciale interdite
+                        </p>
                     </div>
                 </div>
             </div>
+            <div class="footer_container_tainalo2">
+                <h3 class="footer_title">
+                    Alexandre "tainalo2" RONGIER
+                </h3>
+                <div class="footer_section_content">
+                    <div class="footer_horizontal_line"></div>
+                    <div>
+                        <div class="footer_logos">
+                            <a href="https://github.com/tainalo2" target="_blank">
+                                <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    fill="#000000">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+                                    </g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <title>github [#142]</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs> </defs>
+                                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                            <g id="Dribbble-Light-Preview"
+                                                transform="translate(-140.000000, -7559.000000)" fill="#000000">
+                                                <g id="icons" transform="translate(56.000000, 160.000000)">
+                                                    <path
+                                                        d="M94,7399 C99.523,7399 104,7403.59 104,7409.253 C104,7413.782 101.138,7417.624 97.167,7418.981 C96.66,7419.082 96.48,7418.762 96.48,7418.489 C96.48,7418.151 96.492,7417.047 96.492,7415.675 C96.492,7414.719 96.172,7414.095 95.813,7413.777 C98.04,7413.523 100.38,7412.656 100.38,7408.718 C100.38,7407.598 99.992,7406.684 99.35,7405.966 C99.454,7405.707 99.797,7404.664 99.252,7403.252 C99.252,7403.252 98.414,7402.977 96.505,7404.303 C95.706,7404.076 94.85,7403.962 94,7403.958 C93.15,7403.962 92.295,7404.076 91.497,7404.303 C89.586,7402.977 88.746,7403.252 88.746,7403.252 C88.203,7404.664 88.546,7405.707 88.649,7405.966 C88.01,7406.684 87.619,7407.598 87.619,7408.718 C87.619,7412.646 89.954,7413.526 92.175,7413.785 C91.889,7414.041 91.63,7414.493 91.54,7415.156 C90.97,7415.418 89.522,7415.871 88.63,7414.304 C88.63,7414.304 88.101,7413.319 87.097,7413.247 C87.097,7413.247 86.122,7413.234 87.029,7413.87 C87.029,7413.87 87.684,7414.185 88.139,7415.37 C88.139,7415.37 88.726,7417.2 91.508,7416.58 C91.513,7417.437 91.522,7418.245 91.522,7418.489 C91.522,7418.76 91.338,7419.077 90.839,7418.982 C86.865,7417.627 84,7413.783 84,7409.253 C84,7403.59 88.478,7399 94,7399"
+                                                        id="github-[#142]"> </path>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </a>
+                            <a href="https://www.linkedin.com/in/rongier-alexandre/" target="_blank">
+                                <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    fill="#000000">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+                                    </g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <title>linkedin [#161]</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs> </defs>
+                                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                            <g id="Dribbble-Light-Preview"
+                                                transform="translate(-180.000000, -7479.000000)" fill="#000000">
+                                                <g id="icons" transform="translate(56.000000, 160.000000)">
+                                                    <path
+                                                        d="M144,7339 L140,7339 L140,7332.001 C140,7330.081 139.153,7329.01 137.634,7329.01 C135.981,7329.01 135,7330.126 135,7332.001 L135,7339 L131,7339 L131,7326 L135,7326 L135,7327.462 C135,7327.462 136.255,7325.26 139.083,7325.26 C141.912,7325.26 144,7326.986 144,7330.558 L144,7339 L144,7339 Z M126.442,7323.921 C125.093,7323.921 124,7322.819 124,7321.46 C124,7320.102 125.093,7319 126.442,7319 C127.79,7319 128.883,7320.102 128.883,7321.46 C128.884,7322.819 127.79,7323.921 126.442,7323.921 L126.442,7323.921 Z M124,7339 L129,7339 L129,7326 L124,7326 L124,7339 Z"
+                                                        id="linkedin-[#161]"> </path>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </a>
+                            <a href="https://www.alexandre-rongier.fr" target="_blank">
+                                <svg class="lightMode_svg invert_svg svg_footer" viewBox="0 0 20 20" version="1.1"
+                                    xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                                    fill="#000000">
+                                    <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                                    <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round">
+                                    </g>
+                                    <g id="SVGRepo_iconCarrier">
+                                        <title>globe_network [#1294]</title>
+                                        <desc>Created with Sketch.</desc>
+                                        <defs> </defs>
+                                        <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                            <g id="Dribbble-Light-Preview"
+                                                transform="translate(-380.000000, -2399.000000)" fill="#000000">
+                                                <g id="icons" transform="translate(56.000000, 160.000000)">
+                                                    <path
+                                                        d="M336.311,2256.66477 C337.577,2254.61206 338.313,2252.32917 338.507,2250.00323 L341.93,2250.00323 C341.533,2253.16786 339.289,2255.76302 336.311,2256.66477 M334.005,2256.50564 C332.565,2254.55702 331.719,2252.30815 331.495,2250.00323 L336.506,2250.00323 C336.285,2252.30715 335.442,2254.55602 334.005,2256.50564 M326.069,2250.00323 L329.493,2250.00323 C329.689,2252.33017 330.429,2254.61507 331.699,2256.66777 C328.716,2255.76903 326.467,2253.17187 326.069,2250.00323 M331.288,2241.47915 C330.176,2243.51284 329.574,2245.7457 329.467,2248.00157 L326.069,2248.00157 C326.448,2244.98106 328.512,2242.48499 331.288,2241.47915 M333.967,2240.99675 C333.976,2240.98474 333.985,2240.97273 333.994,2240.96072 C334.003,2240.97273 334.011,2240.98474 334.02,2240.99675 C335.555,2243.08749 336.393,2245.52551 336.532,2248.00157 L331.467,2248.00157 C331.603,2245.52651 332.437,2243.08949 333.967,2240.99675 M341.93,2248.00157 L338.532,2248.00157 C338.422,2245.74369 337.816,2243.50984 336.699,2241.47415 C339.482,2242.47798 341.551,2244.97606 341.93,2248.00157 M334.855,2239.03712 C328.942,2238.5347 324,2243.19858 324,2249.0024 C324,2254.43892 328.335,2258.84258 333.71,2258.99571 C339.387,2259.15984 344,2254.59505 344,2249.0024 C344,2243.84011 340.068,2239.48249 334.855,2239.03712"
+                                                        id="globe_network-[#1294]"> </path>
+                                                </g>
+                                            </g>
+                                        </g>
+                                    </g>
+                                </svg>
+                            </a>
+                        </div>
+                        <p>
+                            Développeur full-stack junior
+                        </p>
+                        <p>
+                            Je cherche un travail !
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </footer>
 
 
