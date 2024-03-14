@@ -140,7 +140,11 @@ let yDrag = 0;
 let draggingStatus = false;
 
 function DragOn(e) {
-    draggingEle = e.target.parentElement;
+    if (e.target.classList.contains('svg_devis_line_dots')) {
+        draggingEle = e.target.parentElement;
+    } else {
+        draggingEle = e.target.parentElement.parentElement.parentElement;
+    }
     const rect = draggingEle.getBoundingClientRect();
     xDrag = cursorX - rect.left;
     //yDrag = e.pageY - rect.top;
@@ -150,6 +154,7 @@ function DragOn(e) {
 }
 
 function DragMove(e) {
+    
     const draggingRect = draggingEle.getBoundingClientRect();
 
 
@@ -250,8 +255,6 @@ window.addEventListener('DOMContentLoaded', async function () {
         toggleLightMode(document.getElementById("switch_toggle_light"));
     }, false);
 
-    //document.getElementById("input_firstName_worker").addEventListener('input', () => { inputError(document.getElementById("input_firstName_worker")) });
-
     document.querySelectorAll('.input_input').forEach(element => {
         element.addEventListener('input', () => { inputError(element) });
         element.addEventListener('focus', () => { inputError(element) });
@@ -276,6 +279,11 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
 
+    document.querySelectorAll('.devis_price_calc').forEach(element => {
+        element.addEventListener('input', () => { priceCalc(element) });
+    });
+
+
     document.querySelectorAll('.svg_devis_line_dots').forEach(dots => {
         dots.addEventListener('mousedown', DragOn);
     });
@@ -283,7 +291,6 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.querySelectorAll('.devis_line_buttons_container').forEach(trash => {
         trash.addEventListener('dragenter', (event) => {
             event.target.style.background = "red";
-
         });
     });
 
@@ -332,9 +339,12 @@ function addDevisLine() {
     cloneLine_node.querySelector(".devis_description").innerHTML = "";
     cloneLine_node.querySelector(".devis_quantity").value = "";
     cloneLine_node.querySelector(".devis_price").value = "";
-    cloneLine_node.querySelector(".devis_price_total").value = "";
+    cloneLine_node.querySelector(".devis_price_total").value = "0€";
     cloneLine_node.removeAttribute('id');
     cloneLine_node.querySelector(".svg_devis_line_dots").addEventListener('mousedown', DragOn);
+    cloneLine_node.querySelectorAll('.devis_price_calc').forEach(element => {
+        element.addEventListener('input', () => { priceCalc(element) });
+    });
 }
 
 function onElement(element) {
