@@ -229,7 +229,22 @@ function resizeCanvas(canvas, pad) {
     pad.clear(); // otherwise isEmpty() might return incorrect value
 }
 
-window.addEventListener('DOMContentLoaded', function () {
+async function URLtoBase64(url) {
+    return new Promise((resolve, reject) => {
+        fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                reader.onloadend = () => {
+                    const base64data = reader.result;
+                    resolve(base64data);
+                };
+            });
+    });
+}
+
+window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("switch_toggle_light").addEventListener("click", () => {
         toggleLightMode(document.getElementById("switch_toggle_light"));
     },
@@ -249,9 +264,20 @@ window.addEventListener('DOMContentLoaded', function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
+    //localStorage.clear();
     if (localStorage.getItem("image_animate_angry") === null) {
-        console.log("No infinite scroll");
+        localStorage.setItem("image_animate_angry", await URLtoBase64('animate_angry.png'));
     }
+    if (localStorage.getItem("image_animate_writing") === null) {
+        localStorage.setItem("image_animate_writing", await URLtoBase64('animate_writing.png'));
+    }
+
+    document.querySelectorAll('.error_img').forEach(errorIMG => {
+        errorIMG.src = localStorage.getItem("image_animate_angry");
+    });
+
+    document.getElementById("main_title_img").src = localStorage.getItem("image_animate_writing");
+
 });
 
 window.addEventListener('load', function () {

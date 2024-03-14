@@ -82,7 +82,7 @@ textarea::-webkit-scrollbar-thumb {
     justify-content: center;
 }
 
-.maint_title_img {
+#main_title_img {
     width: 2.5em;
 }
 
@@ -932,7 +932,7 @@ footer p {
         padding: 1rem;
     }
 
-    .maint_title_img {
+    #main_title_img {
         width: 1.5rem;
     }
 
