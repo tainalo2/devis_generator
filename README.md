@@ -3,7 +3,8 @@
 
 Devis Generator est un générateur de facture/devis pour les micros-entrepreneurs français, en format web.
 
-![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript)
+![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
+
 
 <p align="center">
   <img width="460" height="300" src="https://picsum.photos/460/300">
@@ -29,6 +30,16 @@ Un développement open-source pour assurer la gratuité, un format web pour êtr
 La solution est donc un site web, l'officiel est hébergé ici : https://www.purpletwit.com/devisgenerator
 
 Le code est en HTML/CSS/JS vanilla pour simplifier le déploiement et l'auto-hébergement.
+
+## Fonctionalités
+
+Devis generator permet de :
+* Générer un PDF de facture/devis
+* Respecter les lois en vigueurs pour les micro-entrepreneurs
+* Enregistrer des templates de prestataire/client/devis (bientôt) (seulement avec une base SQL)
+* Ajouter une signature "manuscrite"
+* Pré-calculer la TVA
+* Ajout d'un bouton cliquable pour le paiement en ligne
 
 ## Participer au projet
 
