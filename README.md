@@ -7,9 +7,9 @@ Devis Generator est un générateur de facture/devis pour les micros-entrepreneu
 
 
 <p align="center">
-  <img width="300" height="290" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_1.png">
-  <img width="300" height="290" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_2.png">
-  <img width="300" height="290" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_3.png">
+  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_1.png">
+  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_2.png">
+  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_3.png">
 </p>
 
 ```
