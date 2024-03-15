@@ -1,9 +1,7 @@
 > Je cherche du travail ! Freelance ou CDI en dev front/back -> www.alexandre-rongier.fr
-# Devis Generator
+# Devis Generator ![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
 
 Devis Generator est un générateur de facture/devis pour les micros-entrepreneurs français, en format web.
-
-![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
 
 
 <p align="center">
@@ -40,6 +38,12 @@ Devis generator permet de :
 * Ajout de l'hébergement des templates
 * Système de double chiffrement de la base SQL
 * Support des ventes commerciale (TVA et déclarations différentes)
+
+## Dépendances
+Devis generator base certaines fonctionalités sur des librairies JS :
+* Système de signature : [Signature Pad](https://github.com/szimek/signature_pad?tab=readme-ov-file)
+* Génération du PDF : [jsPDF](https://github.com/parallax/jsPDF)
+* Transformation d'éléments en image pour le PDF + jsPDF : [html2canvas](https://github.com/niklasvh/html2canvas)
 
 ## Participer au projet
 
