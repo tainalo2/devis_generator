@@ -303,7 +303,7 @@ window.addEventListener('DOMContentLoaded', async function () {
 
 
     //Check localStorage + set default
-    //localStorage.clear();
+    localStorage.clear();
     if (localStorage.getItem("image_animate_angry") === null) {
         localStorage.setItem("image_animate_angry", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/animate_angry.png'));
     }
