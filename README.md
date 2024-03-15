@@ -12,13 +12,6 @@ Devis Generator est un générateur de facture/devis pour les micros-entrepreneu
   <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/image_for_readme_3.png">
 </p>
 
-```
-<p align="center">
-  <img width="460" height="300" src="https://picsum.photos/460/300">
-</p>
-```
-
-
 ## Problématique
 Il n'existe pas d'outils simple et concis permettant d'éditer une facture ou un devis en PDF sans oublier toutes les obligations légales. Le statut de micro-entrepreneur permettant notamment d'encadré des activités additionnelles au salariat, censé être administrativement simplifié pour ne pas être un frein à son encadrement légale, je trouvais ça lourd d'éditer ma facture à chaque fois dans un vieux modèle google sheet.
 
@@ -42,6 +35,11 @@ Devis generator permet de :
 * Ajouter une signature "manuscrite"
 * Pré-calculer la TVA
 * Ajout d'un bouton cliquable pour le paiement en ligne
+
+## Roadmap
+* Ajout de l'hébergement des templates
+* Système de double chiffrement de la base SQL
+* Support des ventes commerciale (TVA et déclarations différentes)
 
 ## Participer au projet
 
