@@ -18,17 +18,23 @@ function toggleLightMode(element) {
         document.querySelector(':root').style.setProperty('--main-bg-color', 'black');
         document.querySelector(':root').style.setProperty('--main-second-color', 'white');
         document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(248, 248, 248)');
+        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(245, 245, 245)');
+        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(95, 95, 95)');
+        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(240, 240, 240)');
         document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31');
         signaturePad1.penColor = "white";
     } else {
         document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
         document.querySelector(':root').style.setProperty('--main-second-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(248, 248, 248)');
+        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(245, 245, 245)');
         document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
+        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(240, 240, 240)');
+        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(95, 95, 95)');
         document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
         document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)');
         signaturePad1.penColor = "black";
     }
 }
@@ -154,7 +160,7 @@ function DragOn(e) {
 }
 
 function DragMove(e) {
-    
+
     const draggingRect = draggingEle.getBoundingClientRect();
 
 
@@ -251,6 +257,45 @@ async function URLtoBase64(url) {
 
 window.addEventListener('DOMContentLoaded', async function () {
 
+    history.replaceState("home", "", document.location.href);
+
+    document.addEventListener("click", async (event) => {
+        if (event.target.getAttribute("route") || event.target.parentElement.getAttribute("route")) {
+            // Prevent a new page from loading
+            event.preventDefault();
+            var route;
+            if (event.target.getAttribute("route")) {
+                route = event.target.getAttribute("route");
+            } else {
+                route = event.target.parentElement.getAttribute("route");
+            }
+            updateView(route);
+            history.pushState(route, "", route);
+        }
+    });
+
+    // Handle forward/back buttons
+    window.addEventListener("popstate", (event) => {
+        console.log(event);
+        // If a state has been provided, we have a "simulated" page
+        // and we update the current page.
+        if (event.state) {
+            // Simulate the loading of the previous page
+            updateView(event.state);
+        }
+    });
+
+
+    document.addEventListener("mousemove", (e) => {
+        rotateElement(e, document.getElementById("img_paralax_1_1"), 2, 50);
+        rotateElement(e, document.getElementById("img_paralax_1_2"), 1, 310);
+        rotateElement(e, document.getElementById("img_paralax_1_3"), 3, 70);
+    });
+
+    document.querySelectorAll('.landing_workflow_nav_element').forEach(element => {
+        element.addEventListener('click', () => { landingWorkflowContentSwitcher(element) });
+    });
+
     document.getElementById("switch_toggle_light").addEventListener("click", () => {
         toggleLightMode(document.getElementById("switch_toggle_light"));
     }, false);
@@ -325,12 +370,46 @@ window.addEventListener('load', function () {
     window.addEventListener("resize", function (e) {
         resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
     });
+    document.getElementById("content_container").style.display = "none";
 });
 
 window.addEventListener('mousemove', (event) => {
     cursorX = event.pageX;
     cursorY = event.pageY;
 });
+
+function rotateElement(event, element, tempSensi, originPositionX) {
+    //sensibility
+    const sensibility = 30;
+    // get mouse position
+    const x = event.clientX - 250;
+    const y = event.clientY;
+    // console.log(x, y)
+
+    // find the middle
+    const middleX = window.innerWidth / 2;
+    const middleY = window.innerHeight / 2;
+    // console.log(middleX, middleY)
+
+    // get offset from middle as a percentage
+    // and tone it down a little
+    const offsetX = ((x - middleX) / middleX) * sensibility;
+    const offsetY = ((y - middleY) / middleY) * sensibility;
+    // console.log(offsetX, offsetY);
+
+    // set rotation
+    element.style.setProperty("--rotateX", offsetX + "deg");
+    element.style.setProperty("--rotateY", -1 * offsetY + "deg");
+
+    //function by Kevin Powell -> https://www.youtube.com/watch?v=Z-3tPXf9a7M
+
+    element.style.left = originPositionX + ((offsetX * tempSensi)) + "px";
+}
+
+function getCssProperty(element, property) {
+    return window.getComputedStyle(element, null).getPropertyValue(property);
+}
+
 
 function addDevisLine() {
     var firstLine_node = document.getElementById("first_devis_lines_container").firstElementChild;
@@ -339,7 +418,7 @@ function addDevisLine() {
     cloneLine_node.querySelector(".devis_description").innerHTML = "";
     cloneLine_node.querySelector(".devis_quantity").value = "";
     cloneLine_node.querySelector(".devis_price").value = "";
-    cloneLine_node.querySelector(".devis_price_total").value = "0€";
+    cloneLine_node.querySelector(".devis_price_total").innerHTML = "0€";
     cloneLine_node.removeAttribute('id');
     cloneLine_node.querySelector(".svg_devis_line_dots").addEventListener('mousedown', DragOn);
     cloneLine_node.querySelectorAll('.devis_price_calc').forEach(element => {
@@ -364,16 +443,16 @@ function priceCalc(element) {
     if (quantity > 0 && price > 0 && quantity != "" && price != "") {
         totalLine = quantity * price;
     }
-    parent.querySelector('.devis_price_total').innerHTML = totalLine + "€"
+    parent.querySelector('.devis_price_total').innerHTML = totalLine.toFixed(2) + "€"
 
     var totalDevis = 0;
     parent.parentElement.childNodes.forEach((line) => {
         if (line.className == 'devis_line') {
-            totalDevis = totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", ""));
+            totalDevis = (totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", ""))).toFixed(2);
         }
     })
     document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
-    document.getElementById("price_indicator_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+    document.getElementById("price_indicator_ttc").innerHTML = (parseFloat(totalDevis) + (parseFloat(totalDevis) * 0.2)).toFixed(2) + "€";
     if (totalDevis <= 150) {
         document.getElementById("toggle_tva").style.display = "none";
     } else {
@@ -522,4 +601,39 @@ function getElementOffset(element) {
         left: boundingRect.left + window.scrollX,
         top: boundingRect.top + window.scrollY
     };
+}
+
+function updateView(viewName) {
+    if (viewName == "home") {
+        document.getElementById("loading_container").classList.remove("wraped");
+        setTimeout(() => {
+            document.getElementById("content_container").style.display = "none";
+            document.getElementById("landing_page").style.display = "block";
+            document.getElementById("loading_container").classList.add("wraped");
+        }, 1500);
+
+    } else if (viewName == "generator") {
+        document.getElementById("loading_container").classList.remove("wraped");
+        setTimeout(() => {
+            document.getElementById("landing_page").style.display = "none";
+            document.getElementById("content_container").style.display = "flex";
+            setTimeout(() => {
+                resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+            }, 1000);
+            
+            document.getElementById("loading_container").classList.add("wraped");
+        }, 1500);
+
+    }
+
+}
+
+function landingWorkflowContentSwitcher(button) {
+    var numberID = button.id.replace("landing_workflow_nav_element_", "");
+    document.querySelector(".landing_workflow_nav_element_active").classList.remove("landing_workflow_nav_element_active");
+    button.classList.add("landing_workflow_nav_element_active");
+    document.querySelector(".landing_workflow_content_container_active").classList.add("landing_workflow_content_container");
+    document.querySelector(".landing_workflow_content_container_active").classList.remove("landing_workflow_content_container_active");
+    document.getElementById("landing_workflow_content_container_" + numberID).classList.add("landing_workflow_content_container_active");
+    document.getElementById("landing_workflow_content_container_" + numberID).classList.remove("landing_workflow_content_container");
 }
