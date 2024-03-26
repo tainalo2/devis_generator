@@ -350,10 +350,19 @@ window.addEventListener('DOMContentLoaded', async function () {
     //Check localStorage + set default
     localStorage.clear();
     if (localStorage.getItem("image_animate_angry") === null) {
-        localStorage.setItem("image_animate_angry", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/animate_angry.png'));
+        localStorage.setItem("image_animate_angry", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/animate_angry.png'));
     }
     if (localStorage.getItem("image_animate_writing") === null) {
-        localStorage.setItem("image_animate_writing", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/animate_writing.png'));
+        localStorage.setItem("image_animate_writing", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/animate_writing.png'));
+    }
+    if (localStorage.getItem("image_landing_paralax_1_1") === null) {
+        localStorage.setItem("image_landing_paralax_1_1", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_1.png'));
+    }
+    if (localStorage.getItem("image_landing_paralax_1_2") === null) {
+        localStorage.setItem("image_landing_paralax_1_2", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_2.png'));
+    }
+    if (localStorage.getItem("image_landing_paralax_1_3") === null) {
+        localStorage.setItem("image_landing_paralax_1_3", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_3.png'));
     }
 
     document.querySelectorAll('.error_img').forEach(errorIMG => {
@@ -361,6 +370,9 @@ window.addEventListener('DOMContentLoaded', async function () {
     });
 
     document.getElementById("main_title_img").src = localStorage.getItem("image_animate_writing");
+    document.getElementById("img_paralax_1_1").src = localStorage.getItem("image_landing_paralax_1_1");
+    document.getElementById("img_paralax_1_2").src = localStorage.getItem("image_landing_paralax_1_2");
+    document.getElementById("img_paralax_1_3").src = localStorage.getItem("image_landing_paralax_1_3");
 
 });
 
