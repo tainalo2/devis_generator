@@ -258,7 +258,6 @@ async function URLtoBase64(url) {
 }
 
 window.addEventListener('DOMContentLoaded', async function () {
-    updateView(originRoute);
 
     history.replaceState("home", "", document.location.href);
 
@@ -379,6 +378,8 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("img_paralax_1_1").src = localStorage.getItem("image_landing_paralax_1_1");
     document.getElementById("img_paralax_1_2").src = localStorage.getItem("image_landing_paralax_1_2");
     document.getElementById("img_paralax_1_3").src = localStorage.getItem("image_landing_paralax_1_3");
+
+    updateView(originRoute);
 
 });
 
