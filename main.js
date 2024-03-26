@@ -12,6 +12,7 @@ const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
 const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
+const originRoute = "home";
 let signaturePad1;
 
 function toggleLightMode(element) {
@@ -257,6 +258,7 @@ async function URLtoBase64(url) {
 }
 
 window.addEventListener('DOMContentLoaded', async function () {
+    updateView(originRoute);
 
     history.replaceState("home", "", document.location.href);
 
