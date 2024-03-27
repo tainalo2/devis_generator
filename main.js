@@ -277,7 +277,7 @@ window.addEventListener('DOMContentLoaded', async function () {
             }
             if (rootRoute != null && route != "/" ) {
                 route = rootRoute + "/" + route;
-            } else if (rootRoute == null) {
+            } else if (rootRoute != null) {
                 route = rootRoute;
             }
             history.pushState(route, "", route);
