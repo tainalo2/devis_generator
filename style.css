@@ -37,7 +37,7 @@ a {
 .full_page_container {
     margin-left: auto;
     margin-right: auto;
-    width: calc(100% - 4rem);
+    width: calc(100% - 2rem);
     max-width: 900px;
     display: flex;
     justify-content: space-between;
@@ -298,8 +298,6 @@ textarea::-webkit-scrollbar-thumb {
 }
 
 .banner {
-    padding-left: 2rem;
-    padding-right: 2rem;
     margin: 0;
     background-color: var(--main-second-color);
     color: var(--main-bg-color);
@@ -1175,10 +1173,6 @@ footer p {
 
     h2 {
         font-size: 1rem;
-    }
-
-    #landing_page {
-        width: calc(100% - 4rem);
     }
 
     .landing_paragraph_container {
