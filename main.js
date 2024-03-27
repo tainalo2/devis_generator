@@ -11,7 +11,6 @@ const regexNumber = new RegExp("[0-9]");
 const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
 const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
-//const rootRoute = null;
 const rootRoute = null;
 const originRoute = "home";
 let signaturePad1;
