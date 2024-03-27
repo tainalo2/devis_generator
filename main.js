@@ -282,7 +282,8 @@ window.addEventListener('DOMContentLoaded', async function () {
             } else if (rootRoute != null) {
                 console.log("route 3 :" + route);
                 console.log("rootRoute : " + rootRoute);
-                route = rootRoute;
+                route = "/";
+                console.log(document.location.href);
             }
             history.pushState(route, "", route);
         }
