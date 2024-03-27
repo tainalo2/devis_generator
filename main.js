@@ -275,15 +275,10 @@ window.addEventListener('DOMContentLoaded', async function () {
             if (route == "home"){
                 route = "/";
             }
-            console.log("route 1 :" + route);
             if (rootRoute != null && route != "/" ) {
-                console.log("route 2 :" + route);
                 route = rootRoute + "/" + route;
             } else if (rootRoute != null) {
-                console.log("route 3 :" + route);
-                console.log("rootRoute : " + rootRoute);
                 route = "/" + rootRoute;
-                console.log(document.location.href);
             }
             history.pushState(route, "", route);
         }
