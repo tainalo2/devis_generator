@@ -275,7 +275,7 @@ window.addEventListener('DOMContentLoaded', async function () {
             if (route == "home"){
                 route = "/";
             }
-            if (rootRoute != null ) {
+            if (rootRoute != null && route != "/" ) {
                 route = rootRoute + "/" + route;
             }
             history.pushState(route, "", route);
@@ -289,7 +289,7 @@ window.addEventListener('DOMContentLoaded', async function () {
         // and we update the current page.
         if (event.state) {
             // Simulate the loading of the previous page
-            updateView(event.state);
+            updateView(event.state.replace(rootRoute + "/", ""));
         }
     });
 
