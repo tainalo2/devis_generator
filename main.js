@@ -11,6 +11,7 @@ const regexNumber = new RegExp("[0-9]");
 const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
 const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
+//const rootRoute = null;
 const rootRoute = null;
 const originRoute = "home";
 let signaturePad1;
@@ -389,9 +390,9 @@ window.addEventListener('DOMContentLoaded', async function () {
 window.addEventListener('load', function () {
     signaturePad1 = new SignaturePad(document.querySelector("#canvas1"));
     resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
-    window.addEventListener("resize", function (e) {
+    /*window.addEventListener("resize", function (e) {
         resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
-    });
+    });*/
     document.getElementById("content_container").style.display = "none";
 });
 
@@ -626,7 +627,7 @@ function getElementOffset(element) {
 }
 
 function updateView(viewName) {
-    if (viewName == "home") {
+    if (viewName == "home" || viewName == "/") {
         document.getElementById("loading_container").classList.remove("wraped");
         setTimeout(() => {
             document.getElementById("content_container").style.display = "none";
