@@ -913,10 +913,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transform: scale3d(1, 0.9, 1);
 }
 
-.button_basic_big {}
-
-
-
 .noClick {
     pointer-events: none;
 }
