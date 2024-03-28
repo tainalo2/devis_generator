@@ -9,13 +9,13 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <meta name="description" content="Générateur de devis/facture pour micro-entrepreneur. Gratuit et open-source.">
     <link rel="icon"
-        href="data:image/png;base64,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" />
+        href="src/image/favicon.png" />
     <link rel='stylesheet' type='text/css' media='screen' href='/style.css'>
-    <link rel="canonical" href="https://devisgenerator.fr" />
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"
+    <link rel="canonical" href="https://www.devisgenerator.fr" />
+    <script type="text/javascript" src="src/dependencies/signature_pad.umd.min.js"
         nonce=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" nonce=""></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js" nonce=""></script>
+    <script type="text/javascript" src="src/dependencies/jspdf.umd.min.js" nonce=""></script>
+    <script type="text/javascript"src="src/dependencies/html2canvas.min.js" nonce=""></script>
     <script type="text/javascript" src="/main.js" nonce=""></script>
 </head>
 
@@ -26,7 +26,7 @@
                 <h1>
                     Devis generator
                 </h1>
-                <img id="main_title_img" src="" alt="Writing Hand" />
+                <img id="main_title_img" src="src/image/animate_writing.png" alt="Writing Hand" />
             </a>
             <div class="navBar">
                 <div class="lightMode_container">
@@ -111,9 +111,9 @@
 
             </div>
             <div class="paralax">
-                <img id="img_paralax_1_2" src="" />
-                <img id="img_paralax_1_3" src="" />
-                <img id="img_paralax_1_1" src="" />
+                <img id="img_paralax_1_2" src="src/image/landing_paralax_1_2.png" alt="capture de la section client"/>
+                <img id="img_paralax_1_3" src="src/image/landing_paralax_1_3.png" alt="capture de la section devis"/>
+                <img id="img_paralax_1_1" src="src/image/landing_paralax_1_1.png" alt="capture de la section prestataire"/>
             </div>
         </div>
 
@@ -287,7 +287,7 @@
                         <p class="error_text">
                             Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                         </p>
-                        <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                        <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                     </div>
                 </label>
                 <label class="input_container" id="devis_number_container">
@@ -336,7 +336,7 @@
                         <p class="error_text">
                             Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                         </p>
-                        <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                        <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                     </div>
                 </label>
             </div>
@@ -413,7 +413,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -462,7 +462,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_phone_worker">
@@ -496,7 +496,7 @@
                     <p class="error_text">
                         Choisissez un préfixe puis saisissez les 10 chiffres du numéro.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_address_worker">
@@ -545,7 +545,7 @@
                     <p class="error_text">
                         Putain v'la l'erreur mon fréro c'est tendu !
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_siren_worker">
@@ -593,7 +593,7 @@
                     <p class="error_text">
                         Le SIREN se compose de 9 chiffres.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <div class="display_flex_start" id="check_container_artisan">
@@ -655,7 +655,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container hide_input" id="input_container_commercant_rcs_worker">
@@ -703,7 +703,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>
@@ -781,7 +781,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -831,7 +831,7 @@
                     <p class="error_text">
                         Putain v'la l'erreur mon fréro c'est tendu !
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_phone_customer">
@@ -865,7 +865,7 @@
                     <p class="error_text">
                         Choisissez un préfixe puis saisissez les 10 chiffres du numéro.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_email_customer">
@@ -894,7 +894,7 @@
                     <p class="error_text">
                         Veuillez saisir un email valide, '.', '-', '@' sont autorisés.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container" id="input_container_siren_customer">
@@ -942,7 +942,7 @@
                     <p class="error_text">
                         Le SIREN se compose de 9 chiffres.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>
@@ -1228,7 +1228,7 @@
                     <p class="error_text">
                         Le taux d'indemnités minimum pour le premier semestre 2024 est 15.21%
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -1292,7 +1292,7 @@
                     <p class="error_text">
                         Doit commencer par une majuscule, seul '-' est accepté comme caractère spécial.
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
 
             </label>
@@ -1379,7 +1379,7 @@
                     <p class="error_text">
                         Mauvais format d'IBAN
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
             <label class="input_container">
@@ -1408,7 +1408,7 @@
                     <p class="error_text">
                         Mauvais format d'IBAN
                     </p>
-                    <img class="error_img" src="" alt="Angry Face" width="25" height="25" />
+                    <img class="error_img" src="/src/image/animate_angry.png" alt="Angry Face" width="25" height="25" />
                 </div>
             </label>
         </div>

@@ -358,7 +358,7 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
-    //new localstorage with versioning over JSON
+    /*//new localstorage with versioning over JSON
     localstorageOBJ = await fetch('localstorage.json');
     localstorageOBJ = await localstorageOBJ.json();
     for (i in localstorageOBJ.files) {
@@ -397,7 +397,7 @@ window.addEventListener('DOMContentLoaded', async function () {
             // (Note: the exact output may be browser-dependent)
         }
         
-    }
+    }*/
 
     updateView(originRoute);
 
