@@ -358,47 +358,6 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
-    /*//new localstorage with versioning over JSON
-    localstorageOBJ = await fetch('localstorage.json');
-    localstorageOBJ = await localstorageOBJ.json();
-    for (i in localstorageOBJ.files) {
-        if (localStorage.getItem(localstorageOBJ.files[i].name) === null || JSON.parse(localStorage.getItem(localstorageOBJ.files[i].name)).version != localstorageOBJ.files[i].version) {
-            var upStorageSrc = {
-                name: localstorageOBJ.files[i].name,
-                data: "",
-                DOM_element_type: localstorageOBJ.files[i].DOM_element_type,
-                DOM_element_name: localstorageOBJ.files[i].DOM_element_name,
-                type: localstorageOBJ.files[i].type,
-                version: localstorageOBJ.files[i].version
-            }
-            if (localstorageOBJ.files[i].type == "image") {
-                upStorageSrc.data = await URLtoBase64(localstorageOBJ.files[i].url);
-            }
-            localStorage.setItem(localstorageOBJ.files[i].name, JSON.stringify(upStorageSrc));
-        }
-    }
-
-    var allLocalStorageFilesNames = Object.keys(localStorage);
-    for (i in allLocalStorageFilesNames) {
-        try {
-            var tempObj = JSON.parse(localStorage.getItem(allLocalStorageFilesNames[i]));
-            if (tempObj.type == "image") {
-                if (tempObj.DOM_element_type == "class") {
-                    document.querySelectorAll("." + tempObj.DOM_element_name).forEach(element => {
-                        element.src = tempObj.data;
-                    });
-                } else if (tempObj.DOM_element_type == "id") {
-                    document.getElementById(tempObj.DOM_element_name).src = tempObj.data;
-                }
-            }
-        } catch (error) {
-            console.error(error);
-            // Expected output: ReferenceError: nonExistentFunction is not defined
-            // (Note: the exact output may be browser-dependent)
-        }
-        
-    }*/
-
     updateView(originRoute);
 
 });

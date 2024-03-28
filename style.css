@@ -948,9 +948,11 @@ footer p {
 
 .footer_container {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     max-width: 900px;
     width: 100%;
+    flex-wrap: wrap;
+    gap: 30px;
 }
 
 .align_footer {
@@ -1377,6 +1379,14 @@ footer p {
 
     .svg_devis_line_dots {
         margin-right: 1.4%;
+    }
+
+    .footer_logos {
+        gap: 25px;
+    }
+
+    .svg_footer {
+        width: 30px;
     }
 
 }
