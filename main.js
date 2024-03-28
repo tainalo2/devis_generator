@@ -380,17 +380,23 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     var allLocalStorageFilesNames = Object.keys(localStorage);
     for (i in allLocalStorageFilesNames) {
-        var tempObj = JSON.parse(localStorage.getItem(allLocalStorageFilesNames[i]));
-        console.log(tempObj)
-        if (tempObj.type == "image") {
-            if (tempObj.DOM_element_type == "class") {
-                document.querySelectorAll("." + tempObj.DOM_element_name).forEach(element => {
-                    element.src = tempObj.data;
-                });
-            } else if (tempObj.DOM_element_type == "id") {
-                document.getElementById(tempObj.DOM_element_name).src = tempObj.data;
+        try {
+            var tempObj = JSON.parse(localStorage.getItem(allLocalStorageFilesNames[i]));
+            if (tempObj.type == "image") {
+                if (tempObj.DOM_element_type == "class") {
+                    document.querySelectorAll("." + tempObj.DOM_element_name).forEach(element => {
+                        element.src = tempObj.data;
+                    });
+                } else if (tempObj.DOM_element_type == "id") {
+                    document.getElementById(tempObj.DOM_element_name).src = tempObj.data;
+                }
             }
+        } catch (error) {
+            console.error(error);
+            // Expected output: ReferenceError: nonExistentFunction is not defined
+            // (Note: the exact output may be browser-dependent)
         }
+        
     }
 
     updateView(originRoute);
