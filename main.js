@@ -1,6 +1,9 @@
 //code by tainalo2
 window.jsPDF = window.jspdf.jsPDF
 window.html2canvas = html2canvas;
+var localstorageJSON;
+
+
 
 const regexFirstName = new RegExp("^[a-zA-Z\u00C0-\u024F\-]+$");
 const regexLastName = new RegExp("^[a-zA-Z\u00C0-\u024F\- ]+$");
@@ -14,6 +17,7 @@ const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
 const originRoute = "home";
 let signaturePad1;
+var localstorageOBJ;
 
 function toggleLightMode(element) {
     if (element.checked) {
@@ -272,10 +276,10 @@ window.addEventListener('DOMContentLoaded', async function () {
                 route = event.target.parentElement.getAttribute("route");
             }
             updateView(route);
-            if (route == "home"){
+            if (route == "home") {
                 route = "/";
             }
-            if (rootRoute != null && route != "/" ) {
+            if (rootRoute != null && route != "/") {
                 route = rootRoute + "/" + route;
             } else if (rootRoute != null) {
                 route = "/" + rootRoute;
@@ -354,35 +358,40 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
-
-
-
-    //Check localStorage + set default
-    localStorage.clear();
-    if (localStorage.getItem("image_animate_writing") === null) {
-        localStorage.setItem("image_animate_writing", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/animate_writing.png'));
+    //new localstorage with versioning over JSON
+    localstorageOBJ = await fetch('localstorage.json');
+    localstorageOBJ = await localstorageOBJ.json();
+    for (i in localstorageOBJ.files) {
+        if (localStorage.getItem(localstorageOBJ.files[i].name) === null || JSON.parse(localStorage.getItem(localstorageOBJ.files[i].name)).version != localstorageOBJ.files[i].version) {
+            var upStorageSrc = {
+                name: localstorageOBJ.files[i].name,
+                data: "",
+                DOM_element_type: localstorageOBJ.files[i].DOM_element_type,
+                DOM_element_name: localstorageOBJ.files[i].DOM_element_name,
+                type: localstorageOBJ.files[i].type,
+                version: localstorageOBJ.files[i].version
+            }
+            if (localstorageOBJ.files[i].type == "image") {
+                upStorageSrc.data = await URLtoBase64(localstorageOBJ.files[i].url);
+            }
+            localStorage.setItem(localstorageOBJ.files[i].name, JSON.stringify(upStorageSrc));
+        }
     }
-    if (localStorage.getItem("image_animate_angry") === null) {
-        localStorage.setItem("image_animate_angry", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/animate_angry.png'));
-    }
-    if (localStorage.getItem("image_landing_paralax_1_1") === null) {
-        localStorage.setItem("image_landing_paralax_1_1", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_1.png'));
-    }
-    if (localStorage.getItem("image_landing_paralax_1_2") === null) {
-        localStorage.setItem("image_landing_paralax_1_2", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_2.png'));
-    }
-    if (localStorage.getItem("image_landing_paralax_1_3") === null) {
-        localStorage.setItem("image_landing_paralax_1_3", await URLtoBase64('https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/landing_paralax_1_3.png'));
-    }
 
-    document.querySelectorAll('.error_img').forEach(errorIMG => {
-        errorIMG.src = localStorage.getItem("image_animate_angry");
-    });
-
-    document.getElementById("main_title_img").src = localStorage.getItem("image_animate_writing");
-    document.getElementById("img_paralax_1_1").src = localStorage.getItem("image_landing_paralax_1_1");
-    document.getElementById("img_paralax_1_2").src = localStorage.getItem("image_landing_paralax_1_2");
-    document.getElementById("img_paralax_1_3").src = localStorage.getItem("image_landing_paralax_1_3");
+    var allLocalStorageFilesNames = Object.keys(localStorage);
+    for (i in allLocalStorageFilesNames) {
+        var tempObj = JSON.parse(localStorage.getItem(allLocalStorageFilesNames[i]));
+        console.log(tempObj)
+        if (tempObj.type == "image") {
+            if (tempObj.DOM_element_type == "class") {
+                document.querySelectorAll("." + tempObj.DOM_element_name).forEach(element => {
+                    element.src = tempObj.data;
+                });
+            } else if (tempObj.DOM_element_type == "id") {
+                document.getElementById(tempObj.DOM_element_name).src = tempObj.data;
+            }
+        }
+    }
 
     updateView(originRoute);
 
@@ -644,7 +653,7 @@ function updateView(viewName) {
             setTimeout(() => {
                 resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
             }, 1000);
-            
+
             document.getElementById("loading_container").classList.add("wraped");
         }, 1500);
 
