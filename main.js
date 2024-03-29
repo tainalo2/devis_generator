@@ -1,7 +1,6 @@
 //code by tainalo2
 window.jsPDF = window.jspdf.jsPDF
 window.html2canvas = html2canvas;
-var localstorageJSON;
 
 
 
@@ -17,7 +16,6 @@ const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
 const originRoute = "home";
 let signaturePad1;
-var localstorageOBJ;
 
 function toggleLightMode(element) {
     if (element.checked) {

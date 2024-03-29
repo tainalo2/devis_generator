@@ -1,7 +1,7 @@
 > Je cherche du travail ! Freelance ou CDI en dev front/back -> www.alexandre-rongier.fr
 
 
-> [Devis generator le site officiel ici](https://www.purpletwit.com/devisgenerator)
+> [Devis generator le site officiel ici](https://www.devisgenerator.fr/)
 # Devis Generator ![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
 
 Devis Generator est un générateur de facture/devis pour les micros-entrepreneurs français, en format web.
@@ -23,7 +23,7 @@ Une plateforme gratuite, accessible à tous, et qui va droit au but pour économ
 
 Un développement open-source pour assurer la gratuité, un format web pour être compatible à tous les supports, une UI/UX minimaliste pour ne pas décourager l'utilisateur.
 
-La solution est donc un site web, l'officiel est hébergé ici : https://www.purpletwit.com/devisgenerator
+La solution est donc un site web, l'officiel est hébergé ici : https://www.devisgenerator.fr/
 
 Le code est en HTML/CSS/JS vanilla pour simplifier le déploiement et l'auto-hébergement.
 
@@ -44,7 +44,7 @@ Devis generator permet de :
 
 ## Dépendances
 Devis generator base certaines fonctionalités sur des librairies JS :
-* Système de signature : [Signature Pad](https://github.com/szimek/signature_pad?tab=readme-ov-file)
+* Système de signature manuscrite : [Signature Pad](https://github.com/szimek/signature_pad?tab=readme-ov-file)
 * Génération du PDF : [jsPDF](https://github.com/parallax/jsPDF)
 * Transformation d'éléments en image pour le PDF + jsPDF : [html2canvas](https://github.com/niklasvh/html2canvas)
 
