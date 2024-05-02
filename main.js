@@ -273,6 +273,7 @@ window.addEventListener('DOMContentLoaded', async function () {
         document.getElementById("button_register").style.display = "none";
 
         document.getElementById("display_pseudo").style.display = "block";
+        document.getElementById("display_pseudo").innerHTML = pseudo;
         document.getElementById("button_unsign").style.display = "block";
     }
 
@@ -618,9 +619,7 @@ function generatePDF() {
 function login_start() {
     if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
         var fetchBody = {
-            "type": "login"/*,
-            "login": document.getElementById("input_login").value.trim(),
-            "password": document.getElementById("input_password").value.trim()*/
+            "type": "login"
         }
         fetchCommon("fetch", fetchBody);
     }
@@ -748,6 +747,9 @@ function fetchCommon(uri, body) {
             console.log(data);
             if (data.type == "login") {
                 login_challenge(data.salt);
+            }
+            if (data.type == "register" && data.status == "success") {
+                location.reload();
             }
         })
         .catch(error => {
