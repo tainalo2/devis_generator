@@ -683,7 +683,7 @@ function saveTemplate(type) {
             "firstName": document.getElementById("input_firstName_worker").value.trim(),
             "lastName": document.getElementById("input_lastName_worker").value.trim(),
             "siren": document.getElementById("input_siren_worker").value.trim(),
-            "address": document.getElementById("input_address_worker").value.trim(),
+            "address": document.getElementById("input_address_worker").textContent.trim(),
             "phone": document.getElementById("input_phone_worker").value.trim(),
         }
         user_templates.customers.push(tempObj);
