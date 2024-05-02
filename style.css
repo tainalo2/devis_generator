@@ -680,7 +680,7 @@ textarea::-webkit-scrollbar-thumb {
     margin-top: 5px;
 }
 
-#display_pseudo, #button_unsign {
+#display_pseudo, #button_unsign, #button_save_worker, #button_save_customer {
     display: none;
 }
 

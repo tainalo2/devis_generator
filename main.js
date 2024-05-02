@@ -275,11 +275,19 @@ window.addEventListener('DOMContentLoaded', async function () {
         document.getElementById("display_pseudo").style.display = "block";
         document.getElementById("display_pseudo").innerHTML = pseudo;
         document.getElementById("button_unsign").style.display = "block";
+        document.getElementById("button_save_worker").style.display = "block";
+        document.getElementById("button_save_customer").style.display = "block";
     }
 
     if (user_templates != "") {
         console.log(user_templates);
         user_templates = JSON.parse(user_templates);
+    } else {
+        user_templates = {
+            customers: [],
+            workers: [],
+            devis: []
+        }
     }
 
     document.addEventListener("click", async (event) => {
@@ -358,6 +366,10 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("button_login").addEventListener('click', () => { login_start() });
 
     document.getElementById("button_register").addEventListener('click', () => { register_start() });
+
+    document.getElementById("button_save_worker").addEventListener('click', () => { saveTemplate("worker") });
+
+    document.getElementById("button_save_customer").addEventListener('click', () => { saveTemplate("customer") });
 
     document.querySelectorAll('.devis_price_calc').forEach(element => {
         element.addEventListener('input', () => { priceCalc(element) });
@@ -662,6 +674,20 @@ function register_start() {
         }).catch(error => {
             console.error('Erreur lors du calcul du hachage:', error);
         });
+    }
+}
+
+function saveTemplate(type) {
+    if (type=="worker"){
+        var tempObj = {
+            "firstName": document.getElementById("input_firstName_worker").value.trim(),
+            "lastName": document.getElementById("input_lastName_worker").value.trim(),
+            "siren": document.getElementById("input_siren").value.trim(),
+            "address": document.getElementById("input_address_worker").value.trim(),
+            "phone": document.getElementById("input_phone_worker").value.trim(),
+        }
+        user_templates.customers.push(tempObj);
+        console.log(user_templates);
     }
 }
 
