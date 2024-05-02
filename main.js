@@ -336,6 +336,8 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
 
+    document.getElementById("button_login").addEventListener('click', () => { login_start() });
+
     document.querySelectorAll('.devis_price_calc').forEach(element => {
         element.addEventListener('input', () => { priceCalc(element) });
     });
@@ -350,6 +352,8 @@ window.addEventListener('DOMContentLoaded', async function () {
             event.target.style.background = "red";
         });
     });
+
+
 
     var datePlus30 = new Date();
     datePlus30.setDate(datePlus30.getDate() + 30);
@@ -591,6 +595,17 @@ function generatePDF() {
         );
 }
 
+function login_start() {
+    if ( document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
+        var fetchBody = {
+            "type": "login"/*,
+            "login": document.getElementById("input_login").value.trim(),
+            "password": document.getElementById("input_password").value.trim()*/
+        }
+        fetchCommon("fetch", fetchBody);
+    }
+}
+
 function getElementOffset(element) {
     const boundingRect = element.getBoundingClientRect();
     return {
@@ -633,3 +648,25 @@ function landingWorkflowContentSwitcher(button) {
     document.getElementById("landing_workflow_content_container_" + numberID).classList.add("landing_workflow_content_container_active");
     document.getElementById("landing_workflow_content_container_" + numberID).classList.remove("landing_workflow_content_container");
 }
+
+function fetchCommon(uri, body) {
+    // Remplacez 'https://api.example.com/user' par l'URL de l'API que vous souhaitez interroger
+    fetch(window.location.origin + "/" + uri, body)
+      .then(response => {
+        // Vérifie si la réponse est OK (code 200)
+        if (!response.ok) {
+          throw new Error('Erreur réseau : ' + response.status);
+        }
+        // Parse la réponse JSON
+        return response.json();
+      })
+      .then(data => {
+        // Faites quelque chose avec les données récupérées
+        console.log(data);
+      })
+      .catch(error => {
+        // Attrape les erreurs possibles
+        console.error('Erreur lors de la récupération des données :', error);
+      });
+  }
+  

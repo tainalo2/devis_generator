@@ -29,26 +29,6 @@ body {
     margin: 0;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-.full_page_container {
-    margin-left: auto;
-    margin-right: auto;
-    width: calc(100% - 2rem);
-    max-width: 1040px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 2rem;
-    transition-duration: 1s;
-    transition-timing-function: cubic-bezier(1, .1, .87, .71);
-    height: auto;
-    display: block;
-}
-
 #loading_container {
     width: 100vw;
     height: 100vh;
@@ -70,6 +50,28 @@ a {
 #loading_container.wraped {
     max-height: 0vh;
 }
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.full_page_container {
+    margin-left: auto;
+    margin-right: auto;
+    width: calc(100% - 2rem);
+    max-width: 1040px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+    transition-duration: 1s;
+    transition-timing-function: cubic-bezier(1, .1, .87, .71);
+    height: auto;
+    display: block;
+}
+
+
 
 #loading_text {
     margin: auto;
@@ -330,9 +332,29 @@ textarea::-webkit-scrollbar-thumb {
     width: 2.5em;
 }
 
+.navBar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
 .lightMode_svg {
     width: 1.2rem;
     margin: 0.2rem;
+}
+
+.user_logo {
+    background-color: var(--main-bg-color);
+    border-radius: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.2rem;
+}
+
+.user_logo svg {
+    width: 1.5rem;
 }
 
 .invert_svg {
@@ -413,8 +435,6 @@ textarea::-webkit-scrollbar-thumb {
 .basic_toggle_label:active:after {
     width: 1rem;
 }
-
-
 
 .section {
     display: flex;
@@ -576,7 +596,8 @@ textarea::-webkit-scrollbar-thumb {
     bottom: -1.5rem;
 }
 
-.speech {
+.speech,
+.invert_speech {
     position: absolute;
     display: none;
     transition: opacity 0.2s display 0s;
@@ -594,15 +615,29 @@ textarea::-webkit-scrollbar-thumb {
     bottom: 0rem;
 }
 
+.invert_speech {
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    top: 90%;
+    color: var(--main-second-color);
+    background-color: var(--main-bg-color);
+    border-color: var(--main-second-color);
+    height: fit-content;
+    font-size: 15px;
+}
+
+.invert_speech label {
+    margin-top: 0px;
+}
+
 /* (B) USE ::AFTER TO CREATE THE "CALLOUT" */
-.speech::after {
+.speech::after,
+.invert_speech::before {
     display: block;
     width: 0;
     content: "";
     border: 10px solid transparent;
-}
-
-.speech::after {
     position: absolute;
     border-top-color: var(--main-second-color);
     border-bottom: 0;
@@ -610,9 +645,39 @@ textarea::-webkit-scrollbar-thumb {
     left: calc(50% - 10px);
 }
 
+.invert_speech::before {
+    transform: rotate(180deg);
+    bottom: 100%;
+    border-top-color: var(--main-bg-color);
+}
+
 .input_info_svg:hover+.speech,
 .help_container:hover .speech {
     display: block;
+}
+
+
+.user_logo:hover .invert_speech,
+.invert_speech:hover {
+    display: flex;    
+}
+
+.invert_speech .input_input {
+    border: 2px solid var(--main-second-color);
+}
+
+.invert_speech .input_title {
+    font-size: 13px;
+}
+
+.invert_speech .input_container > .input_input:valid + .input_title,
+.invert_speech .input_container > .input_input:focus + .input_title {
+    font-size: 11px;
+    top: -1.1rem;
+}
+
+.invert_speech .input_container {
+    margin-top: 5px;
 }
 
 .error_container {
@@ -919,6 +984,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .button_basic:active,
 .button_basic_big:active {
     transform: scale3d(1, 0.9, 1);
+}
+
+.button_basic_invert {
+    font-size: 13px;
+    background-color: var(--main-bg-color);
+    border: solid 1px var(--main-second-color);
+    color: var(--main-second-color);
 }
 
 .noClick {
@@ -1383,6 +1455,10 @@ footer p {
 
     .lightMode_svg {
         width: 1rem;
+    }
+
+    .user_logo svg {
+        width: 1.2rem;
     }
 
     .svg_devis_line_dots {
