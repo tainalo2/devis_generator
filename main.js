@@ -606,6 +606,44 @@ function login_start() {
     }
 }
 
+function login_challenge(salt) {
+    if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
+
+        sha256(document.getElementById("input_password").value.trim()).then(hash => {
+            console.log('Hash SHA-256 de "test":', hash);
+            sha256(hash + salt).then(hash2 => {
+                console.log('Hash SHA-256 de hash test + hash salt:', hash2);
+                var fetchBody = {
+                    "type": "login",
+                    "login": document.getElementById("input_login").value.trim(),
+                    "challenge": hash2
+                }
+                fetchCommon("fetch", fetchBody);
+            }).catch(error => {
+                console.error('Erreur lors du calcul du hachage:', error);
+            });
+        }).catch(error => {
+            console.error('Erreur lors du calcul du hachage:', error);
+        });
+        
+    }
+}
+
+async function sha256(message) {
+    // Convertir la chaîne de caractères en un tableau d'octets (ArrayBuffer)
+    const buffer = new TextEncoder().encode(message);
+
+    // Calculer le hachage SHA-256
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+
+    // Convertir le tableau d'octets en une chaîne hexadécimale
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+}
+
+
 function getElementOffset(element) {
     const boundingRect = element.getBoundingClientRect();
     return {
