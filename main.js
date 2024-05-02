@@ -746,7 +746,9 @@ function fetchCommon(uri, body) {
         .then(data => {
             // Faites quelque chose avec les données récupérées
             console.log(data);
-            login_challenge(data.salt);
+            if (data.type == "login") {
+                login_challenge(data.salt);
+            }
         })
         .catch(error => {
             // Attrape les erreurs possibles
