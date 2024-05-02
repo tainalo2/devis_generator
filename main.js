@@ -745,8 +745,11 @@ function fetchCommon(uri, body) {
         .then(data => {
             // Faites quelque chose avec les données récupérées
             console.log(data);
-            if (data.type == "login") {
+            if (data.type == "challengeAccepted") {
                 login_challenge(data.salt);
+            }
+            if (data.type == "login" && data.status == "success") {
+                location.reload();
             }
             if (data.type == "register" && data.status == "success") {
                 location.reload();
