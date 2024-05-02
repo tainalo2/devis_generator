@@ -15,6 +15,8 @@ const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
 const originRoute = "home";
+var pseudo = "";
+var user_templates = "";
 let signaturePad1;
 
 function toggleLightMode(element) {
@@ -263,6 +265,22 @@ window.addEventListener('DOMContentLoaded', async function () {
 
     history.replaceState("home", "", document.location.href);
 
+    if (pseudo != "") {
+        console.log(pseudo);
+        document.getElementById("login_container").style.display = "none";
+        document.getElementById("password_container").style.display = "none";
+        document.getElementById("button_login").style.display = "none";
+        document.getElementById("button_register").style.display = "none";
+
+        document.getElementById("display_pseudo").style.display = "block";
+        document.getElementById("button_unsign").style.display = "block";
+    }
+
+    if (user_templates != "") {
+        console.log(user_templates);
+        user_templates = JSON.parse(user_templates);
+    }
+
     document.addEventListener("click", async (event) => {
         if (event.target.getAttribute("route") || event.target.parentElement.getAttribute("route")) {
             // Prevent a new page from loading
@@ -337,6 +355,8 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
 
     document.getElementById("button_login").addEventListener('click', () => { login_start() });
+
+    document.getElementById("button_register").addEventListener('click', () => { register_start() });
 
     document.querySelectorAll('.devis_price_calc').forEach(element => {
         element.addEventListener('input', () => { priceCalc(element) });
@@ -606,6 +626,8 @@ function login_start() {
     }
 }
 
+
+
 function login_challenge(salt) {
     if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
 
@@ -625,7 +647,22 @@ function login_challenge(salt) {
         }).catch(error => {
             console.error('Erreur lors du calcul du hachage:', error);
         });
-        
+
+    }
+}
+
+function register_start() {
+    if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
+        sha256(document.getElementById("input_password").value.trim()).then(hash => {
+            var fetchBody = {
+                "type": "register",
+                "login": document.getElementById("input_login").value.trim(),
+                "password": hash
+            }
+            fetchCommon("fetch", fetchBody);
+        }).catch(error => {
+            console.error('Erreur lors du calcul du hachage:', error);
+        });
     }
 }
 
