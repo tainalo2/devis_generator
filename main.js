@@ -709,6 +709,7 @@ function fetchCommon(uri, body) {
         .then(data => {
             // Faites quelque chose avec les données récupérées
             console.log(data);
+            login_challenge(salt);
         })
         .catch(error => {
             // Attrape les erreurs possibles
