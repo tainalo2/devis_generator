@@ -596,7 +596,7 @@ function generatePDF() {
 }
 
 function login_start() {
-    if ( document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
+    if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
         var fetchBody = {
             "type": "login"/*,
             "login": document.getElementById("input_login").value.trim(),
@@ -651,22 +651,29 @@ function landingWorkflowContentSwitcher(button) {
 
 function fetchCommon(uri, body) {
     // Remplacez 'https://api.example.com/user' par l'URL de l'API que vous souhaitez interroger
-    fetch(window.location.origin + "/" + uri, body)
-      .then(response => {
-        // Vérifie si la réponse est OK (code 200)
-        if (!response.ok) {
-          throw new Error('Erreur réseau : ' + response.status);
-        }
-        // Parse la réponse JSON
-        return response.json();
-      })
-      .then(data => {
-        // Faites quelque chose avec les données récupérées
-        console.log(data);
-      })
-      .catch(error => {
-        // Attrape les erreurs possibles
-        console.error('Erreur lors de la récupération des données :', error);
-      });
-  }
-  
+    const requestOptions = {
+        method: 'POST', // Méthode de la requête
+        headers: {
+            'Content-Type': 'application/json' // En-têtes de la requête
+        },
+        body: JSON.stringify(body)
+    };
+
+    fetch(window.location.origin + "/" + uri, requestOptions)
+        .then(response => {
+            // Vérifie si la réponse est OK (code 200)
+            if (!response.ok) {
+                throw new Error('Erreur réseau : ' + response.status);
+            }
+            // Parse la réponse JSON
+            return response.json();
+        })
+        .then(data => {
+            // Faites quelque chose avec les données récupérées
+            console.log(data);
+        })
+        .catch(error => {
+            // Attrape les erreurs possibles
+            console.error('Erreur lors de la récupération des données :', error);
+        });
+}
