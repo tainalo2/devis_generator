@@ -282,6 +282,15 @@ window.addEventListener('DOMContentLoaded', async function () {
     if (user_templates != "") {
         console.log(user_templates);
         user_templates = JSON.parse(user_templates);
+        // Création d'un nouvel élément <option>
+        var nouvelOption = document.createElement("option");
+
+        user_templates.workers.forEach(function (obj) {
+            // Attribution de la valeur et du texte à l'option
+            nouvelOption.value = obj.siren;
+            nouvelOption.text = obj.firstName + " " + obj.lastName;
+            document.getElementById("template_worker").add(nouvelOption);
+        });
     } else {
         user_templates = {
             customers: [],
@@ -719,6 +728,8 @@ function saveTemplate(type) {
         typeObj.push(tempObj);
     }
     console.log(user_templates);
+    //localStorage.setItem("user_templates", JSON.stringify(user_templates));
+    fetchCommon("templateSave", JSON.stringify(user_templates));
 
 }
 
