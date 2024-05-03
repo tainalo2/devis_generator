@@ -679,30 +679,47 @@ function register_start() {
 
 function saveTemplate(type) {
     var match = false;
+    var typeObj = {};
     if (type == "worker") {
-        user_templates.customers.forEach(function (obj) {
-            if (obj.siren == document.getElementById("input_siren_worker").value.trim()) {
-                match = true;
-                obj.firstName = document.getElementById("input_firstName_worker").value.trim();
-                obj.lastName = document.getElementById("input_lastName_worker").value.trim();
-                obj.address = document.getElementById("input_address_worker").textContent.trim();
-                obj.phone = document.getElementById("input_phone_prefix_worker").value + document.getElementById("input_phone_number_worker").value.trim();
-            }
-        });
-        if(!match){
-            var tempObj = {
-                "firstName": document.getElementById("input_firstName_worker").value.trim(),
-                "lastName": document.getElementById("input_lastName_worker").value.trim(),
-                "siren": document.getElementById("input_siren_worker").value.trim(),
-                "address": document.getElementById("input_address_worker").textContent.trim(),
-                "phone": document.getElementById("input_phone_prefix_worker").value + document.getElementById("input_phone_number_worker").value.trim(),
-            };
-            user_templates.customers.push(tempObj);
-        }
-        
-        
-        console.log(user_templates);
+        typeObj = user_templates.workers;
     }
+    if (type == "customer") {
+        typeObj = user_templates.customers;
+    }
+    typeObj.forEach(function (obj) {
+        if (obj.siren == document.getElementById("input_siren_" + type).value.trim()) {
+            match = true;
+            if (type == "customer") {
+                obj.name = document.getElementById("input_name_" + type).value.trim();
+            } else {
+                obj.firstName = document.getElementById("input_firstName_" + type).value.trim();
+                obj.lastName = document.getElementById("input_lastName_" + type).value.trim();
+            }
+            obj.address = document.getElementById("input_address_" + type).textContent.trim();
+            obj.phone = document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim();
+        }
+    });
+    if (!match) {
+        if (type == "customer") {
+            var tempObj = {
+                "name": document.getElementById("input_name_" + type).value.trim(),
+                "siren": document.getElementById("input_siren_" + type).value.trim(),
+                "address": document.getElementById("input_address_" + type).textContent.trim(),
+                "phone": document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim(),
+            };
+        } else {
+            var tempObj = {
+                "firstName": document.getElementById("input_firstName_" + type).value.trim(),
+                "lastName": document.getElementById("input_lastName_" + type).value.trim(),
+                "siren": document.getElementById("input_siren_" + type).value.trim(),
+                "address": document.getElementById("input_address_" + type).textContent.trim(),
+                "phone": document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim(),
+            };
+        }
+        typeObj.push(tempObj);
+    }
+    console.log(user_templates);
+
 }
 
 async function sha256(message) {
