@@ -729,7 +729,11 @@ function saveTemplate(type) {
     }
     console.log(user_templates);
     //localStorage.setItem("user_templates", JSON.stringify(user_templates));
-    fetchCommon("templateSave", JSON.stringify(user_templates));
+    var fetchBody = {
+        "type": "templateSave",
+        "templates": JSON.stringify(user_templates)
+    }
+    fetchCommon("fetch", fetchBody);
 
 }
 
