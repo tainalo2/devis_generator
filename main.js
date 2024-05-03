@@ -678,15 +678,29 @@ function register_start() {
 }
 
 function saveTemplate(type) {
-    if (type=="worker"){
-        var tempObj = {
-            "firstName": document.getElementById("input_firstName_worker").value.trim(),
-            "lastName": document.getElementById("input_lastName_worker").value.trim(),
-            "siren": document.getElementById("input_siren_worker").value.trim(),
-            "address": document.getElementById("input_address_worker").textContent.trim(),
-            "phone": document.getElementById("input_phone_prefix_worker").value+document.getElementById("input_phone_number_worker").value.trim(),
-        };
-        user_templates.customers.push(tempObj);
+    var match = false;
+    if (type == "worker") {
+        user_templates.customers.forEach(function (obj) {
+            if (obj.siren == document.getElementById("input_siren_worker").value.trim()) {
+                match = true;
+                obj.firstName = document.getElementById("input_firstName_worker").value.trim();
+                obj.lastName = document.getElementById("input_lastName_worker").value.trim();
+                obj.address = document.getElementById("input_address_worker").textContent.trim();
+                obj.phone = document.getElementById("input_phone_prefix_worker").value + document.getElementById("input_phone_number_worker").value.trim();
+            }
+        });
+        if(!match){
+            var tempObj = {
+                "firstName": document.getElementById("input_firstName_worker").value.trim(),
+                "lastName": document.getElementById("input_lastName_worker").value.trim(),
+                "siren": document.getElementById("input_siren_worker").value.trim(),
+                "address": document.getElementById("input_address_worker").textContent.trim(),
+                "phone": document.getElementById("input_phone_prefix_worker").value + document.getElementById("input_phone_number_worker").value.trim(),
+            };
+            user_templates.customers.push(tempObj);
+        }
+        
+        
         console.log(user_templates);
     }
 }
