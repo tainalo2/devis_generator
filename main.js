@@ -2,8 +2,6 @@
 window.jsPDF = window.jspdf.jsPDF
 window.html2canvas = html2canvas;
 
-
-
 const regexFirstName = new RegExp("^[a-zA-Z\u00C0-\u024F\-]+$");
 const regexLastName = new RegExp("^[a-zA-Z\u00C0-\u024F\- ]+$");
 const regexSiren = new RegExp("^\\d{9}$");
@@ -299,6 +297,25 @@ window.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
+    document.getElementById("template_worker").addEventListener("change", function () {
+        var templateObj = user_templates.workers.find(function (worker) {
+            return worker.siren === document.getElementById("template_worker").value;
+        });
+        document.getElementById("input_firstName_worker").value = templateObj.firstName;
+        document.getElementById("input_lastName_worker").value = templateObj.lastName;
+        document.getElementById("input_siren_worker").value = templateObj.siren;
+        document.getElementById("input_address_worker").textContent = templateObj.address;
+    });
+
+    document.getElementById("template_customer").addEventListener("change", function () {
+        var templateObj = user_templates.customers.find(function (customer) {
+            return customer.siren === document.getElementById("template_customer").value;
+        });
+        document.getElementById("input_name_customer").value = templateObj.name;
+        document.getElementById("input_siren_customer").value = templateObj.siren;
+        document.getElementById("input_address_customer").textContent = templateObj.address;
+    });
+
     document.addEventListener("click", async (event) => {
         if (event.target.getAttribute("route") || event.target.parentElement.getAttribute("route")) {
             // Prevent a new page from loading
@@ -451,7 +468,6 @@ function rotateElement(event, element, tempSensi, originPositionX) {
 function getCssProperty(element, property) {
     return window.getComputedStyle(element, null).getPropertyValue(property);
 }
-
 
 function addDevisLine() {
     var firstLine_node = document.getElementById("first_devis_lines_container").firstElementChild;
@@ -646,8 +662,6 @@ function login_start() {
     }
 }
 
-
-
 function login_challenge(salt) {
     if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
 
@@ -750,7 +764,6 @@ async function sha256(message) {
 
     return hashHex;
 }
-
 
 function getElementOffset(element) {
     const boundingRect = element.getBoundingClientRect();
