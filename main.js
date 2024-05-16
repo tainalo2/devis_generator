@@ -280,10 +280,11 @@ window.addEventListener('DOMContentLoaded', async function () {
     if (user_templates != "") {
         console.log(user_templates);
         user_templates = JSON.parse(user_templates);
-        // Création d'un nouvel élément <option>
-        var nouvelOption = document.createElement("option");
+        
 
         user_templates.workers.forEach(function (obj) {
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
             // Attribution de la valeur et du texte à l'option
             console.log(obj);
             nouvelOption.value = obj.siren;
@@ -292,6 +293,8 @@ window.addEventListener('DOMContentLoaded', async function () {
         });
 
         user_templates.customers.forEach(function (obj) {
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
             // Attribution de la valeur et du texte à l'option
             nouvelOption.value = obj.siren;
             nouvelOption.text = obj.name;
