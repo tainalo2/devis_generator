@@ -285,6 +285,7 @@ window.addEventListener('DOMContentLoaded', async function () {
 
         user_templates.workers.forEach(function (obj) {
             // Attribution de la valeur et du texte à l'option
+            console.log(obj);
             nouvelOption.value = obj.siren;
             nouvelOption.text = obj.firstName + " " + obj.lastName;
             document.getElementById("template_worker").add(nouvelOption);
