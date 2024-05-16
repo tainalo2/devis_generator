@@ -289,6 +289,13 @@ window.addEventListener('DOMContentLoaded', async function () {
             nouvelOption.text = obj.firstName + " " + obj.lastName;
             document.getElementById("template_worker").add(nouvelOption);
         });
+
+        user_templates.customers.forEach(function (obj) {
+            // Attribution de la valeur et du texte à l'option
+            nouvelOption.value = obj.siren;
+            nouvelOption.text = obj.name;
+            document.getElementById("template_customer").add(nouvelOption);
+        });
     } else {
         user_templates = {
             customers: [],
@@ -390,6 +397,8 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
 
     document.getElementById("button_login").addEventListener('click', () => { login_start() });
+
+    document.getElementById("button_unsign").addEventListener('click', () => { unsign() });
 
     document.getElementById("button_register").addEventListener('click', () => { register_start() });
 
@@ -662,6 +671,13 @@ function login_start() {
     }
 }
 
+function unsign() {
+    var fetchBody = {
+        "type": "unsign"
+    }
+    fetchCommon("fetch", fetchBody);
+}
+
 function login_challenge(salt) {
     if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
 
@@ -714,9 +730,15 @@ function saveTemplate(type) {
             match = true;
             if (type == "customer") {
                 obj.name = document.getElementById("input_name_" + type).value.trim();
+                obj.siren = document.getElementById("input_siren_" + type).value.trim();
+                obj.address = document.getElementById("input_address_" + type).textContent.trim();
+                obj.phone = document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim();
             } else {
                 obj.firstName = document.getElementById("input_firstName_" + type).value.trim();
                 obj.lastName = document.getElementById("input_lastName_" + type).value.trim();
+                obj.siren = document.getElementById("input_siren_" + type).value.trim();
+                obj.address = document.getElementById("input_address_" + type).textContent.trim();
+                obj.phone = document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim();
             }
             obj.address = document.getElementById("input_address_" + type).textContent.trim();
             obj.phone = document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim();
@@ -833,7 +855,7 @@ function fetchCommon(uri, body) {
             if (data.type == "challengeAccepted") {
                 login_challenge(data.salt);
             }
-            if (data.type == "login" && data.status == "success") {
+            if ((data.type == "login" || data.type == "unsign") && data.status == "success") {
                 location.reload();
             }
             if (data.type == "register" && data.status == "success") {
