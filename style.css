@@ -659,7 +659,7 @@ textarea::-webkit-scrollbar-thumb {
 
 .user_logo:hover .invert_speech,
 .invert_speech:hover {
-    display: flex;    
+    display: flex;
 }
 
 .invert_speech .input_input {
@@ -670,18 +670,14 @@ textarea::-webkit-scrollbar-thumb {
     font-size: 13px;
 }
 
-.invert_speech .input_container > .input_input:valid + .input_title,
-.invert_speech .input_container > .input_input:focus + .input_title {
+.invert_speech .input_container>.input_input:valid+.input_title,
+.invert_speech .input_container>.input_input:focus+.input_title {
     font-size: 11px;
     top: -1.1rem;
 }
 
 .invert_speech .input_container {
     margin-top: 5px;
-}
-
-#display_pseudo, #button_unsign, #button_save_worker, #button_save_customer {
-    display: none;
 }
 
 .error_container {
@@ -1246,6 +1242,30 @@ footer p {
 
 .section_to_generate_bonus_element {
     display: none;
+}
+
+.withLoginElement {
+    display: none;
+}
+
+#alertDisplay {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 0px;
+    width: 100%;
+    height: 0px;
+    background-color: #1cdd00;
+    color: black;
+    font-weight: bolder;
+    z-index: 9999;
+    transition: all 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+#alertDisplay div {
+    padding: 5px;
 }
 
 @media screen and (max-width: 480px) {

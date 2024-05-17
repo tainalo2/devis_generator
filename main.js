@@ -13,7 +13,7 @@ const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
 const originRoute = "home";
-var pseudo = "";
+var pseudo = "tainalo2";
 var user_templates = "";
 let signaturePad1;
 
@@ -264,23 +264,20 @@ window.addEventListener('DOMContentLoaded', async function () {
     history.replaceState("home", "", document.location.href);
 
     if (pseudo != "") {
-        console.log(pseudo);
-        document.getElementById("login_container").style.display = "none";
-        document.getElementById("password_container").style.display = "none";
-        document.getElementById("button_login").style.display = "none";
-        document.getElementById("button_register").style.display = "none";
+        document.querySelectorAll('.withoutLoginElement').forEach(element => {
+            element.style.display = "none";
+        });
 
-        document.getElementById("display_pseudo").style.display = "block";
+        document.querySelectorAll('.withLoginElement').forEach(element => {
+            element.style.display = "flex";
+        });
         document.getElementById("display_pseudo").innerHTML = pseudo;
-        document.getElementById("button_unsign").style.display = "block";
-        document.getElementById("button_save_worker").style.display = "block";
-        document.getElementById("button_save_customer").style.display = "block";
     }
 
     if (user_templates != "") {
         console.log(user_templates);
         user_templates = JSON.parse(user_templates);
-        
+
 
         user_templates.workers.forEach(function (obj) {
             // Création d'un nouvel élément <option>
@@ -309,13 +306,20 @@ window.addEventListener('DOMContentLoaded', async function () {
     }
 
     document.getElementById("template_worker").addEventListener("change", function () {
-        var templateObj = user_templates.workers.find(function (worker) {
-            return worker.siren === document.getElementById("template_worker").value;
-        });
-        document.getElementById("input_firstName_worker").value = templateObj.firstName;
-        document.getElementById("input_lastName_worker").value = templateObj.lastName;
-        document.getElementById("input_siren_worker").value = templateObj.siren;
-        document.getElementById("input_address_worker").textContent = templateObj.address;
+        if (document.getElementById("template_worker").value == "emptyAll") {
+            document.getElementById("input_firstName_worker").value = "";
+            document.getElementById("input_lastName_worker").value = "";
+            document.getElementById("input_siren_worker").value = "";
+            document.getElementById("input_address_worker").textContent = "";
+        } else {
+            var templateObj = user_templates.workers.find(function (worker) {
+                return worker.siren === document.getElementById("template_worker").value;
+            });
+            document.getElementById("input_firstName_worker").value = templateObj.firstName;
+            document.getElementById("input_lastName_worker").value = templateObj.lastName;
+            document.getElementById("input_siren_worker").value = templateObj.siren;
+            document.getElementById("input_address_worker").textContent = templateObj.address;
+        }
     });
 
     document.getElementById("template_customer").addEventListener("change", function () {
@@ -425,15 +429,12 @@ window.addEventListener('DOMContentLoaded', async function () {
         });
     });
 
-
-
     var datePlus30 = new Date();
     datePlus30.setDate(datePlus30.getDate() + 30);
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
     updateView(originRoute);
-
 });
 
 window.addEventListener('load', function () {
@@ -567,6 +568,7 @@ function toglleCheck(element) {
 }
 
 function generatePDF() {
+    alertDisplay("waiting", "Génération en cours...");
     // Modify all PDF values with inputs
 
     //global infos
@@ -662,6 +664,7 @@ function generatePDF() {
             }
             pdf.save('fileName.pdf');
             document.getElementById("absolute_to_generate").style.display = "none";
+            alertDisplay("success", "PDF généré avec succès !");
         }
         );
 }
@@ -774,7 +777,7 @@ function saveTemplate(type) {
         "templates": JSON.stringify(user_templates)
     }
     fetchCommon("fetch", fetchBody);
-
+    alertDisplay("waiting", "Sauvegarde en cours...");
 }
 
 async function sha256(message) {
@@ -849,6 +852,7 @@ function fetchCommon(uri, body) {
             // Vérifie si la réponse est OK (code 200)
             if (!response.ok) {
                 throw new Error('Erreur réseau : ' + response.status);
+                alertDisplay("error", "Erreur après : " + response.status);
             }
             // Parse la réponse JSON
             return response.json();
@@ -865,9 +869,30 @@ function fetchCommon(uri, body) {
             if (data.type == "register" && data.status == "success") {
                 location.reload();
             }
+            if (data.type == "templateSave" && data.status == "success") {
+                alertDisplay("success", "Template sauvegardé");
+            }
         })
         .catch(error => {
             // Attrape les erreurs possibles
             console.error('Erreur lors de la récupération des données :', error);
         });
+}
+
+function alertDisplay (type, message) {
+    document.getElementById("alertDisplayText").innerHTML = message;
+    if (type == "success") {
+        document.getElementById("alertDisplay").style.backgroundColor = "var(--valid-color)";
+    } else if (type == "error") {
+        document.getElementById("alertDisplay").style.backgroundColor = "var(--error-color)";
+    } else if (type == "waiting") {
+        document.getElementById("alertDisplay").style.backgroundColor = "var(--inactive-second-color)";
+    }
+    document.getElementById("alertDisplay").style.height = "30px";
+
+    if (type != "waiting") {
+        setTimeout(() => {
+            document.getElementById("alertDisplay").style.height = "0px";
+        }, 3000);
+    }
 }
