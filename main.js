@@ -807,12 +807,13 @@ function deleteTemplate(type) {
             user_templates.customers.splice(indexCustomerToDelete, 1);
         }
     }
-    
+
     var fetchBody = {
         "type": "templateSave",
         "templates": JSON.stringify(user_templates)
     }
     fetchCommon("fetch", fetchBody);
+    supprimerOptionParValeur('template_' + type, document.getElementById("input_siren_" + type).value.trim());
     forcerOptionSelect('template_' + type, 'emptyAll');
     alertDisplay("waiting", "Sauvegarde en cours...");
 }
@@ -941,4 +942,16 @@ function forcerOptionSelect(elementId, valeur) {
     // Optionnel : déclencher l'événement 'change' si nécessaire
     var event = new Event('change');
     selectElement.dispatchEvent(event);
+}
+
+function supprimerOptionParValeur(selectId, valeur) {
+    var selectElement = document.getElementById(selectId);
+    var options = selectElement.options;
+
+    for (var i = 0; i < options.length; i++) {
+        if (options[i].value === valeur) {
+            selectElement.removeChild(options[i]);
+            break;
+        }
+    }
 }
