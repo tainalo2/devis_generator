@@ -13,7 +13,7 @@ const regexTwoNumbers = new RegExp("[0-9]{3}");
 const regexPhoneNumber = new RegExp("^(([0-9]{2}-){4})([0-9]{2})$");
 const rootRoute = null;
 const originRoute = "home";
-var pseudo = "tainalo2";
+var pseudo = "";
 var user_templates = "";
 let signaturePad1;
 
@@ -323,12 +323,20 @@ window.addEventListener('DOMContentLoaded', async function () {
     });
 
     document.getElementById("template_customer").addEventListener("change", function () {
-        var templateObj = user_templates.customers.find(function (customer) {
-            return customer.siren === document.getElementById("template_customer").value;
-        });
-        document.getElementById("input_name_customer").value = templateObj.name;
-        document.getElementById("input_siren_customer").value = templateObj.siren;
-        document.getElementById("input_address_customer").textContent = templateObj.address;
+        if (document.getElementById("template_customer").value == "emptyAll") {
+            document.getElementById("input_name_customer").value = "";
+            document.getElementById("input_siren_customer").value = "";
+            document.getElementById("input_address_customer").textContent = "";
+        } else {
+            var templateObj = user_templates.customers.find(function (customer) {
+                return customer.siren === document.getElementById("template_customer").value;
+            });
+            document.getElementById("input_name_customer").value = templateObj.name;
+            document.getElementById("input_siren_customer").value = templateObj.siren;
+            document.getElementById("input_address_customer").textContent = templateObj.address;
+        }
+
+
     });
 
     document.addEventListener("click", async (event) => {
@@ -403,6 +411,10 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById("button_clear_signature").addEventListener('click', () => { signaturePad1.clear(); });
 
     document.getElementById("button_generatePDF").addEventListener('click', () => { generatePDF() });
+
+    document.getElementById("button_delete_worker").addEventListener('click', () => { deleteTemplate("worker") });
+
+    document.getElementById("button_delete_customer").addEventListener('click', () => { deleteTemplate("customer") });
 
     document.getElementById("button_login").addEventListener('click', () => { login_start() });
 
@@ -780,6 +792,31 @@ function saveTemplate(type) {
     alertDisplay("waiting", "Sauvegarde en cours...");
 }
 
+function deleteTemplate(type) {
+    if (type == "worker") {
+        const indexWorkerToDelete = user_templates.workers.findIndex(worker => worker.siren === document.getElementById("input_siren_" + type).value.trim());
+        // Si un élément est trouvé, le supprimer du tableau
+        if (indexWorkerToDelete !== -1) {
+            user_templates.workers.splice(indexWorkerToDelete, 1);
+        }
+    }
+    if (type == "customer") {
+        const indexCustomerToDelete = user_templates.customers.findIndex(customer => customer.siren === document.getElementById("input_siren_" + type).value.trim());
+        // Si un élément est trouvé, le supprimer du tableau
+        if (indexCustomerToDelete !== -1) {
+            user_templates.customers.splice(indexCustomerToDelete, 1);
+        }
+    }
+    
+    var fetchBody = {
+        "type": "templateSave",
+        "templates": JSON.stringify(user_templates)
+    }
+    fetchCommon("fetch", fetchBody);
+    forcerOptionSelect('template_' + type, 'emptyAll');
+    alertDisplay("waiting", "Sauvegarde en cours...");
+}
+
 async function sha256(message) {
     // Convertir la chaîne de caractères en un tableau d'octets (ArrayBuffer)
     const buffer = new TextEncoder().encode(message);
@@ -879,7 +916,7 @@ function fetchCommon(uri, body) {
         });
 }
 
-function alertDisplay (type, message) {
+function alertDisplay(type, message) {
     document.getElementById("alertDisplayText").innerHTML = message;
     if (type == "success") {
         document.getElementById("alertDisplay").style.backgroundColor = "var(--valid-color)";
@@ -895,4 +932,13 @@ function alertDisplay (type, message) {
             document.getElementById("alertDisplay").style.height = "0px";
         }, 3000);
     }
+}
+
+function forcerOptionSelect(elementId, valeur) {
+    var selectElement = document.getElementById(elementId);
+    selectElement.value = valeur;
+
+    // Optionnel : déclencher l'événement 'change' si nécessaire
+    var event = new Event('change');
+    selectElement.dispatchEvent(event);
 }
