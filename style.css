@@ -1152,6 +1152,7 @@ footer p {
 .section_devis_to_generate_line div {
     padding-top: 5px;
     padding-bottom: 5px;
+    align-self: stretch;
 }
 
 .section_devis_to_generate_line_description {
