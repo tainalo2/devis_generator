@@ -264,46 +264,10 @@ window.addEventListener('DOMContentLoaded', async function () {
     history.replaceState("home", "", document.location.href);
 
     if (pseudo != "") {
-        document.querySelectorAll('.withoutLoginElement').forEach(element => {
-            element.style.display = "none";
-        });
-
-        document.querySelectorAll('.withLoginElement').forEach(element => {
-            element.style.display = "flex";
-        });
-        document.getElementById("display_pseudo").innerHTML = pseudo;
+        updateOnLogin("sign");
     }
 
-    if (user_templates != "") {
-        console.log(user_templates);
-        user_templates = JSON.parse(user_templates);
-
-
-        user_templates.workers.forEach(function (obj) {
-            // Création d'un nouvel élément <option>
-            var nouvelOption = document.createElement("option");
-            // Attribution de la valeur et du texte à l'option
-            console.log(obj);
-            nouvelOption.value = obj.siren;
-            nouvelOption.text = obj.firstName + " " + obj.lastName;
-            document.getElementById("template_worker").add(nouvelOption);
-        });
-
-        user_templates.customers.forEach(function (obj) {
-            // Création d'un nouvel élément <option>
-            var nouvelOption = document.createElement("option");
-            // Attribution de la valeur et du texte à l'option
-            nouvelOption.value = obj.siren;
-            nouvelOption.text = obj.name;
-            document.getElementById("template_customer").add(nouvelOption);
-        });
-    } else {
-        user_templates = {
-            customers: [],
-            workers: [],
-            devis: []
-        }
-    }
+    updateTemplateOnLogin();
 
     document.getElementById("template_worker").addEventListener("change", function () {
         if (document.getElementById("template_worker").value == "emptyAll") {
@@ -683,6 +647,7 @@ function generatePDF() {
 
 function login_start() {
     if (document.getElementById("input_login").value.trim() != "" && document.getElementById("input_password").value.trim() != "") {
+        alertDisplay("waiting", "Connexion en cours...");
         var fetchBody = {
             "type": "login"
         }
@@ -771,6 +736,12 @@ function saveTemplate(type) {
                 "address": document.getElementById("input_address_" + type).textContent.trim(),
                 "phone": document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim(),
             };
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
+            // Attribution de la valeur et du texte à l'option
+            nouvelOption.value = tempObj.siren;
+            nouvelOption.text = tempObj.name;
+            document.getElementById("template_worker").add(nouvelOption);
         } else {
             var tempObj = {
                 "firstName": document.getElementById("input_firstName_" + type).value.trim(),
@@ -779,6 +750,12 @@ function saveTemplate(type) {
                 "address": document.getElementById("input_address_" + type).textContent.trim(),
                 "phone": document.getElementById("input_phone_prefix_" + type).value + document.getElementById("input_phone_number_" + type).value.trim(),
             };
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
+            // Attribution de la valeur et du texte à l'option
+            nouvelOption.value = tempObj.siren;
+            nouvelOption.text = tempObj.firstName + " " + tempObj.lastName;
+            document.getElementById("template_worker").add(nouvelOption);
         }
         typeObj.push(tempObj);
     }
@@ -901,13 +878,19 @@ function fetchCommon(uri, body) {
             if (data.type == "challengeAccepted") {
                 login_challenge(data.salt);
             }
-            if ((data.type == "login" || data.type == "unsign") && data.status == "success") {
+            if (data.type == "login" && data.status == "success") {
+                //location.reload();
+                pseudo = data.pseudo;
+                user_templates = data.templates;
+                updateTemplateOnLogin();
+                updateOnLogin("sign");
+            } else if (data.type == "unsign" && data.status == "success") {
+                pseudo = "";
+                user_templates = "";
+                updateOnLogin("unsign");
+            } else if (data.type == "register" && data.status == "success") {
                 location.reload();
-            }
-            if (data.type == "register" && data.status == "success") {
-                location.reload();
-            }
-            if (data.type == "templateSave" && data.status == "success") {
+            } else if (data.type == "templateSave" && data.status == "success") {
                 alertDisplay("success", "Template sauvegardé");
             }
         })
@@ -954,4 +937,57 @@ function supprimerOptionParValeur(selectId, valeur) {
             break;
         }
     }
+}
+
+function updateOnLogin(type) {
+    if (type == "sign") {
+        document.querySelectorAll('.withoutLoginElement').forEach(element => {
+            element.style.display = "none";
+        });
+        document.querySelectorAll('.withLoginElement').forEach(element => {
+            element.style.display = "flex";
+        });
+        document.getElementById("display_pseudo").innerHTML = pseudo;
+    } else if (type == "unsign") {
+        document.querySelectorAll('.withoutLoginElement').forEach(element => {
+            element.style.display = "flex";
+        });
+        document.querySelectorAll('.withLoginElement').forEach(element => {
+            element.style.display = "none";
+        });
+        document.getElementById('template_worker').innerHTML = '';
+        document.getElementById('template_customer').innerHTML = '';
+    }
+
+}
+
+function updateTemplateOnLogin() {
+    if (user_templates != "") {
+        user_templates = JSON.parse(user_templates);
+        user_templates.workers.forEach(function (obj) {
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
+            // Attribution de la valeur et du texte à l'option
+            console.log(obj);
+            nouvelOption.value = obj.siren;
+            nouvelOption.text = obj.firstName + " " + obj.lastName;
+            document.getElementById("template_worker").add(nouvelOption);
+        });
+
+        user_templates.customers.forEach(function (obj) {
+            // Création d'un nouvel élément <option>
+            var nouvelOption = document.createElement("option");
+            // Attribution de la valeur et du texte à l'option
+            nouvelOption.value = obj.siren;
+            nouvelOption.text = obj.name;
+            document.getElementById("template_customer").add(nouvelOption);
+        });
+    } else {
+        user_templates = {
+            customers: [],
+            workers: [],
+            devis: []
+        }
+    }
+
 }
