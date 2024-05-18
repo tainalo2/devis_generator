@@ -496,7 +496,7 @@ function priceCalc(element) {
     var totalDevis = 0;
     parent.parentElement.childNodes.forEach((line) => {
         if (line.className == 'devis_line') {
-            totalDevis = (totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", ""))).toFixed(2);
+            totalDevis = (totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", "")));
         }
     })
     document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
