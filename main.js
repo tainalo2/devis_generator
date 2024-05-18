@@ -965,8 +965,9 @@ function updateOnLogin(type) {
         // Attribution de la valeur et du texte à l'option
         nouvelOption.value = "emptyAll";
         nouvelOption.text = "Template vide";
+        nouvelOption2 = nouvelOption.cloneNode(true);
         document.getElementById("template_customer").add(nouvelOption);
-        document.getElementById("template_worker").add(nouvelOption);
+        document.getElementById("template_worker").add(nouvelOption2);
         alertDisplay("success", "Déconnecté");
     }
 
