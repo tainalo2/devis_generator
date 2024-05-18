@@ -950,6 +950,8 @@ function updateOnLogin(type) {
         });
         document.getElementById("display_pseudo").innerHTML = pseudo;
         alertDisplay("success", "Connecté");
+        document.getElementById("input_login").value = "";
+        document.getElementById("input_password").value = "";
     } else if (type == "unsign") {
         document.querySelectorAll('.withoutLoginElement').forEach(element => {
             element.style.display = "flex";
