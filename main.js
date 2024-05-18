@@ -656,6 +656,7 @@ function login_start() {
 }
 
 function unsign() {
+    alertDisplay("waiting", "Déconnexion en cours...");
     var fetchBody = {
         "type": "unsign"
     }
@@ -948,6 +949,7 @@ function updateOnLogin(type) {
             element.style.display = "flex";
         });
         document.getElementById("display_pseudo").innerHTML = pseudo;
+        alertDisplay("success", "Connecté");
     } else if (type == "unsign") {
         document.querySelectorAll('.withoutLoginElement').forEach(element => {
             element.style.display = "flex";
@@ -957,6 +959,13 @@ function updateOnLogin(type) {
         });
         document.getElementById('template_worker').innerHTML = '';
         document.getElementById('template_customer').innerHTML = '';
+        var nouvelOption = document.createElement("option");
+        // Attribution de la valeur et du texte à l'option
+        nouvelOption.value = "emptyAll";
+        nouvelOption.text = "Template vide";
+        document.getElementById("template_customer").add(nouvelOption);
+        document.getElementById("template_worker").add(nouvelOption);
+        alertDisplay("success", "Déconnecté");
     }
 
 }
@@ -968,7 +977,6 @@ function updateTemplateOnLogin() {
             // Création d'un nouvel élément <option>
             var nouvelOption = document.createElement("option");
             // Attribution de la valeur et du texte à l'option
-            console.log(obj);
             nouvelOption.value = obj.siren;
             nouvelOption.text = obj.firstName + " " + obj.lastName;
             document.getElementById("template_worker").add(nouvelOption);
