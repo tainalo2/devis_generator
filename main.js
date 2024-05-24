@@ -558,7 +558,7 @@ function generatePDF() {
 
     //worker infos
     document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
-    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").textContent;
+    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").innerHTML;
     document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren_worker").value;
     if (document.getElementById("toggle_commercant_label").checked) {
         document.getElementById("section_to_generate_id_worker_rcs").style.display = "block";
@@ -571,7 +571,7 @@ function generatePDF() {
 
     //customer infos
     document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_name_customer").value;
-    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").textContent;
+    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").innerHTML;
     document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_siren_customer").value;
 
     //devis elements
@@ -586,7 +586,7 @@ function generatePDF() {
             cloneLine_node.removeAttribute('id');
             cloneLine_node.style.display = "flex";
 
-            cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").textContent.trim();
+            cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").innerHTML;
             cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").innerHTML = line.querySelector(".devis_quantity").value;
             cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = line.querySelector(".devis_price").value + "€";
             cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value) + "€";
