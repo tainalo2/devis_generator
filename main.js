@@ -558,7 +558,7 @@ function generatePDF() {
 
     //worker infos
     document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
-    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").textContent.trim();
+    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").textContent;
     document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren_worker").value;
     if (document.getElementById("toggle_commercant_label").checked) {
         document.getElementById("section_to_generate_id_worker_rcs").style.display = "block";
@@ -571,7 +571,7 @@ function generatePDF() {
 
     //customer infos
     document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_name_customer").value;
-    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").textContent.trim();
+    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").textContent;
     document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_siren_customer").value;
 
     //devis elements
@@ -579,7 +579,7 @@ function generatePDF() {
     var firstLine_node = document.getElementById("section_devis_to_generate_line_1");
     var cloneLine_node;
     document.getElementById("first_devis_lines_container").childNodes.forEach((line) => {
-        if (line.className == 'devis_line' && line.querySelector(".devis_description").textContent.trim() != "" && line.querySelector(".devis_price").value != "" && line.querySelector(".devis_quantity").value != "") {
+        if (line.className == 'devis_line' && line.querySelector(".devis_description").textContent != "" && line.querySelector(".devis_price").value != "" && line.querySelector(".devis_quantity").value != "") {
             totalDevis = totalDevis + parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value);
             cloneLine_node = firstLine_node.cloneNode(true);
             document.getElementById("section_devis_to_generate").appendChild(cloneLine_node);
@@ -823,7 +823,7 @@ function updateView(viewName) {
         document.getElementById("loading_container").classList.remove("wraped");
         setTimeout(() => {
             document.getElementById("content_container").style.display = "none";
-            document.getElementById("landing_page").style.display = "flex";
+            //document.getElementById("landing_page").style.display = "flex";
             document.getElementById("loading_container").classList.add("wraped");
         }, 1500);
 
