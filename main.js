@@ -352,6 +352,18 @@ window.addEventListener('DOMContentLoaded', async function () {
         toggleLightMode(document.getElementById("switch_toggle_light"));
     }, false);
 
+    document.getElementById("switch_toggle_light_min").addEventListener("click", () => {
+        toggleLightMode(document.getElementById("switch_toggle_light_min"));
+    }, false);
+
+    document.getElementById("nav_menu_button").addEventListener("click", () => {
+        document.getElementById("absolute_min_menu").style.right = "0%";
+    });
+
+    document.getElementById("exit_menu").addEventListener("click", () => {
+        document.getElementById("absolute_min_menu").style.right = "-100%";
+    });
+
     document.querySelectorAll('.input_input').forEach(element => {
         element.addEventListener('input', () => { inputError(element) });
         element.addEventListener('focus', () => { inputError(element) });
@@ -403,6 +415,12 @@ window.addEventListener('DOMContentLoaded', async function () {
         trash.addEventListener('dragenter', (event) => {
             event.target.style.background = "red";
         });
+    });
+
+    articleCreateNavButtons();
+
+    document.querySelectorAll('.readArticle').forEach(element => {
+        element.addEventListener('click', () => { revealArticle(element) });
     });
 
     var datePlus30 = new Date();
@@ -819,27 +837,27 @@ function getElementOffset(element) {
 }
 
 function updateView(viewName) {
-    if (viewName == "home" || viewName == "/") {
-        document.getElementById("loading_container").classList.remove("wraped");
-        setTimeout(() => {
-            document.getElementById("content_container").style.display = "none";
-            //document.getElementById("landing_page").style.display = "flex";
-            document.getElementById("loading_container").classList.add("wraped");
-        }, 1500);
+    document.getElementById("loading_container").classList.remove("wraped");
+    setTimeout(() => {
+        document.querySelectorAll('.full_page_container').forEach(element => {
+            element.style.display = "none";
+        });
+        document.getElementById("loading_container").classList.add("wraped");
 
-    } else if (viewName == "generator") {
-        document.getElementById("loading_container").classList.remove("wraped");
-        setTimeout(() => {
-            document.getElementById("landing_page").style.display = "none";
+        if (viewName == "home" || viewName == "/") {
+            document.getElementById("landing_page").style.display = "flex";
+        } else if (viewName == "generator") {
             document.getElementById("content_container").style.display = "flex";
             setTimeout(() => {
                 resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
             }, 1000);
-
-            document.getElementById("loading_container").classList.add("wraped");
-        }, 1500);
-
-    }
+        } else if (viewName == "story") {
+            document.getElementById("story").style.display = "flex";
+        } else if (viewName == "roadmap") {
+            document.getElementById("roadmap").style.display = "flex";
+        }
+        document.getElementById("loading_container").classList.add("wraped");
+    }, 1500);
 
 }
 
@@ -999,6 +1017,35 @@ function updateTemplateOnLogin() {
             workers: [],
             devis: []
         }
+    }
+
+}
+
+function articleCreateNavButtons() {
+    var button = document.createElement('div');
+    button.classList.add('button_basic');
+    button.classList.add('button_basic_invert');
+    document.querySelectorAll('.article_chapter_title').forEach(element => {
+        var cloneButton = button.cloneNode(true);
+        cloneButton.innerHTML = element.innerHTML;
+        element.parentElement.parentElement.parentElement.querySelector('.article_nav_container').querySelector('.article_nav').appendChild(cloneButton);
+        cloneButton.addEventListener('click', function () {
+            element.scrollIntoView({ behavior: 'smooth' });
+        })
+    });
+}
+
+function revealArticle(element) {
+    var article = element.parentElement.parentElement.parentElement.parentElement.querySelector(".article_container");
+    if (article.style.height == "auto") {
+        article.style.height = "0px";
+        article.style.marginTop = "0px";
+        article.style.overflow = "hidden";
+    } else {
+        console.log("test else");
+        article.style.height = "auto";
+        article.style.marginTop = "25px";
+        article.style.overflow = "clip";
     }
 
 }
