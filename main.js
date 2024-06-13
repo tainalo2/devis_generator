@@ -428,7 +428,7 @@ window.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('date_emission').valueAsDate = new Date();
     document.getElementById('date_paiement').valueAsDate = datePlus30;
 
-    updateView(originRoute);
+    updateView(originRoute, true);
 });
 
 window.addEventListener('load', function () {
@@ -836,8 +836,8 @@ function getElementOffset(element) {
     };
 }
 
-function updateView(viewName) {
-    if (window.location.pathname.replace("/", "") != viewName) {
+function updateView(viewName, except = false) {
+    if (window.location.pathname.replace("/", "") != viewName || except) {
         document.getElementById("loading_container").classList.remove("wraped");
         setTimeout(() => {
             document.querySelectorAll('.full_page_container').forEach(element => {
