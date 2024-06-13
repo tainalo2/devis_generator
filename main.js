@@ -837,27 +837,30 @@ function getElementOffset(element) {
 }
 
 function updateView(viewName) {
-    document.getElementById("loading_container").classList.remove("wraped");
-    setTimeout(() => {
-        document.querySelectorAll('.full_page_container').forEach(element => {
-            element.style.display = "none";
-        });
-        document.getElementById("loading_container").classList.add("wraped");
+    if (window.location.pathname.replace("/", "") != viewName) {
+        document.getElementById("loading_container").classList.remove("wraped");
+        setTimeout(() => {
+            document.querySelectorAll('.full_page_container').forEach(element => {
+                element.style.display = "none";
+            });
+            document.getElementById("loading_container").classList.add("wraped");
 
-        if (viewName == "home" || viewName == "/") {
-            document.getElementById("landing_page").style.display = "flex";
-        } else if (viewName == "generator") {
-            document.getElementById("content_container").style.display = "flex";
-            setTimeout(() => {
-                resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
-            }, 1000);
-        } else if (viewName == "story") {
-            document.getElementById("story").style.display = "flex";
-        } else if (viewName == "roadmap") {
-            document.getElementById("roadmap").style.display = "flex";
-        }
-        document.getElementById("loading_container").classList.add("wraped");
-    }, 1500);
+            if (viewName == "home" || viewName == "/") {
+                document.getElementById("landing_page").style.display = "flex";
+            } else if (viewName == "generator") {
+                document.getElementById("content_container").style.display = "flex";
+                setTimeout(() => {
+                    resizeCanvas(document.querySelector("#canvas1"), signaturePad1);
+                }, 1000);
+            } else if (viewName == "story") {
+                document.getElementById("story").style.display = "flex";
+            } else if (viewName == "roadmap") {
+                document.getElementById("roadmap").style.display = "flex";
+            }
+            document.getElementById("loading_container").classList.add("wraped");
+        }, 1500);
+    }
+
 
 }
 
