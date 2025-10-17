@@ -3,189 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Thème PDF</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: var(--main-bg-color, white);
-            color: var(--main-second-color, black);
-        }
-        
-        .test-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 2px solid var(--main-second-color, black);
-            border-radius: 10px;
-            background-color: var(--main-bg-color, white);
-        }
-        
-        .theme-toggle {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: var(--main-tier_color, #f5f5f5);
-            border-radius: 5px;
-        }
-        
-        .pdf-preview {
-            border: 1px solid var(--pdf-border-color, #202020);
-            padding: 20px;
-            background-color: var(--pdf-bg-color, white);
-            color: var(--pdf-text-color, black);
-            margin: 20px 0;
-        }
-        
-        .pdf-section {
-            border: 1px solid var(--pdf-border-color, #202020);
-            padding: 10px;
-            margin: 10px 0;
-            background-color: var(--pdf-section-bg, #f7f7f7);
-        }
-        
-        .pdf-button {
-            background-color: var(--pdf-button-bg, black);
-            color: var(--pdf-button-text, white);
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Test Thème PDF - Devis Generator</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="test-container">
-        <h1>Test de Gestion des Thèmes PDF</h1>
-        
-        <div class="theme-toggle">
-            <label>
-                <input type="checkbox" id="theme-toggle"> Mode sombre
-            </label>
-        </div>
-        
-        <div class="pdf-preview">
-            <h2>Prévisualisation PDF</h2>
-            <div class="pdf-section">
-                <h3>Section Test</h3>
-                <p>Ceci est un test de la génération PDF avec gestion des thèmes.</p>
-                <p>Les couleurs s'adaptent automatiquement au mode jour/nuit.</p>
+    <div class="banner">
+        <div class="banner_content_container">
+            <div class="main_title">
+                <h1>Test Thème PDF</h1>
             </div>
-            <button class="pdf-button">Bouton PDF</button>
-        </div>
-        
-        <div>
-            <h3>Variables CSS actuelles :</h3>
-            <ul id="css-vars"></ul>
+            <div class="lightMode_container">
+                <label class="invert_toggle_label" for="switch_toggle_light_test">
+                    <input type="checkbox" id="switch_toggle_light_test" class="invert_toggle_input">
+                </label>
+                <span class="toggle_title">Mode sombre</span>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Variables CSS pour les thèmes
-        const lightTheme = {
-            '--main-bg-color': 'white',
-            '--main-second-color': 'black',
-            '--main-tier_color': 'rgb(245, 245, 245)',
-            '--main-quater_color': 'rgb(53, 53, 53)',
-            '--inactive-bg-color': 'rgb(240, 240, 240)',
-            '--inactive-second-color': 'rgb(95, 95, 95)',
-            '--filter-main-color-svg': 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)',
-            '--filter-second-color-svg': 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)',
-            '--basic_shadow': '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)',
-            '--pdf-bg-color': 'white',
-            '--pdf-text-color': 'black',
-            '--pdf-border-color': '#202020',
-            '--pdf-section-bg': 'rgb(247, 247, 247)',
-            '--pdf-payment-bg': 'rgb(230, 230, 230)',
-            '--pdf-button-bg': 'black',
-            '--pdf-button-text': 'white'
-        };
-
-        const darkTheme = {
-            '--main-bg-color': 'black',
-            '--main-second-color': 'white',
-            '--main-tier_color': 'rgb(53, 53, 53)',
-            '--main-quater_color': 'rgb(245, 245, 245)',
-            '--inactive-bg-color': 'rgb(95, 95, 95)',
-            '--inactive-second-color': 'rgb(240, 240, 240)',
-            '--filter-main-color-svg': 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)',
-            '--filter-second-color-svg': 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)',
-            '--basic_shadow': '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31)',
-            '--pdf-bg-color': 'black',
-            '--pdf-text-color': 'white',
-            '--pdf-border-color': '#404040',
-            '--pdf-section-bg': 'rgb(30, 30, 30)',
-            '--pdf-payment-bg': 'rgb(40, 40, 40)',
-            '--pdf-button-bg': 'white',
-            '--pdf-button-text': 'black'
-        };
-
-        function applyTheme(theme) {
-            const root = document.documentElement;
-            Object.entries(theme).forEach(([property, value]) => {
-                root.style.setProperty(property, value);
-            });
-            updateCSSVarsDisplay();
-        }
-
-        function updateCSSVarsDisplay() {
-            const cssVarsList = document.getElementById('css-vars');
-            cssVarsList.innerHTML = '';
+    <div class="full_page_container">
+        <div class="section">
+            <h2>Test des Variables PDF</h2>
+            <p>Ce test permet de vérifier que les variables CSS pour les PDF s'adaptent correctement au mode jour/nuit.</p>
             
+            <div class="section">
+                <h3>Prévisualisation PDF</h3>
+                <div id="absolute_to_generate" style="display: block; position: relative; margin: 20px 0;">
+                    <div class="header_to_generate">
+                        <div class="header_to_generate_container">
+                            <div id="header_to_generate_title">Facture Test</div>
+                            <div id="header_to_generate_subtitle">Test de génération PDF</div>
+                        </div>
+                        <div class="header_to_generate_container text_end">
+                            <div class="header_to_generate_date">Date d'émission : <span id="header_to_generate_date_value">17/10/2024</span></div>
+                            <div id="header_to_generate_number">N°202410171</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate_container">
+                        <div class="section_to_generate">
+                            <div class="section_to_generate_title">Prestataire</div>
+                            <div>
+                                <span class="section_to_generate_label">Nom :</span>
+                                <span>Test User</span>
+                            </div>
+                            <div>
+                                <span class="section_to_generate_label">Adresse :</span>
+                                <span>123 Test Street</span>
+                            </div>
+                        </div>
+                        <div class="section_to_generate">
+                            <div class="section_to_generate_title">Client</div>
+                            <div>
+                                <span class="section_to_generate_label">Entreprise :</span>
+                                <span>Test Company</span>
+                            </div>
+                            <div>
+                                <span class="section_to_generate_label">Adresse :</span>
+                                <span>456 Client Avenue</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate">
+                        <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_labels">
+                            <div class="section_devis_to_generate_line_description">Description</div>
+                            <div class="section_devis_to_generate_line_quantity">Quantité</div>
+                            <div class="section_devis_to_generate_line_unit_price">Prix</div>
+                            <div class="section_devis_to_generate_line_total_price">Total</div>
+                        </div>
+                        <div class="section_devis_to_generate_line">
+                            <div class="section_devis_to_generate_line_description">Service de test</div>
+                            <div class="section_devis_to_generate_line_quantity">1</div>
+                            <div class="section_devis_to_generate_line_unit_price">100€</div>
+                            <div class="section_devis_to_generate_line_total_price">100€</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate" id="section_to_generate_id_retard">
+                        <div class="section_to_generate_title">Modalités de retard</div>
+                        <div><span class="section_to_generate_label">Date limite :</span><span>17/11/2024</span></div>
+                        <div><span class="section_to_generate_label">Taux d'intérêt :</span><span>15,21%</span></div>
+                    </div>
+                    
+                    <div id="section_to_generate_signature">
+                        <p>Zone de signature</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Variables CSS Actuelles</h3>
+                <div id="css-variables-display">
+                    <p><strong>PDF Background:</strong> <span id="pdf-bg-color">-</span></p>
+                    <p><strong>PDF Text:</strong> <span id="pdf-text-color">-</span></p>
+                    <p><strong>PDF Border:</strong> <span id="pdf-border-color">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        // Fonction pour afficher les variables CSS actuelles
+        function updateCSSVariablesDisplay() {
             const root = document.documentElement;
             const computedStyle = getComputedStyle(root);
             
-            const pdfVars = [
-                '--pdf-bg-color',
-                '--pdf-text-color',
-                '--pdf-border-color',
-                '--pdf-section-bg',
-                '--pdf-payment-bg',
-                '--pdf-button-bg',
-                '--pdf-button-text'
-            ];
-            
-            pdfVars.forEach(varName => {
-                const value = computedStyle.getPropertyValue(varName).trim();
-                const li = document.createElement('li');
-                li.textContent = `${varName}: ${value}`;
-                cssVarsList.appendChild(li);
-            });
+            document.getElementById('pdf-bg-color').textContent = computedStyle.getPropertyValue('--pdf-bg-color').trim();
+            document.getElementById('pdf-text-color').textContent = computedStyle.getPropertyValue('--pdf-text-color').trim();
+            document.getElementById('pdf-border-color').textContent = computedStyle.getPropertyValue('--pdf-border-color').trim();
         }
-
-        // Initialisation
+        
+        // Mettre à jour l'affichage au chargement
         document.addEventListener('DOMContentLoaded', function() {
-            const themeToggle = document.getElementById('theme-toggle');
-            
-            // Détecter le thème système
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                themeToggle.checked = true;
-                applyTheme(darkTheme);
-            } else {
-                themeToggle.checked = false;
-                applyTheme(lightTheme);
-            }
+            updateCSSVariablesDisplay();
             
             // Écouter les changements de thème
-            themeToggle.addEventListener('change', function() {
-                if (this.checked) {
-                    applyTheme(darkTheme);
-                } else {
-                    applyTheme(lightTheme);
-                }
+            document.getElementById('switch_toggle_light_test').addEventListener('change', function() {
+                setTimeout(updateCSSVariablesDisplay, 100);
             });
-            
-            // Écouter les changements de thème système
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                    if (e.matches) {
-                        themeToggle.checked = true;
-                        applyTheme(darkTheme);
-                    } else {
-                        themeToggle.checked = false;
-                        applyTheme(lightTheme);
-                    }
-                });
-            }
         });
     </script>
 </body>
