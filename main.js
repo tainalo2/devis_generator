@@ -18,29 +18,7 @@ var user_templates = "";
 let signaturePad1;
 
 function toggleLightMode(element) {
-    if (element.checked) {
-        document.querySelector(':root').style.setProperty('--main-bg-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-second-color', 'white');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(245, 245, 245)');
-        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(95, 95, 95)');
-        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(240, 240, 240)');
-        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31');
-        signaturePad1.penColor = "white";
-    } else {
-        document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
-        document.querySelector(':root').style.setProperty('--main-second-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(245, 245, 245)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(240, 240, 240)');
-        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(95, 95, 95)');
-        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)');
-        signaturePad1.penColor = "black";
-    }
+    applyTheme(element.checked);
 }
 
 function inputError(element) {
@@ -259,9 +237,124 @@ async function URLtoBase64(url) {
     });
 }
 
+// Fonction pour initialiser les variables PDF selon le mode actuel
+function initializePDFTheme() {
+    const isDarkMode = document.getElementById("switch_toggle_light").checked;
+    applyTheme(isDarkMode);
+}
+
+// Fonction pour détecter le mode système et l'appliquer
+function detectSystemTheme() {
+    // D'abord, essayer de charger les préférences sauvegardées
+    if (loadThemePreference()) {
+        return; // Les préférences ont été chargées
+    }
+    
+    // Sinon, utiliser le thème système
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // Le système est en mode sombre
+        document.getElementById("switch_toggle_light").checked = true;
+        applyTheme(true);
+    } else {
+        // Le système est en mode clair
+        document.getElementById("switch_toggle_light").checked = false;
+        applyTheme(false);
+    }
+}
+
+// Fonction utilitaire pour appliquer un thème spécifique
+function applyTheme(isDarkMode) {
+    const root = document.querySelector(':root');
+    
+    if (isDarkMode) {
+        // Mode nuit
+        root.style.setProperty('--main-bg-color', 'black');
+        root.style.setProperty('--main-second-color', 'white');
+        root.style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
+        root.style.setProperty('--main-quater_color', 'rgb(245, 245, 245)');
+        root.style.setProperty('--inactive-bg-color', 'rgb(95, 95, 95)');
+        root.style.setProperty('--inactive-second-color', 'rgb(240, 240, 240)');
+        root.style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--basic_shadow', '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31)');
+        
+        // Variables PDF pour le mode nuit
+        root.style.setProperty('--pdf-bg-color', 'black');
+        root.style.setProperty('--pdf-text-color', 'white');
+        root.style.setProperty('--pdf-border-color', '#404040');
+        root.style.setProperty('--pdf-section-bg', 'rgb(30, 30, 30)');
+        root.style.setProperty('--pdf-payment-bg', 'rgb(40, 40, 40)');
+        root.style.setProperty('--pdf-button-bg', 'white');
+        root.style.setProperty('--pdf-button-text', 'black');
+        
+        if (signaturePad1) signaturePad1.penColor = "white";
+    } else {
+        // Mode jour
+        root.style.setProperty('--main-bg-color', 'white');
+        root.style.setProperty('--main-second-color', 'black');
+        root.style.setProperty('--main-tier_color', 'rgb(245, 245, 245)');
+        root.style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
+        root.style.setProperty('--inactive-bg-color', 'rgb(240, 240, 240)');
+        root.style.setProperty('--inactive-second-color', 'rgb(95, 95, 95)');
+        root.style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--basic_shadow', '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)');
+        
+        // Variables PDF pour le mode jour
+        root.style.setProperty('--pdf-bg-color', 'white');
+        root.style.setProperty('--pdf-text-color', 'black');
+        root.style.setProperty('--pdf-border-color', '#202020');
+        root.style.setProperty('--pdf-section-bg', 'rgb(247, 247, 247)');
+        root.style.setProperty('--pdf-payment-bg', 'rgb(230, 230, 230)');
+        root.style.setProperty('--pdf-button-bg', 'black');
+        root.style.setProperty('--pdf-button-text', 'white');
+        
+        if (signaturePad1) signaturePad1.penColor = "black";
+    }
+    
+    // Sauvegarder la préférence
+    localStorage.setItem('theme-preference', isDarkMode ? 'dark' : 'light');
+}
+
+// Fonction pour charger les préférences de thème sauvegardées
+function loadThemePreference() {
+    const savedTheme = localStorage.getItem('theme-preference');
+    if (savedTheme) {
+        const isDarkMode = savedTheme === 'dark';
+        document.getElementById("switch_toggle_light").checked = isDarkMode;
+        applyTheme(isDarkMode);
+        return true;
+    }
+    return false;
+}
+
 window.addEventListener('DOMContentLoaded', async function () {
 
     history.replaceState("home", "", document.location.href);
+    
+    // Détecter et appliquer le thème système
+    detectSystemTheme();
+    
+    // Détecter et appliquer le thème système
+    detectSystemTheme();
+    
+    // Initialiser le thème PDF
+    initializePDFTheme();
+    
+    // Écouter les changements de thème système
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (e.matches) {
+                // Le système est passé en mode sombre
+                document.getElementById("switch_toggle_light").checked = true;
+                toggleLightMode(document.getElementById("switch_toggle_light"));
+            } else {
+                // Le système est passé en mode clair
+                document.getElementById("switch_toggle_light").checked = false;
+                toggleLightMode(document.getElementById("switch_toggle_light"));
+            }
+        });
+    }
 
     if (pseudo != "") {
         updateOnLogin("sign");
@@ -563,6 +656,10 @@ function toglleCheck(element) {
 
 function generatePDF() {
     alertDisplay("waiting", "Génération en cours...");
+    
+    // S'assurer que le thème PDF est à jour
+    initializePDFTheme();
+    
     // Modify all PDF values with inputs
 
     //global infos
