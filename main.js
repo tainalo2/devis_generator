@@ -657,22 +657,34 @@ function cleanPDFGeneration() {
     const firstLine = document.getElementById("section_devis_to_generate_line_1");
     const labelsLine = document.getElementById("section_devis_to_generate_line_labels");
     
-    // Supprimer tous les enfants sauf la première ligne template et les labels
-    Array.from(devisContainer.children).forEach((child) => {
-        if (child !== firstLine && child !== labelsLine) {
-            child.remove();
-        }
-    });
+    // Vérifier que le conteneur existe avant de manipuler ses enfants
+    if (devisContainer && firstLine) {
+        // Supprimer tous les enfants sauf la première ligne template et les labels
+        Array.from(devisContainer.children).forEach((child) => {
+            if (child !== firstLine && child !== labelsLine) {
+                child.remove();
+            }
+        });
+        
+        // Réinitialiser l'affichage de la première ligne
+        firstLine.style.display = "none";
+    }
     
-    // Réinitialiser l'affichage de la première ligne
-    firstLine.style.display = "none";
+    // Réinitialiser les sections conditionnelles avec vérification de nullité
+    const workerRcs = document.getElementById("section_to_generate_id_worker_rcs");
+    if (workerRcs) workerRcs.style.display = "none";
     
-    // Réinitialiser les sections conditionnelles
-    document.getElementById("section_to_generate_id_worker_rcs").style.display = "none";
-    document.getElementById("section_to_generate_id_worker_rm").style.display = "none";
-    document.getElementById("section_to_generate_info_paiement").style.display = "none";
-    document.getElementById("section_to_generate_info_paiement_iban_container").style.display = "none";
-    document.getElementById("section_to_generate_internet_paiement_button").style.display = "none";
+    const workerRm = document.getElementById("section_to_generate_id_worker_rm");
+    if (workerRm) workerRm.style.display = "none";
+    
+    const infoPaiement = document.getElementById("section_to_generate_info_paiement");
+    if (infoPaiement) infoPaiement.style.display = "none";
+    
+    const ibanContainer = document.getElementById("section_to_generate_info_paiement_iban_container");
+    if (ibanContainer) ibanContainer.style.display = "none";
+    
+    const paiementButton = document.getElementById("section_to_generate_internet_paiement_button");
+    if (paiementButton) paiementButton.style.display = "none";
 }
 
 function generatePDF() {
