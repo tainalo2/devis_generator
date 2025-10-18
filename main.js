@@ -5,7 +5,7 @@ window.html2canvas = html2canvas;
 const regexFirstName = new RegExp("^[a-zA-Z\u00C0-\u024F\-]+$");
 const regexLastName = new RegExp("^[a-zA-Z\u00C0-\u024F\- ]+$");
 const regexSiren = new RegExp("^\\d{9}$");
-const regexCompanyName = new RegExp("^[\w\s'àéèù'-\u00C0-\u024F]+$");
+const regexCompanyName = new RegExp("^[a-zA-Z0-9\u00C0-\u024F\\-' ]+$");
 const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
 const regexNumber = new RegExp("[0-9]");
 const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
@@ -610,7 +610,7 @@ function priceCalc(element) {
             totalDevis = (totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", "")));
         }
     })
-    document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
+    document.getElementById("price_indicator_htc").innerHTML = totalDevis.toFixed(2) + "€";
     document.getElementById("price_indicator_ttc").innerHTML = (parseFloat(totalDevis) + (parseFloat(totalDevis) * 0.2)).toFixed(2) + "€";
     if (totalDevis <= 150) {
         document.getElementById("toggle_tva").style.display = "none";
@@ -654,8 +654,35 @@ function toglleCheck(element) {
 
 }
 
+function cleanPDFGeneration() {
+    // Nettoyer les lignes de devis ajoutées lors de la génération précédente
+    const devisContainer = document.getElementById("section_devis_to_generate");
+    const firstLine = document.getElementById("section_devis_to_generate_line_1");
+    const labelsLine = document.getElementById("section_devis_to_generate_line_labels");
+    
+    // Supprimer tous les enfants sauf la première ligne template et les labels
+    Array.from(devisContainer.children).forEach((child) => {
+        if (child !== firstLine && child !== labelsLine) {
+            child.remove();
+        }
+    });
+    
+    // Réinitialiser l'affichage de la première ligne
+    firstLine.style.display = "none";
+    
+    // Réinitialiser les sections conditionnelles
+    document.getElementById("section_to_generate_id_worker_rcs").style.display = "none";
+    document.getElementById("section_to_generate_id_worker_rm").style.display = "none";
+    document.getElementById("section_to_generate_info_paiement").style.display = "none";
+    document.getElementById("section_to_generate_info_paiement_iban_container").style.display = "none";
+    document.getElementById("section_to_generate_internet_paiement_button").style.display = "none";
+}
+
 function generatePDF() {
     alertDisplay("waiting", "Génération en cours...");
+    
+    // Nettoyer les éléments de la génération précédente
+    cleanPDFGeneration();
     
     // S'assurer que le thème PDF est à jour
     initializePDFTheme();
@@ -703,17 +730,17 @@ function generatePDF() {
 
             cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").innerHTML;
             cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").innerHTML = line.querySelector(".devis_quantity").value;
-            cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = line.querySelector(".devis_price").value + "€";
-            cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value) + "€";
+            cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = parseFloat(line.querySelector(".devis_price").value).toFixed(2) + "€";
+            cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = (parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value)).toFixed(2) + "€";
         }
         document.getElementById("section_devis_to_generate_line_1").style.display = "none";
-        document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis + "€";
+        document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis.toFixed(2) + "€";
         if (document.getElementById("switch_tva").checked && totalDevis > 150) {
-            document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)).toFixed(2) + "€";
             document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "none";
         } else {
             document.getElementById("section_to_generate_id_tva").innerHTML = "0%";
-            document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis + "€";
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis.toFixed(2) + "€";
             document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "block";
         }
     });
@@ -740,20 +767,34 @@ function generatePDF() {
     //pdf generation
     var element = document.getElementById("absolute_to_generate");
     var signature = document.getElementById('canvas1');
-    var signature_width = signature.width / (signature.height / 50);
+    var signature_height = 80;
+    var signature_width = (signature.width * signature_height) / signature.height;
     var pdf = new jsPDF('p', 'pt', 'a4');
     //width 600px * 849px for A4 page
     document.getElementById("absolute_to_generate").style.display = "block";
     pdf.html(element)
         .then(() => {
-            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop + document.getElementById('section_to_generate_id_retard').offsetHeight + 40, signature_width, 80, "signature", "NONE", 10);
+            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop + document.getElementById('section_to_generate_id_retard').offsetHeight + 40, signature_width, signature_height, "signature", "NONE", 10);
             pdf.setFontSize(12);
-            pdf.setTextColor(255, 255, 255);
+            // Adapter la couleur du texte du bouton au thème actuel
+            const isDarkMode = document.getElementById("switch_toggle_light").checked;
+            if (isDarkMode) {
+                pdf.setTextColor(0, 0, 0); // Noir en mode sombre (sur bouton blanc)
+            } else {
+                pdf.setTextColor(255, 255, 255); // Blanc en mode jour (sur bouton noir)
+            }
             pdf.setFont('Helvetica', 'bold')
             if (document.getElementById("input_payement_link").value.trim() != "") {
                 pdf.textWithLink('Payer en ligne', document.getElementById('section_to_generate_internet_paiement_button').offsetLeft + 10, getElementOffset(document.getElementById('section_to_generate_internet_paiement_button')).top + 16.5, { url: document.getElementById("input_payement_link").value.trim() });
             }
-            pdf.save('fileName.pdf');
+            
+            // Construire le nom du fichier : NUMERO-NOM_CLIENT-NOM_PRESTA.pdf
+            const numeroDevis = document.getElementById("header_to_generate_number").innerHTML.replace("N°", "");
+            const nomClient = document.getElementById("input_name_customer").value.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_àéèêëïîôùûüçÀÉÈÊËÏÎÔÙÛÜÇ-]/g, '');
+            const nomPresta = (document.getElementById("input_firstName_worker").value.trim() + "_" + document.getElementById("input_lastName_worker").value.trim()).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_àéèêëïîôùûüçÀÉÈÊËÏÎÔÙÛÜÇ-]/g, '');
+            const fileName = `${numeroDevis}-${nomClient}-${nomPresta}.pdf`;
+            
+            pdf.save(fileName);
             document.getElementById("absolute_to_generate").style.display = "none";
             alertDisplay("success", "PDF généré avec succès !");
         }

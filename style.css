@@ -1272,8 +1272,8 @@ footer p {
 
 #section_total_ttc {
     font-weight: bold;
-    background-color: black;
-    color: white;
+    background-color: var(--pdf-button-bg);
+    color: var(--pdf-button-text);
     padding: 5px;
     font-size: 13px;
 }
