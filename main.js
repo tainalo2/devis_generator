@@ -335,9 +335,6 @@ window.addEventListener('DOMContentLoaded', async function () {
     // Détecter et appliquer le thème système
     detectSystemTheme();
     
-    // Détecter et appliquer le thème système
-    detectSystemTheme();
-    
     // Initialiser le thème PDF
     initializePDFTheme();
     
