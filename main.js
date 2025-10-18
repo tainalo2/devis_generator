@@ -5,7 +5,7 @@ window.html2canvas = html2canvas;
 const regexFirstName = new RegExp("^[a-zA-Z\u00C0-\u024F\-]+$");
 const regexLastName = new RegExp("^[a-zA-Z\u00C0-\u024F\- ]+$");
 const regexSiren = new RegExp("^\\d{9}$");
-const regexCompanyName = new RegExp("^[\w\s'àéèù'-\u00C0-\u024F]+$");
+const regexCompanyName = new RegExp("^[a-zA-Z0-9\u00C0-\u024F\\-' ]+$");
 const regexEmail = new RegExp("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
 const regexNumber = new RegExp("[0-9]");
 const regexIntFloat = new RegExp("[0-9]*\.?[0-9]*")
@@ -18,29 +18,7 @@ var user_templates = "";
 let signaturePad1;
 
 function toggleLightMode(element) {
-    if (element.checked) {
-        document.querySelector(':root').style.setProperty('--main-bg-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-second-color', 'white');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(245, 245, 245)');
-        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(95, 95, 95)');
-        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(240, 240, 240)');
-        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31');
-        signaturePad1.penColor = "white";
-    } else {
-        document.querySelector(':root').style.setProperty('--main-bg-color', 'white');
-        document.querySelector(':root').style.setProperty('--main-second-color', 'black');
-        document.querySelector(':root').style.setProperty('--main-tier_color', 'rgb(245, 245, 245)');
-        document.querySelector(':root').style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
-        document.querySelector(':root').style.setProperty('--inactive-bg-color', 'rgb(240, 240, 240)');
-        document.querySelector(':root').style.setProperty('--inactive-second-color', 'rgb(95, 95, 95)');
-        document.querySelector(':root').style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
-        document.querySelector(':root').style.setProperty('--basic_shadow', '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)');
-        signaturePad1.penColor = "black";
-    }
+    applyTheme(element.checked);
 }
 
 function inputError(element) {
@@ -259,9 +237,121 @@ async function URLtoBase64(url) {
     });
 }
 
+// Fonction pour initialiser les variables PDF selon le mode actuel
+function initializePDFTheme() {
+    const isDarkMode = document.getElementById("switch_toggle_light").checked;
+    applyTheme(isDarkMode);
+}
+
+// Fonction pour détecter le mode système et l'appliquer
+function detectSystemTheme() {
+    // D'abord, essayer de charger les préférences sauvegardées
+    if (loadThemePreference()) {
+        return; // Les préférences ont été chargées
+    }
+    
+    // Sinon, utiliser le thème système
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // Le système est en mode sombre
+        document.getElementById("switch_toggle_light").checked = true;
+        applyTheme(true);
+    } else {
+        // Le système est en mode clair
+        document.getElementById("switch_toggle_light").checked = false;
+        applyTheme(false);
+    }
+}
+
+// Fonction utilitaire pour appliquer un thème spécifique
+function applyTheme(isDarkMode) {
+    const root = document.querySelector(':root');
+    
+    if (isDarkMode) {
+        // Mode nuit
+        root.style.setProperty('--main-bg-color', 'black');
+        root.style.setProperty('--main-second-color', 'white');
+        root.style.setProperty('--main-tier_color', 'rgb(53, 53, 53)');
+        root.style.setProperty('--main-quater_color', 'rgb(245, 245, 245)');
+        root.style.setProperty('--inactive-bg-color', 'rgb(95, 95, 95)');
+        root.style.setProperty('--inactive-second-color', 'rgb(240, 240, 240)');
+        root.style.setProperty('--filter-main-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--filter-second-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--basic_shadow', '0 1px 2px rgba(255, 255, 255, 0.11), 0 2px 4px rgba(255, 255, 255, 0.24), 0 4px 8px rgba(255, 255, 255, 0.61), 0 8px 16px rgba(255, 255, 255, 0.29), 0 16px 32px rgba(255, 255, 255, 0.29), 0 32px 64px rgba(255, 255, 255, 0.31)');
+        
+        // Variables PDF pour le mode nuit
+        root.style.setProperty('--pdf-bg-color', 'black');
+        root.style.setProperty('--pdf-text-color', 'white');
+        root.style.setProperty('--pdf-border-color', '#404040');
+        root.style.setProperty('--pdf-section-bg', 'rgb(30, 30, 30)');
+        root.style.setProperty('--pdf-payment-bg', 'rgb(40, 40, 40)');
+        root.style.setProperty('--pdf-button-bg', 'white');
+        root.style.setProperty('--pdf-button-text', 'black');
+        
+        if (signaturePad1) signaturePad1.penColor = "white";
+    } else {
+        // Mode jour
+        root.style.setProperty('--main-bg-color', 'white');
+        root.style.setProperty('--main-second-color', 'black');
+        root.style.setProperty('--main-tier_color', 'rgb(245, 245, 245)');
+        root.style.setProperty('--main-quater_color', 'rgb(53, 53, 53)');
+        root.style.setProperty('--inactive-bg-color', 'rgb(240, 240, 240)');
+        root.style.setProperty('--inactive-second-color', 'rgb(95, 95, 95)');
+        root.style.setProperty('--filter-main-color-svg', 'invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--filter-second-color-svg', 'invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%)');
+        root.style.setProperty('--basic_shadow', '0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03)');
+        
+        // Variables PDF pour le mode jour
+        root.style.setProperty('--pdf-bg-color', 'white');
+        root.style.setProperty('--pdf-text-color', 'black');
+        root.style.setProperty('--pdf-border-color', '#202020');
+        root.style.setProperty('--pdf-section-bg', 'rgb(247, 247, 247)');
+        root.style.setProperty('--pdf-payment-bg', 'rgb(230, 230, 230)');
+        root.style.setProperty('--pdf-button-bg', 'black');
+        root.style.setProperty('--pdf-button-text', 'white');
+        
+        if (signaturePad1) signaturePad1.penColor = "black";
+    }
+    
+    // Sauvegarder la préférence
+    localStorage.setItem('theme-preference', isDarkMode ? 'dark' : 'light');
+}
+
+// Fonction pour charger les préférences de thème sauvegardées
+function loadThemePreference() {
+    const savedTheme = localStorage.getItem('theme-preference');
+    if (savedTheme) {
+        const isDarkMode = savedTheme === 'dark';
+        document.getElementById("switch_toggle_light").checked = isDarkMode;
+        applyTheme(isDarkMode);
+        return true;
+    }
+    return false;
+}
+
 window.addEventListener('DOMContentLoaded', async function () {
 
     history.replaceState("home", "", document.location.href);
+    
+    // Détecter et appliquer le thème système
+    detectSystemTheme();
+    
+    // Initialiser le thème PDF
+    initializePDFTheme();
+    
+    // Écouter les changements de thème système
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (e.matches) {
+                // Le système est passé en mode sombre
+                document.getElementById("switch_toggle_light").checked = true;
+                toggleLightMode(document.getElementById("switch_toggle_light"));
+            } else {
+                // Le système est passé en mode clair
+                document.getElementById("switch_toggle_light").checked = false;
+                toggleLightMode(document.getElementById("switch_toggle_light"));
+            }
+        });
+    }
 
     if (pseudo != "") {
         updateOnLogin("sign");
@@ -517,7 +607,7 @@ function priceCalc(element) {
             totalDevis = (totalDevis + parseFloat(line.querySelector(".devis_price_total").innerHTML.replace("€", "")));
         }
     })
-    document.getElementById("price_indicator_htc").innerHTML = totalDevis + "€";
+    document.getElementById("price_indicator_htc").innerHTML = totalDevis.toFixed(2) + "€";
     document.getElementById("price_indicator_ttc").innerHTML = (parseFloat(totalDevis) + (parseFloat(totalDevis) * 0.2)).toFixed(2) + "€";
     if (totalDevis <= 150) {
         document.getElementById("toggle_tva").style.display = "none";
@@ -561,8 +651,51 @@ function toglleCheck(element) {
 
 }
 
+function cleanPDFGeneration() {
+    // Nettoyer les lignes de devis ajoutées lors de la génération précédente
+    const devisContainer = document.getElementById("section_devis_to_generate");
+    const firstLine = document.getElementById("section_devis_to_generate_line_1");
+    const labelsLine = document.getElementById("section_devis_to_generate_line_labels");
+    
+    // Vérifier que le conteneur existe avant de manipuler ses enfants
+    if (devisContainer && firstLine) {
+        // Supprimer tous les enfants sauf la première ligne template et les labels
+        Array.from(devisContainer.children).forEach((child) => {
+            if (child !== firstLine && child !== labelsLine) {
+                child.remove();
+            }
+        });
+        
+        // Réinitialiser l'affichage de la première ligne
+        firstLine.style.display = "none";
+    }
+    
+    // Réinitialiser les sections conditionnelles avec vérification de nullité
+    const workerRcs = document.getElementById("section_to_generate_id_worker_rcs");
+    if (workerRcs) workerRcs.style.display = "none";
+    
+    const workerRm = document.getElementById("section_to_generate_id_worker_rm");
+    if (workerRm) workerRm.style.display = "none";
+    
+    const infoPaiement = document.getElementById("section_to_generate_info_paiement");
+    if (infoPaiement) infoPaiement.style.display = "none";
+    
+    const ibanContainer = document.getElementById("section_to_generate_info_paiement_iban_container");
+    if (ibanContainer) ibanContainer.style.display = "none";
+    
+    const paiementButton = document.getElementById("section_to_generate_internet_paiement_button");
+    if (paiementButton) paiementButton.style.display = "none";
+}
+
 function generatePDF() {
     alertDisplay("waiting", "Génération en cours...");
+    
+    // Nettoyer les éléments de la génération précédente
+    cleanPDFGeneration();
+    
+    // S'assurer que le thème PDF est à jour
+    initializePDFTheme();
+    
     // Modify all PDF values with inputs
 
     //global infos
@@ -606,17 +739,17 @@ function generatePDF() {
 
             cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").innerHTML;
             cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").innerHTML = line.querySelector(".devis_quantity").value;
-            cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = line.querySelector(".devis_price").value + "€";
-            cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value) + "€";
+            cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = parseFloat(line.querySelector(".devis_price").value).toFixed(2) + "€";
+            cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = (parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value)).toFixed(2) + "€";
         }
         document.getElementById("section_devis_to_generate_line_1").style.display = "none";
-        document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis + "€";
+        document.getElementById("section_to_generate_id_total_htc").innerHTML = totalDevis.toFixed(2) + "€";
         if (document.getElementById("switch_tva").checked && totalDevis > 150) {
-            document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)) + "€";
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = (totalDevis + (totalDevis * 0.2)).toFixed(2) + "€";
             document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "none";
         } else {
             document.getElementById("section_to_generate_id_tva").innerHTML = "0%";
-            document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis + "€";
+            document.getElementById("section_to_generate_id_total_ttc").innerHTML = totalDevis.toFixed(2) + "€";
             document.getElementById("section_devis_to_generate_tva_exempt_text").style.display = "block";
         }
     });
@@ -643,20 +776,34 @@ function generatePDF() {
     //pdf generation
     var element = document.getElementById("absolute_to_generate");
     var signature = document.getElementById('canvas1');
-    var signature_width = signature.width / (signature.height / 50);
+    var signature_height = 80;
+    var signature_width = (signature.width * signature_height) / signature.height;
     var pdf = new jsPDF('p', 'pt', 'a4');
     //width 600px * 849px for A4 page
     document.getElementById("absolute_to_generate").style.display = "block";
     pdf.html(element)
         .then(() => {
-            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop + document.getElementById('section_to_generate_id_retard').offsetHeight + 40, signature_width, 80, "signature", "NONE", 10);
+            pdf.addImage(signature, 'PNG', 60, document.getElementById('section_to_generate_id_retard').offsetTop + document.getElementById('section_to_generate_id_retard').offsetHeight + 40, signature_width, signature_height, "signature", "NONE", 10);
             pdf.setFontSize(12);
-            pdf.setTextColor(255, 255, 255);
+            // Adapter la couleur du texte du bouton au thème actuel
+            const isDarkMode = document.getElementById("switch_toggle_light").checked;
+            if (isDarkMode) {
+                pdf.setTextColor(0, 0, 0); // Noir en mode sombre (sur bouton blanc)
+            } else {
+                pdf.setTextColor(255, 255, 255); // Blanc en mode jour (sur bouton noir)
+            }
             pdf.setFont('Helvetica', 'bold')
             if (document.getElementById("input_payement_link").value.trim() != "") {
                 pdf.textWithLink('Payer en ligne', document.getElementById('section_to_generate_internet_paiement_button').offsetLeft + 10, getElementOffset(document.getElementById('section_to_generate_internet_paiement_button')).top + 16.5, { url: document.getElementById("input_payement_link").value.trim() });
             }
-            pdf.save('fileName.pdf');
+            
+            // Construire le nom du fichier : NUMERO-NOM_CLIENT-NOM_PRESTA.pdf
+            const numeroDevis = document.getElementById("header_to_generate_number").innerHTML.replace("N°", "");
+            const nomClient = document.getElementById("input_name_customer").value.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_àéèêëïîôùûüçÀÉÈÊËÏÎÔÙÛÜÇ-]/g, '');
+            const nomPresta = (document.getElementById("input_firstName_worker").value.trim() + "_" + document.getElementById("input_lastName_worker").value.trim()).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_àéèêëïîôùûüçÀÉÈÊËÏÎÔÙÛÜÇ-]/g, '');
+            const fileName = `${numeroDevis}-${nomClient}-${nomPresta}.pdf`;
+            
+            pdf.save(fileName);
             document.getElementById("absolute_to_generate").style.display = "none";
             alertDisplay("success", "PDF généré avec succès !");
         }

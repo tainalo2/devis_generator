@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Thème PDF - Devis Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="banner">
+        <div class="banner_content_container">
+            <div class="main_title">
+                <h1>Test Thème PDF</h1>
+            </div>
+            <div class="lightMode_container">
+                <label class="invert_toggle_label" for="switch_toggle_light_test">
+                    <input type="checkbox" id="switch_toggle_light_test" class="invert_toggle_input">
+                </label>
+                <span class="toggle_title">Mode sombre</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="full_page_container">
+        <div class="section">
+            <h2>Test des Variables PDF</h2>
+            <p>Ce test permet de vérifier que les variables CSS pour les PDF s'adaptent correctement au mode jour/nuit.</p>
+            
+            <div class="section">
+                <h3>Prévisualisation PDF</h3>
+                <div id="absolute_to_generate" style="display: block; position: relative; margin: 20px 0;">
+                    <div class="header_to_generate">
+                        <div class="header_to_generate_container">
+                            <div id="header_to_generate_title">Facture Test</div>
+                            <div id="header_to_generate_subtitle">Test de génération PDF</div>
+                        </div>
+                        <div class="header_to_generate_container text_end">
+                            <div class="header_to_generate_date">Date d'émission : <span id="header_to_generate_date_value">17/10/2024</span></div>
+                            <div id="header_to_generate_number">N°202410171</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate_container">
+                        <div class="section_to_generate">
+                            <div class="section_to_generate_title">Prestataire</div>
+                            <div>
+                                <span class="section_to_generate_label">Nom :</span>
+                                <span>Test User</span>
+                            </div>
+                            <div>
+                                <span class="section_to_generate_label">Adresse :</span>
+                                <span>123 Test Street</span>
+                            </div>
+                        </div>
+                        <div class="section_to_generate">
+                            <div class="section_to_generate_title">Client</div>
+                            <div>
+                                <span class="section_to_generate_label">Entreprise :</span>
+                                <span>Test Company</span>
+                            </div>
+                            <div>
+                                <span class="section_to_generate_label">Adresse :</span>
+                                <span>456 Client Avenue</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate">
+                        <div class="section_devis_to_generate_line" id="section_devis_to_generate_line_labels">
+                            <div class="section_devis_to_generate_line_description">Description</div>
+                            <div class="section_devis_to_generate_line_quantity">Quantité</div>
+                            <div class="section_devis_to_generate_line_unit_price">Prix</div>
+                            <div class="section_devis_to_generate_line_total_price">Total</div>
+                        </div>
+                        <div class="section_devis_to_generate_line">
+                            <div class="section_devis_to_generate_line_description">Service de test</div>
+                            <div class="section_devis_to_generate_line_quantity">1</div>
+                            <div class="section_devis_to_generate_line_unit_price">100€</div>
+                            <div class="section_devis_to_generate_line_total_price">100€</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section_to_generate" id="section_to_generate_id_retard">
+                        <div class="section_to_generate_title">Modalités de retard</div>
+                        <div><span class="section_to_generate_label">Date limite :</span><span>17/11/2024</span></div>
+                        <div><span class="section_to_generate_label">Taux d'intérêt :</span><span>15,21%</span></div>
+                    </div>
+                    
+                    <div id="section_to_generate_signature">
+                        <p>Zone de signature</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>Variables CSS Actuelles</h3>
+                <div id="css-variables-display">
+                    <p><strong>PDF Background:</strong> <span id="pdf-bg-color">-</span></p>
+                    <p><strong>PDF Text:</strong> <span id="pdf-text-color">-</span></p>
+                    <p><strong>PDF Border:</strong> <span id="pdf-border-color">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        // Fonction pour afficher les variables CSS actuelles
+        function updateCSSVariablesDisplay() {
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+            
+            document.getElementById('pdf-bg-color').textContent = computedStyle.getPropertyValue('--pdf-bg-color').trim();
+            document.getElementById('pdf-text-color').textContent = computedStyle.getPropertyValue('--pdf-text-color').trim();
+            document.getElementById('pdf-border-color').textContent = computedStyle.getPropertyValue('--pdf-border-color').trim();
+        }
+        
+        // Mettre à jour l'affichage au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCSSVariablesDisplay();
+            
+            // Écouter les changements de thème
+            document.getElementById('switch_toggle_light_test').addEventListener('change', function() {
+                setTimeout(updateCSSVariablesDisplay, 100);
+            });
+        });
+    </script>
+</body>
+</html>

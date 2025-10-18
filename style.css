@@ -10,6 +10,16 @@
     --filter-main-color-svg: invert(0%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%);
     --filter-second-color-svg: invert(100%) sepia(2%) saturate(906%) hue-rotate(227deg) brightness(121%) contrast(100%);
     --basic_shadow: 0 1px 2px rgba(0, 0, 0, .07), 0 2px 4px rgba(0, 0, 0, .03), 0 4px 8px rgba(0, 0, 0, .03), 0 8px 16px rgba(0, 0, 0, .03), 0 16px 32px rgba(0, 0, 0, .03), 0 32px 64px rgba(0, 0, 0, .03);
+    
+    /* Variables spécifiques pour le PDF */
+    --pdf-bg-color: white;
+    --pdf-text-color: black;
+    --pdf-border-color: #202020;
+    --pdf-section-bg: rgb(247, 247, 247);
+    --pdf-payment-bg: rgb(230, 230, 230);
+    --pdf-button-bg: black;
+    --pdf-button-text: white;
+    
     background: var(--main-bg-color);
     color: var(--main-second-color);
     margin: 0px;
@@ -1137,7 +1147,8 @@ footer p {
 
 #absolute_to_generate {
     position: absolute;
-    background-color: rgb(255, 255, 255);
+    background-color: var(--pdf-bg-color);
+    color: var(--pdf-text-color);
     top: 0;
     width: 560px;
     display: block;
@@ -1157,11 +1168,13 @@ footer p {
 #header_to_generate_title {
     font-weight: bold;
     font-size: 24px;
+    color: var(--pdf-text-color);
 }
 
 #header_to_generate_subtitle {
     font-weight: bolder;
     font-size: 14px;
+    color: var(--pdf-text-color);
 }
 
 .section_to_generate_title {
@@ -1169,6 +1182,7 @@ footer p {
     font-size: 13px;
     text-align: center;
     margin-bottom: 5px;
+    color: var(--pdf-text-color);
 }
 
 .text_end {
@@ -1183,18 +1197,21 @@ footer p {
 }
 
 .section_to_generate {
-    border: 1px solid #202020;
+    border: 1px solid var(--pdf-border-color);
     padding: 10px;
     flex: 1;
     border-radius: 5px;
     overflow: hidden;
     height: fit-content;
+    background-color: var(--pdf-bg-color);
+    color: var(--pdf-text-color);
 }
 
 .section_to_generate_label {
     font-weight: bold;
     margin-right: 5px;
     margin-bottom: 5px;
+    color: var(--pdf-text-color);
 }
 
 #section_devis_to_generate {
@@ -1205,11 +1222,12 @@ footer p {
     display: flex;
     justify-content: space-between;
     align-items: end;
-    border-bottom: solid 1px black;
+    border-bottom: solid 1px var(--pdf-border-color);
     gap: 5px;
     margin: 0px;
     padding-left: 5px;
     padding-right: 5px;
+    color: var(--pdf-text-color);
 }
 
 .section_devis_to_generate_line:last-child {
@@ -1217,7 +1235,7 @@ footer p {
 }
 
 .section_devis_to_generate_line:nth-child(even) {
-    background: rgb(247, 247, 247);
+    background: var(--pdf-section-bg);
 }
 
 
@@ -1229,18 +1247,18 @@ footer p {
 
 .section_devis_to_generate_line_description {
     flex: 5;
-    border-right: solid 1px black;
+    border-right: solid 1px var(--pdf-border-color);
     padding-left: 10px;
 }
 
 .section_devis_to_generate_line_quantity {
     flex: 1;
-    border-right: solid 1px black;
+    border-right: solid 1px var(--pdf-border-color);
 }
 
 .section_devis_to_generate_line_unit_price {
     flex: 1;
-    border-right: solid 1px black;
+    border-right: solid 1px var(--pdf-border-color);
 }
 
 .section_devis_to_generate_line_total_price {
@@ -1249,13 +1267,13 @@ footer p {
 
 #section_devis_to_generate_line_labels {
     font-weight: bold;
-    border-bottom: solid 2px black;
+    border-bottom: solid 2px var(--pdf-border-color);
 }
 
 #section_total_ttc {
     font-weight: bold;
-    background-color: black;
-    color: white;
+    background-color: var(--pdf-button-bg);
+    color: var(--pdf-button-text);
     padding: 5px;
     font-size: 13px;
 }
@@ -1263,10 +1281,13 @@ footer p {
 #section_to_generate_signature {
     width: 100%;
     height: 50px;
+    background-color: var(--pdf-bg-color);
+    border: 1px solid var(--pdf-border-color);
+    border-radius: 5px;
 }
 
 #section_to_generate_info_paiement {
-    background-color: rgb(230, 230, 230);
+    background-color: var(--pdf-payment-bg);
     position: relative;
     width: 560px;
     left: -20px;
@@ -1296,8 +1317,8 @@ footer p {
 
 #section_to_generate_internet_paiement_button {
     font-family: Arial, Helvetica, sans-serif;
-    background-color: black;
-    color: black;
+    background-color: var(--pdf-button-bg);
+    color: var(--pdf-button-text);
     padding: 5px;
     padding-left: 10px;
     padding-right: 10px;
