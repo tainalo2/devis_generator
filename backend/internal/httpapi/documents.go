@@ -323,7 +323,12 @@ func (s *Server) handleGuestPDF(w http.ResponseWriter, r *http.Request) {
 	} else if s.legal != nil {
 		mentions = s.legal.MentionsForIssue(r.Context())
 	}
-	pdf, err := pdfgen.Render(doc, req.Issuer, req.Client, mentions)
+	guestClient := biz.Client{
+		Name: req.Client.Name, Email: req.Client.Email, Address: req.Client.Address,
+		SIREN: req.Client.SIREN, SIRET: req.Client.SIRET, VATNumber: req.Client.VATNumber,
+		Notes: req.Client.Notes,
+	}
+	pdf, err := pdfgen.Render(doc, req.Issuer, guestClient, mentions)
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "Génération PDF impossible.")
 		return

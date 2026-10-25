@@ -137,7 +137,6 @@ export function NewDocumentPage() {
           payment_terms: form.payment_terms,
         },
         client: {
-          id: "",
           name: clientName || "Client",
           email: "",
           address: emptyAddress(),
@@ -146,7 +145,7 @@ export function NewDocumentPage() {
           vat_number: "",
           notes: "",
         },
-        lines: form.lines,
+        lines: form.lines.map(({ id: _id, ...rest }) => rest),
       })
       downloadBlob(blob, "document-invite.pdf")
       push("PDF téléchargé.", "success")

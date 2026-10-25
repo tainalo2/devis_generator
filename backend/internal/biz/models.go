@@ -85,6 +85,17 @@ type Document struct {
 	UpdatedAt         time.Time       `json:"updated_at"`
 }
 
+// GuestParty is a client/issuer identity for ephemeral guest PDF (no UUID required).
+type GuestParty struct {
+	Name      string  `json:"name"`
+	Email     string  `json:"email"`
+	Address   Address `json:"address"`
+	SIREN     string  `json:"siren"`
+	SIRET     string  `json:"siret"`
+	VATNumber string  `json:"vat_number"`
+	Notes     string  `json:"notes"`
+}
+
 // GuestPDFRequest is the payload for ephemeral guest PDF generation.
 type GuestPDFRequest struct {
 	Kind         string          `json:"kind"`
@@ -96,7 +107,7 @@ type GuestPDFRequest struct {
 	Notes        string          `json:"notes"`
 	PaymentTerms string          `json:"payment_terms"`
 	Issuer       IssuerProfile   `json:"issuer"`
-	Client       Client          `json:"client"`
+	Client       GuestParty      `json:"client"`
 	Lines        []DocLine       `json:"lines"`
 	Number       string          `json:"number"`
 	Mentions     *legal.Mentions `json:"mentions,omitempty"`

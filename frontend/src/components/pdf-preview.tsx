@@ -56,7 +56,6 @@ export function PDFPreview({ input }: { input: PreviewInput }) {
           payment_terms: parsed.payment_terms,
         },
         client: {
-          id: "",
           name: parsed.clientName || "Client",
           email: "",
           address: emptyAddress(),
@@ -65,7 +64,7 @@ export function PDFPreview({ input }: { input: PreviewInput }) {
           vat_number: "",
           notes: "",
         },
-        lines: parsed.lines,
+        lines: parsed.lines.map(({ id: _id, ...rest }) => rest),
       })
         .then((blob) => {
           if (cancelled) return
