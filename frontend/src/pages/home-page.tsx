@@ -34,15 +34,15 @@ export function HomePage() {
   return (
     <section className="space-y-6">
       <div className="space-y-2">
-        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">Vibed</p>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
-          Devis et factures pour micro-entrepreneurs
+          Devis Generator : VIBED
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          Socle de la nouvelle version : API Go, PostgreSQL et interface React. Le formulaire de
-          document arrive ensuite.
+          Devis et factures pour micro-entrepreneurs, indépendants et petites sociétés. Socle API Go,
+          PostgreSQL et interface React (français). Le formulaire de document arrive ensuite.
         </p>
       </div>
+
 
       <div className="flex flex-wrap gap-3">
         <Button render={<Link to="/documents/nouveau" />}>Nouveau document</Button>

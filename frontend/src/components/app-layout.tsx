@@ -18,8 +18,9 @@ export function AppLayout() {
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-6">
             <NavLink to="/" className="text-base font-semibold tracking-tight text-foreground">
-              Devis Generator
+              Devis Generator : VIBED
             </NavLink>
+
             <nav className="flex items-center gap-1">
               <NavLink to="/" end className={navLinkClass}>
                 Accueil

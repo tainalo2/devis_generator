@@ -68,9 +68,10 @@ func (s *Server) mountStatic(r chi.Router) {
 	if err != nil || !info.IsDir() {
 		r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]string{
-				"service": "devisgenerator-vibed",
+				"service": "Devis Generator : VIBED",
 				"hint":    "frontend build not found; run npm run build in frontend/",
 			})
+
 		})
 		return
 	}

@@ -7,8 +7,8 @@ export function NewDocumentPage() {
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Nouveau document</h1>
         <p className="max-w-2xl text-muted-foreground">
-          Squelette de la page devis / facture. Les champs, le calcul de TVA et l&apos;export PDF
-          seront branchés dans une itération suivante.
+          Squelette : devis, facture, facture d&apos;acompte ou avoir. TVA (franchise 293 B ou taux
+          par ligne), numérotation et PDF serveur arriveront ensuite.
         </p>
       </div>
 
@@ -24,8 +24,11 @@ export function NewDocumentPage() {
           >
             <option value="quote">Devis</option>
             <option value="invoice">Facture</option>
+            <option value="deposit_invoice">Facture d&apos;acompte</option>
+            <option value="credit_note">Avoir</option>
           </select>
         </label>
+
         <label className="space-y-1.5 text-sm">
           <span className="font-medium">Client</span>
           <input

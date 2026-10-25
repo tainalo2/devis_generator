@@ -1,8 +1,13 @@
-# Devis Generator — Vibed
+# Devis Generator : VIBED
 
-Branche de développement de la nouvelle version (**Vibed**) : backend Go + PostgreSQL + front React, dans le même dépôt que le site vanilla historique (conservé à la racine, non déplacé).
+Branche de développement de **Devis Generator : VIBED** — backend Go + PostgreSQL + front React, dans le même dépôt que le site vanilla historique (conservé à la racine, non déplacé).
 
-Site officiel actuel : [devisgenerator.fr](https://www.devisgenerator.fr/) · licence GPL-3.0.
+Site officiel actuel : [devisgenerator.fr](https://www.devisgenerator.fr/)
+
+## Licence
+
+- **VIBED** (code sous `backend/`, `frontend/`, `docs/`, `Dockerfile.vibed`, etc.) : [Apache-2.0](LICENSE.vibed)
+- **Site vanilla historique** (racine : `index.html`, `main.js`, …) : [GPL-3.0](LICENSE) — inchangée
 
 ## Prérequis
 
@@ -65,17 +70,13 @@ cd frontend && npm run build
 
 ## Structure
 
-Voir [docs/architecture.md](docs/architecture.md).
+Voir [docs/architecture.md](docs/architecture.md) et les décisions produit dans [docs/DECISIONS.md](docs/DECISIONS.md).
 
 - `backend/` — API Go (chi, pgx, migrations, package `legal` stub)
-- `frontend/` — React + TS + Vite + Tailwind + shadcn/ui
+- `frontend/` — React + TS + Vite + Tailwind + shadcn/ui (français uniquement)
 - `Dockerfile.vibed` — image de la nouvelle stack (le `Dockerfile` nginx legacy reste pour les tags `v*`)
 - `.github/workflows/vibed-ci.yml` — lint / test / build (sans publication d'image)
 
 ## Suite prévue
 
-- Authentification / comptes
-- CRUD clients et documents (devis / factures)
-- Sources officielles pour le package `legal` + cache
-- Génération PDF et mentions légales
-- Décision sur le devenir du site vanilla à la racine
+Voir [docs/DECISIONS.md](docs/DECISIONS.md) : auth invité + email/mot de passe, CRUD documents (devis / facture / acompte / avoir), TVA 293 B + taux par ligne, numérotation `F-2026-0001`, PDF serveur, sources `legal`.

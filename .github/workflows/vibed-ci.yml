@@ -65,6 +65,7 @@ jobs:
           context: .
           file: Dockerfile.vibed
           push: false
-          tags: devisgenerator-vibed:ci
+          tags: devis-generator-vibed:ci
+
           cache-from: type=gha
           cache-to: type=gha,mode=max

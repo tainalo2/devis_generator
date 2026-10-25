@@ -1,4 +1,4 @@
-# Vibed (nouvelle version) — image multi-stage : front Vite + backend Go.
+# Devis Generator : VIBED — image multi-stage : front Vite + backend Go.
 # Le Dockerfile historique (nginx site vanilla) reste inchangé pour les tags v*.
 
 # --- Frontend ---
@@ -19,6 +19,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X main.Version=vibed" -o 
 
 # --- Runtime ---
 FROM gcr.io/distroless/static-debian12:nonroot
+
+LABEL org.opencontainers.image.title="Devis Generator : VIBED" \
+      org.opencontainers.image.description="Générateur de devis/factures pour micro-entrepreneurs, indépendants et petites sociétés (stack Go + React)" \
+      org.opencontainers.image.source="https://github.com/tainalo2/devis_generator" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="vibed"
+
 WORKDIR /app
 COPY --from=backend /out/server /app/server
 COPY --from=frontend /frontend/dist /app/frontend/dist
