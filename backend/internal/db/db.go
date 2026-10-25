@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// NewPool creates a pgx connection pool from a database URL.
+// NewPool creates a pgx connection pool from a database URL and pings once.
 func NewPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -32,5 +32,22 @@ func NewPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("ping database: %w", err)
 	}
 
+	return pool, nil
+}
+
+// NewPoolWithRetry creates a pool, retrying until the database is reachable.
+func NewPoolWithRetry(ctx context.Context, databaseURL string, opts RetryOptions) (*pgxpool.Pool, error) {
+	var pool *pgxpool.Pool
+	err := withRetry(ctx, "database connect", opts, func(ctx context.Context) error {
+		p, err := NewPool(ctx, databaseURL)
+		if err != nil {
+			return err
+		}
+		pool = p
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 	return pool, nil
 }

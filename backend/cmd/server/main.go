@@ -35,15 +35,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx := context.Background()
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), cfg.StartupTimeout)
+	defer startupCancel()
 
-	if err := db.RunMigrations(cfg.DatabaseURL); err != nil {
+	retryOpts := db.DefaultRetryOptions()
+
+	if err := db.RunMigrationsWithRetry(startupCtx, cfg.DatabaseURL, retryOpts); err != nil {
 		slog.Error("migrations", "error", err)
 		os.Exit(1)
 	}
 	slog.Info("migrations applied")
 
-	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
+	pool, err := db.NewPoolWithRetry(startupCtx, cfg.DatabaseURL, retryOpts)
 	if err != nil {
 		slog.Error("database", "error", err)
 		os.Exit(1)

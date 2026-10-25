@@ -20,7 +20,9 @@ services:
       context: .
       dockerfile: Dockerfile.vibed
     environment:
-      ADDR: ":8080"
+      ADDR: "0.0.0.0:8080"
+      SHUTDOWN_TIMEOUT: "10s"
+
       DATABASE_URL: postgres://devis:devis@db:5432/devis?sslmode=disable
       STATIC_DIR: /app/frontend/dist
       APP_ENV: development

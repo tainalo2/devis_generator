@@ -16,3 +16,15 @@ func TestToMigrateURL(t *testing.T) {
 		}
 	}
 }
+
+func TestMigrateURLUsesAdvisoryLockDefault(t *testing.T) {
+	ok := "postgres://u:p@localhost:5432/db?sslmode=disable"
+	if !MigrateURLUsesAdvisoryLockDefault(ok) {
+		t.Fatalf("expected advisory lock default for %q", ok)
+	}
+
+	disabled := "postgres://u:p@localhost:5432/db?x-lock-strategy=off"
+	if MigrateURLUsesAdvisoryLockDefault(disabled) {
+		t.Fatalf("expected advisory lock disabled for %q", disabled)
+	}
+}

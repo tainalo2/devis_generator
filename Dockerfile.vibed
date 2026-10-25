@@ -29,9 +29,11 @@ LABEL org.opencontainers.image.title="Devis Generator : VIBED" \
 WORKDIR /app
 COPY --from=backend /out/server /app/server
 COPY --from=frontend /frontend/dist /app/frontend/dist
-ENV ADDR=:8080 \
+ENV ADDR=0.0.0.0:8080 \
     STATIC_DIR=/app/frontend/dist \
-    APP_ENV=production
+    APP_ENV=production \
+    SHUTDOWN_TIMEOUT=10s
 EXPOSE 8080
 USER nonroot:nonroot
 ENTRYPOINT ["/app/server"]
+

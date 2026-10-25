@@ -18,24 +18,27 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("STATIC_DIR", "")
 	t.Setenv("APP_ENV", "")
 	t.Setenv("SHUTDOWN_TIMEOUT", "")
+	t.Setenv("STARTUP_TIMEOUT", "")
 
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() unexpected error: %v", err)
 	}
 
-	if cfg.Addr != ":8080" {
-		t.Fatalf("Addr = %q, want :8080", cfg.Addr)
+	if cfg.Addr != "0.0.0.0:8080" {
+		t.Fatalf("Addr = %q, want 0.0.0.0:8080", cfg.Addr)
 	}
 	if cfg.StaticDir != "../frontend/dist" {
 		t.Fatalf("StaticDir = %q, want ../frontend/dist", cfg.StaticDir)
 	}
-
 	if cfg.Environment != "development" {
 		t.Fatalf("Environment = %q, want development", cfg.Environment)
 	}
 	if cfg.ShutdownTimeout != 10*time.Second {
 		t.Fatalf("ShutdownTimeout = %v, want 10s", cfg.ShutdownTimeout)
+	}
+	if cfg.StartupTimeout != 2*time.Minute {
+		t.Fatalf("StartupTimeout = %v, want 2m", cfg.StartupTimeout)
 	}
 }
 
@@ -45,6 +48,7 @@ func TestLoadOverrides(t *testing.T) {
 	t.Setenv("STATIC_DIR", "/app/static")
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("SHUTDOWN_TIMEOUT", "5s")
+	t.Setenv("STARTUP_TIMEOUT", "30s")
 
 	cfg, err := Load()
 	if err != nil {
@@ -62,5 +66,15 @@ func TestLoadOverrides(t *testing.T) {
 	}
 	if cfg.ShutdownTimeout != 5*time.Second {
 		t.Fatalf("ShutdownTimeout = %v, want 5s", cfg.ShutdownTimeout)
+	}
+	if cfg.StartupTimeout != 30*time.Second {
+		t.Fatalf("StartupTimeout = %v, want 30s", cfg.StartupTimeout)
+	}
+}
+
+func TestLoadRejectsDisabledAdvisoryLock(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db?x-lock-strategy=off")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error when advisory lock is disabled")
 	}
 }

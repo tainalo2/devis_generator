@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"fmt"
@@ -14,8 +15,11 @@ import (
 var embeddedMigrations embed.FS
 
 // RunMigrations applies embedded SQL migrations against DATABASE_URL.
-// databaseURL must use a scheme accepted by golang-migrate's pgx/v5 driver
-// (postgres:// or pgx5://). postgres:// is rewritten to pgx5://.
+//
+// The golang-migrate pgx/v5 driver acquires a PostgreSQL advisory lock
+// (pg_advisory_lock) by default before migrating, so concurrent app replicas
+// starting together are safe: waiters block until the lock holder finishes.
+// Do not append x-lock-strategy=off (or disable advisory locking) to DATABASE_URL.
 func RunMigrations(databaseURL string) error {
 	source, err := iofs.New(embeddedMigrations, "migrations")
 	if err != nil {
@@ -34,6 +38,14 @@ func RunMigrations(databaseURL string) error {
 	return nil
 }
 
+// RunMigrationsWithRetry retries RunMigrations until the database accepts connections.
+// Concurrent replicas remain safe thanks to migrate's advisory lock (see RunMigrations).
+func RunMigrationsWithRetry(ctx context.Context, databaseURL string, opts RetryOptions) error {
+	return withRetry(ctx, "migrations", opts, func(context.Context) error {
+		return RunMigrations(databaseURL)
+	})
+}
+
 func toMigrateURL(databaseURL string) string {
 	for _, from := range []string{"postgres://", "postgresql://"} {
 		if len(databaseURL) >= len(from) && databaseURL[:len(from)] == from {
@@ -43,3 +55,51 @@ func toMigrateURL(databaseURL string) string {
 	return databaseURL
 }
 
+// MigrateURLUsesAdvisoryLockDefault reports whether the migrate URL leaves the
+// pgx/v5 default advisory lock strategy enabled (no explicit disable).
+func MigrateURLUsesAdvisoryLockDefault(databaseURL string) bool {
+	u := toMigrateURL(databaseURL)
+	// Explicit disables we refuse to treat as "safe default".
+	for _, bad := range []string{
+		"x-lock-strategy=off",
+		"x-lock-strategy=false",
+		"x-lock-strategy=none",
+		"x-advisory-locking=false",
+	} {
+		if containsFold(u, bad) {
+			return false
+		}
+	}
+	return true
+}
+
+func containsFold(s, substr string) bool {
+	return len(s) >= len(substr) && (indexFold(s, substr) >= 0)
+}
+
+func indexFold(s, substr string) int {
+	n, m := len(s), len(substr)
+	if m == 0 {
+		return 0
+	}
+	for i := 0; i+m <= n; i++ {
+		ok := true
+		for j := 0; j < m; j++ {
+			a, b := s[i+j], substr[j]
+			if a >= 'A' && a <= 'Z' {
+				a += 'a' - 'A'
+			}
+			if b >= 'A' && b <= 'Z' {
+				b += 'a' - 'A'
+			}
+			if a != b {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			return i
+		}
+	}
+	return -1
+}

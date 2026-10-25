@@ -25,9 +25,14 @@ LICENSE                  GPL-3.0 (site historique, inchangé)
 
 | Méthode | Chemin | Rôle |
 |---------|--------|------|
-| GET | `/healthz` | Santé process + base |
-| GET | `/api/v1/healthz` | Même payload, préfixe versionné |
+| GET | `/healthz` | Liveness (200, sans Postgres) |
+| GET | `/readyz` | Readiness (Ping Postgres) |
+| GET | `/api/v1/healthz` | Idem liveness, préfixe versionné |
+| GET | `/api/v1/readyz` | Idem readiness, préfixe versionné |
 | GET | `/*` | Front statique (`frontend/dist`) + fallback SPA |
+
+Au démarrage : retries vers Postgres, puis migrations golang-migrate (verrou consultatif PostgreSQL par défaut, sûr multi-réplicas).
+
 
 ## Schéma (socle)
 

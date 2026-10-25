@@ -14,29 +14,42 @@ type Pinger interface {
 
 type healthResponse struct {
 	Status   string `json:"status"`
-	Database string `json:"database"`
+	Database string `json:"database,omitempty"`
 	Version  string `json:"version"`
 }
 
-func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
+// handleHealthz is a liveness probe: always 200 if the process can serve HTTP.
+// It must not depend on PostgreSQL (so a replica can stay "alive" while DB is warming).
+func (s *Server) handleHealthz(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, healthResponse{
+		Status:  "ok",
+		Version: s.version,
+	})
+}
+
+// handleReadyz is a readiness probe: 200 only when the database answers Ping.
+func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 	resp := healthResponse{
 		Status:   "ok",
 		Database: "ok",
 		Version:  s.version,
 	}
 
+	if s.db == nil {
+		resp.Status = "not_ready"
+		resp.Database = "unconfigured"
+		writeJSON(w, http.StatusServiceUnavailable, resp)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 
-	if s.db != nil {
-		if err := s.db.Ping(ctx); err != nil {
-			resp.Status = "degraded"
-			resp.Database = "unavailable"
-			writeJSON(w, http.StatusServiceUnavailable, resp)
-			return
-		}
-	} else {
-		resp.Database = "skipped"
+	if err := s.db.Ping(ctx); err != nil {
+		resp.Status = "not_ready"
+		resp.Database = "unavailable"
+		writeJSON(w, http.StatusServiceUnavailable, resp)
+		return
 	}
 
 	writeJSON(w, http.StatusOK, resp)

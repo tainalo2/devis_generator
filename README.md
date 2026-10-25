@@ -22,10 +22,26 @@ cp .env.example .env   # optionnel pour Compose (les valeurs sont déjà dans co
 docker compose up --build
 ```
 
-Puis ouvrir [http://localhost:8080](http://localhost:8080).  
-Santé API : [http://localhost:8080/api/v1/healthz](http://localhost:8080/api/v1/healthz).
+Puis ouvrir [http://localhost:8080](http://localhost:8080).
+
+- Liveness : [http://localhost:8080/healthz](http://localhost:8080/healthz) (200 sans dépendre de Postgres)
+- Readiness : [http://localhost:8080/readyz](http://localhost:8080/readyz) (vérifie la base)
+
+Image d’essai GHCR : `ghcr.io/tainalo2/devisgenerator-vibed` (tags `vibed-v*` via `.github/workflows/vibed-release.yml`).
+
+## Variables d’environnement
+
+| Variable | Rôle | Défaut |
+|----------|------|--------|
+| `DATABASE_URL` | Connexion PostgreSQL (obligatoire) | — |
+| `APP_ENV` | Environnement (`development` / `production`) | `development` |
+| `ADDR` | Adresse d’écoute HTTP (ex. `0.0.0.0:8080`) | `0.0.0.0:8080` |
+| `SHUTDOWN_TIMEOUT` | Délai max d’arrêt gracieux | `10s` |
+
+Optionnelles : `STATIC_DIR` (front buildé), `STARTUP_TIMEOUT` (retries Postgres/migrations au boot, défaut `2m`). Voir `.env.example`.
 
 ## Développement local (sans image app)
+
 
 1. Postgres :
 

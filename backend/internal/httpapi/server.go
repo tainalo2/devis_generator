@@ -44,10 +44,13 @@ func New(opts Options) *Server {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/healthz", s.handleHealthz)
+	r.Get("/readyz", s.handleReadyz)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/healthz", s.handleHealthz)
+		r.Get("/readyz", s.handleReadyz)
 	})
+
 
 	s.mountStatic(r)
 	s.router = r
