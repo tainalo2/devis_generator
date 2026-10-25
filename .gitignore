@@ -1,0 +1,10 @@
+# Vibed / tooling
+.env
+backend/bin/
+frontend/dist/
+frontend/node_modules/
+*.exe
+*.test
+.DS_Store
+.idea/
+.vscode/

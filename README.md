@@ -1,58 +1,81 @@
-> Je cherche du travail ! Freelance ou CDI en dev front/back -> www.alexandre-rongier.fr
+# Devis Generator — Vibed
 
+Branche de développement de la nouvelle version (**Vibed**) : backend Go + PostgreSQL + front React, dans le même dépôt que le site vanilla historique (conservé à la racine, non déplacé).
 
-> [Devis generator le site officiel ici](https://www.devisgenerator.fr/)
-# Devis Generator ![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
+Site officiel actuel : [devisgenerator.fr](https://www.devisgenerator.fr/) · licence GPL-3.0.
 
-Devis Generator est un générateur de facture/devis pour les micros-entrepreneurs français, en format web.
+## Prérequis
 
+- Go 1.22+
+- Node.js 22+
+- Docker / Docker Compose (pour lancer l'ensemble)
 
-<p align="center">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_1.png">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_2.png">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_3.png">
-</p>
+## Démarrage rapide (Docker)
 
-## Problématique
-Il n'existe pas d'outils simple et concis permettant d'éditer une facture ou un devis en PDF sans oublier toutes les obligations légales. Le statut de micro-entrepreneur permettant notamment d'encadré des activités additionnelles au salariat, censé être administrativement simplifié pour ne pas être un frein à son encadrement légale, je trouvais ça lourd d'éditer ma facture à chaque fois dans un vieux modèle google sheet.
+```bash
+cp .env.example .env   # optionnel pour Compose (les valeurs sont déjà dans compose.yaml)
+docker compose up --build
+```
 
-Au Pays-bas il est courant de monétiser son hobby et d'en faire un complément de revenu. En France le statut de micro-entrepreneur le permet également mais ne donne pas les outils nécessaires.
+Puis ouvrir [http://localhost:8080](http://localhost:8080).  
+Santé API : [http://localhost:8080/api/v1/healthz](http://localhost:8080/api/v1/healthz).
 
-## Solution
-Une plateforme gratuite, accessible à tous, et qui va droit au but pour économiser le temps de l'utilisateur.
+## Développement local (sans image app)
 
-Un développement open-source pour assurer la gratuité, un format web pour être compatible à tous les supports, une UI/UX minimaliste pour ne pas décourager l'utilisateur.
+1. Postgres :
 
-La solution est donc un site web, l'officiel est hébergé ici : https://www.devisgenerator.fr/
+```bash
+docker compose up -d db
+```
 
-Le code est en HTML/CSS/JS vanilla pour simplifier le déploiement et l'auto-hébergement.
+2. Backend (depuis la racine du dépôt) :
 
-## Fonctionalités
+```bash
+cp .env.example .env
+cd backend && go run ./cmd/server
+```
 
-Devis generator permet de :
-* Générer un PDF de facture/devis
-* Respecter les lois en vigueurs pour les micro-entrepreneurs
-* Enregistrer des templates de prestataire/client/devis (bientôt) (seulement avec une base SQL)
-* Ajouter une signature "manuscrite"
-* Pré-calculer la TVA
-* Ajout d'un bouton cliquable pour le paiement en ligne
+3. Frontend (autre terminal) :
 
-## Roadmap
-* Ajout de l'hébergement des templates
-* Système de double chiffrement de la base SQL
-* Support des ventes commerciale (TVA et déclarations différentes)
+```bash
+cd frontend && npm ci && npm run dev
+```
 
-## Dépendances
-Devis generator base certaines fonctionalités sur des librairies JS :
-* Système de signature manuscrite : [Signature Pad](https://github.com/szimek/signature_pad?tab=readme-ov-file)
-* Génération du PDF : [jsPDF](https://github.com/parallax/jsPDF)
-* Transformation d'éléments en image pour le PDF + jsPDF : [html2canvas](https://github.com/niklasvh/html2canvas)
+Vite sert le UI sur [http://localhost:5173](http://localhost:5173) et proxyfie `/api` et `/healthz` vers `:8080`.
 
-## Participer au projet
+## Commandes utiles (`make`)
 
-Les contributions sont les bienvenues, de même pour les feature requests et issues.
+| Cible | Action |
+|-------|--------|
+| `make frontend-install` | `npm ci` |
+| `make frontend-dev` | Vite |
+| `make frontend-build` | Build front |
+| `make backend-run` | Serveur Go |
+| `make backend-test` | `go test ./...` |
+| `make build` | Build front + binaire Go |
+| `make compose-up` | `docker compose up --build` |
+| `make test` | Tests backend + lint front |
 
-Ce projet n'est pas financé, je ne m'engage pas sur la rapidité des réponses.
+Vérifications manuelles attendues :
 
-## License
-Ce projet est sous license [GNU-GPL-V3](https://www.gnu.org/licenses/gpl-3.0), son exploitation est autorisé uniquement dans un cadre non-commercial !
+```bash
+cd backend && go build ./... && go test ./...
+cd frontend && npm run build
+```
+
+## Structure
+
+Voir [docs/architecture.md](docs/architecture.md).
+
+- `backend/` — API Go (chi, pgx, migrations, package `legal` stub)
+- `frontend/` — React + TS + Vite + Tailwind + shadcn/ui
+- `Dockerfile.vibed` — image de la nouvelle stack (le `Dockerfile` nginx legacy reste pour les tags `v*`)
+- `.github/workflows/vibed-ci.yml` — lint / test / build (sans publication d'image)
+
+## Suite prévue
+
+- Authentification / comptes
+- CRUD clients et documents (devis / factures)
+- Sources officielles pour le package `legal` + cache
+- Génération PDF et mentions légales
+- Décision sur le devenir du site vanilla à la racine

@@ -3,3 +3,9 @@
 *.md
 test_theme.html
 LICENSE
+.env
+backend/bin
+frontend/node_modules
+frontend/dist
+**/node_modules
+**/.DS_Store

@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: devis
+      POSTGRES_PASSWORD: devis
+      POSTGRES_DB: devis
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devis -d devis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.vibed
+    environment:
+      ADDR: ":8080"
+      DATABASE_URL: postgres://devis:devis@db:5432/devis?sslmode=disable
+      STATIC_DIR: /app/frontend/dist
+      APP_ENV: development
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

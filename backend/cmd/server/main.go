@@ -1,0 +1,91 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
+	"github.com/joho/godotenv"
+	"github.com/tainalo2/devis_generator/backend/internal/config"
+	"github.com/tainalo2/devis_generator/backend/internal/db"
+	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
+)
+
+// Version is injected at build time via -ldflags.
+var Version = "dev"
+
+func main() {
+	// Load .env from cwd or repo root when present (dev convenience).
+	_ = godotenv.Load()
+	_ = godotenv.Load(filepath.Join("..", ".env"))
+	_ = godotenv.Load(filepath.Join("..", "..", ".env"))
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	slog.SetDefault(logger)
+
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("config", "error", err)
+		os.Exit(1)
+	}
+
+	ctx := context.Background()
+
+	if err := db.RunMigrations(cfg.DatabaseURL); err != nil {
+		slog.Error("migrations", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("migrations applied")
+
+	pool, err := db.NewPool(ctx, cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("database", "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	staticDir := cfg.StaticDir
+	if !filepath.IsAbs(staticDir) {
+		if abs, err := filepath.Abs(staticDir); err == nil {
+			staticDir = abs
+		}
+	}
+
+	api := httpapi.New(httpapi.Options{
+		DB:        pool,
+		StaticDir: staticDir,
+		Version:   Version,
+	})
+
+	srv := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           api.Handler(),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		slog.Info("listening", "addr", cfg.Addr, "env", cfg.Environment, "version", Version)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("server", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("shutdown", "error", err)
+		os.Exit(1)
+	}
+	slog.Info("stopped")
+}
