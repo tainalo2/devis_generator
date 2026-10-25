@@ -5,7 +5,9 @@ name: Docker release
 on:
   push:
     tags:
+      # vX.Y.Z (and other v*) — exclude vibed-v* (VIBED has its own workflow).
       - "v*"
+      - "!vibed-v*"
   workflow_dispatch:
 
 permissions:
