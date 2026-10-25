@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 import { useAuth } from "@/components/auth-provider"
+import { EmptyState } from "@/components/empty-state"
+import { Seo } from "@/components/seo"
 import { Button } from "@/components/ui/button"
 import { deleteClient, listClients } from "@/lib/api"
 import type { Client } from "@/lib/types"
@@ -20,48 +22,61 @@ export function ClientsPage() {
 
   if (!loading && !user) {
     return (
-      <p className="text-muted-foreground">
-        Connectez-vous pour gérer vos clients, ou{" "}
-        <Link className="underline" to="/documents/nouveau">
-          créez un document en invité
-        </Link>
-        .
-      </p>
+      <EmptyState
+        title="Clients réservés au compte"
+        description="Connectez-vous pour enregistrer vos clients, ou créez un document en mode invité."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button render={<Link to="/connexion" />}>Connexion</Button>
+            <Button variant="outline" render={<Link to="/documents/nouveau" />}>
+              Mode invité
+            </Button>
+          </div>
+        }
+      />
     )
   }
 
   return (
     <section className="space-y-6">
+      <Seo title="Clients" path="/clients" noIndex />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Clients</h1>
         <Button render={<Link to="/clients/nouveau" />}>Nouveau client</Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <ul className="divide-y divide-border rounded-md border border-border">
-        {clients.map((c) => (
-          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-            <div>
-              <Link className="font-medium underline-offset-4 hover:underline" to={`/clients/${c.id}`}>
-                {c.name}
-              </Link>
-              {c.email && <p className="text-sm text-muted-foreground">{c.email}</p>}
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                void deleteClient(c.id).then(() => setClients((prev) => prev.filter((x) => x.id !== c.id)))
-              }}
-            >
-              Supprimer
-            </Button>
-          </li>
-        ))}
-        {clients.length === 0 && (
-          <li className="px-4 py-6 text-sm text-muted-foreground">Aucun client pour l’instant.</li>
-        )}
-      </ul>
+      {clients.length === 0 ? (
+        <EmptyState
+          title="Aucun client"
+          description="Ajoutez un client pour le sélectionner dans vos documents."
+          action={<Button render={<Link to="/clients/nouveau" />}>Nouveau client</Button>}
+        />
+      ) : (
+        <ul className="divide-y divide-border rounded-xl border border-border bg-card/60">
+          {clients.map((c) => (
+            <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+              <div>
+                <Link className="font-medium underline-offset-4 hover:underline" to={`/clients/${c.id}`}>
+                  {c.name}
+                </Link>
+                {c.email && <p className="text-sm text-muted-foreground">{c.email}</p>}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  void deleteClient(c.id).then(() =>
+                    setClients((prev) => prev.filter((x) => x.id !== c.id)),
+                  )
+                }}
+              >
+                Supprimer
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }

@@ -12,7 +12,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  if (!loading && user) return <Navigate to="/" replace />
+  if (!loading && user) return <Navigate to="/tableau-de-bord" replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -20,7 +20,7 @@ export function LoginPage() {
     setPending(true)
     try {
       await login(email, password)
-      navigate("/", { replace: true })
+      navigate("/tableau-de-bord", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connexion impossible.")
     } finally {
@@ -29,9 +29,9 @@ export function LoginPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-md space-y-6">
+    <section className="mx-auto w-full max-w-md space-y-6 px-4 py-12">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Connexion</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Connexion</h1>
         <p className="text-muted-foreground">
           Compte optionnel — vous pouvez continuer en invité sans vous connecter.
         </p>

@@ -99,7 +99,7 @@ export function DocumentDetailPage() {
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Document</h1>
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">Document</h1>
           <p className="text-sm text-muted-foreground">
             Statut : {doc.status}
             {doc.number ? ` · N° ${doc.number}` : ""} · TTC {formatEUR(doc.total_cents)}

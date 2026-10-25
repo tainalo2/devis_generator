@@ -78,7 +78,9 @@ export function ClientEditPage() {
 
   return (
     <section className="mx-auto max-w-xl space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight">{isNew ? "Nouveau client" : "Client"}</h1>
+      <h1 className="font-heading text-3xl font-semibold tracking-tight">
+        {isNew ? "Nouveau client" : "Client"}
+      </h1>
       <CompanyAutocomplete onPick={applyHit} />
       <form onSubmit={onSubmit} className="space-y-4">
         <label className="block space-y-1 text-sm">

@@ -56,7 +56,7 @@ export function IssuerPage() {
 
   return (
     <section className="mx-auto max-w-xl space-y-6">
-      <h1 className="text-3xl font-semibold tracking-tight">Mon entreprise</h1>
+      <h1 className="font-heading text-3xl font-semibold tracking-tight">Mon entreprise</h1>
       <p className="text-muted-foreground">
         Identité figée dans les documents émis (SIRET, adresse chiffrée, régime TVA par défaut).
       </p>

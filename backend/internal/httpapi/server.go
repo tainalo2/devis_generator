@@ -24,6 +24,7 @@ type Server struct {
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
+	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
 	router            chi.Router
@@ -41,6 +42,7 @@ type Options struct {
 	Biz          *biz.Store
 	Box          *crypto.Box
 	Legal        *legal.Service
+	PublicConfig *PublicSiteConfig
 	StaticDir    string
 	Version      string
 	CookieSecure bool
@@ -56,6 +58,7 @@ func New(opts Options) *Server {
 		biz:               opts.Biz,
 		box:               opts.Box,
 		legal:             opts.Legal,
+		publicConfig:      opts.PublicConfig,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
 		cookieSecure:      opts.CookieSecure,
@@ -86,6 +89,7 @@ func New(opts Options) *Server {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
+		r.Get("/public/config", s.handlePublicConfig)
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.withOptionalSession)

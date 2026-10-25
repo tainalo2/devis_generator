@@ -105,11 +105,21 @@ func main() {
 	})
 
 	api := httpapi.New(httpapi.Options{
-		DB:           pool,
-		Store:        authstore.New(pool),
-		Biz:          bizStore,
-		Box:          box,
-		Legal:        legalSvc,
+		DB:    pool,
+		Store: authstore.New(pool),
+		Biz:   bizStore,
+		Box:   box,
+		Legal: legalSvc,
+		PublicConfig: &httpapi.PublicSiteConfig{
+			DonateURL:           cfg.DonateURL,
+			LegalPublisherName:  cfg.LegalPublisherName,
+			LegalPublisherAddr:  cfg.LegalPublisherAddr,
+			LegalPublisherEmail: cfg.LegalPublisherEmail,
+			LegalPublisherSIRET: cfg.LegalPublisherSIRET,
+			LegalHostName:       cfg.LegalHostName,
+			LegalHostAddr:       cfg.LegalHostAddr,
+			LegalHostURL:        cfg.LegalHostURL,
+		},
 		StaticDir:    staticDir,
 		Version:      Version,
 		CookieSecure: cfg.CookieSecure,

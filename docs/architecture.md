@@ -44,10 +44,11 @@ LICENSE                  GPL-3.0 (historique)
 | GET | `/api/v1/documents/{id}/pdf` | PDF compte |
 | POST | `/api/v1/guest/pdf` | PDF invité (éphémère) |
 | POST | `/api/v1/billing/preview` | Totaux HT/TVA/TTC |
+| GET | `/api/v1/public/config` | Config site (dons, éditeur, hébergeur) — public |
 | GET | `/api/v1/legal/status` | Variables légales (valeur, source, fraîcheur) — invité OK |
 | GET | `/api/v1/legal/companies/search` | Autocomplétion entreprise (DINUM) — invité + rate limit |
 | POST | `/api/v1/legal/vat/validate` | Validation TVA VIES — invité + rate limit |
-| GET | `/*` | SPA |
+| GET | `/*` | SPA (landing, app, mentions, 404) |
 
 ## Legal
 

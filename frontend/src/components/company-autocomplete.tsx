@@ -18,16 +18,16 @@ export function CompanyAutocomplete({
   const [hits, setHits] = useState<CompanyHit[]>([])
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const canSearch = q.trim().length >= 2
+  const visibleHits = canSearch ? hits : []
 
   useEffect(() => {
-    if (q.trim().length < 2) {
-      setHits([])
-      return
-    }
+    if (!canSearch) return
+    const query = q.trim()
     const handle = window.setTimeout(() => {
       setPending(true)
       setError(null)
-      void searchCompanies(q.trim())
+      void searchCompanies(query)
         .then((list) => setHits(list))
         .catch((err: unknown) => {
           setHits([])
@@ -36,7 +36,7 @@ export function CompanyAutocomplete({
         .finally(() => setPending(false))
     }, 300)
     return () => window.clearTimeout(handle)
-  }, [q])
+  }, [q, canSearch])
 
   return (
     <div className="space-y-2">
@@ -54,13 +54,13 @@ export function CompanyAutocomplete({
       </label>
       {pending && <p className="text-xs text-muted-foreground">Recherche…</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {hits.length > 0 && (
+      {visibleHits.length > 0 && (
         <ul
           id={listId}
           className="max-h-48 overflow-auto border border-border bg-background text-sm"
           role="listbox"
         >
-          {hits.map((h) => (
+          {visibleHits.map((h) => (
             <li key={`${h.siren}-${h.siret}`}>
               <button
                 type="button"

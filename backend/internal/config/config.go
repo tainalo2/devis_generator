@@ -42,6 +42,16 @@ type Config struct {
 	LegalVIESURL         string
 	LegalTEDBURL         string
 	LegalBCEURL          string
+
+	// Site public (landing / pages légales) — aucune identité inventée.
+	DonateURL            string
+	LegalPublisherName   string
+	LegalPublisherAddr   string
+	LegalPublisherEmail  string
+	LegalPublisherSIRET  string
+	LegalHostName        string
+	LegalHostAddr        string
+	LegalHostURL         string
 }
 
 func (c Config) IsProduction() bool {
@@ -72,6 +82,14 @@ func Load() (Config, error) {
 		LegalVIESURL:         getEnv("LEGAL_VIES_URL", ""),
 		LegalTEDBURL:         getEnv("LEGAL_TEDB_URL", ""),
 		LegalBCEURL:          getEnv("LEGAL_BCE_URL", ""),
+		DonateURL:            getEnv("DONATE_URL", ""),
+		LegalPublisherName:   getEnv("LEGAL_PUBLISHER_NAME", ""),
+		LegalPublisherAddr:   getEnv("LEGAL_PUBLISHER_ADDRESS", ""),
+		LegalPublisherEmail:  getEnv("LEGAL_PUBLISHER_EMAIL", ""),
+		LegalPublisherSIRET:  getEnv("LEGAL_PUBLISHER_SIRET", ""),
+		LegalHostName:        getEnv("LEGAL_HOST_NAME", ""),
+		LegalHostAddr:        getEnv("LEGAL_HOST_ADDRESS", ""),
+		LegalHostURL:         getEnv("LEGAL_HOST_URL", ""),
 	}
 
 	if cfg.DatabaseURL == "" {

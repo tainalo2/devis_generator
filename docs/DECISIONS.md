@@ -5,10 +5,12 @@ Décisions validées par le propriétaire. Ce fichier est la référence courte.
 ## Identité
 
 - **Nom officiel** : `Devis Generator : VIBED`
-- **Licence (code Vibed)** : Apache-2.0 — voir `LICENSE.vibed`
+- **Licence (code Vibed)** : Apache-2.0 — voir `LICENSE.APACHE-2.0` / `LICENSE.vibed` ([LICENSING.md](LICENSING.md))
 - **Licence (site vanilla historique à la racine)** : GPL-3.0 — fichier `LICENSE` inchangé
 - **Langue d’interface** : français uniquement
-- **UX** : desktop d’abord, mobile utilisable
+- **UX** : desktop d’abord, mobile pleinement utilisable (pas mobile-first)
+- **Site public** : landing + mentions légales + confidentialité — **pas** de pages Histoire / Road-map
+- **Modèle économique** : gratuit, financé par dons (`DONATE_URL` optionnelle, aucun prestataire de paiement intégré)
 
 ## Public cible
 
@@ -107,6 +109,10 @@ Job périodique (défaut 24 h) protégé par **`pg_try_advisory_lock`** (sûr av
 
 Optionnelles légales (aucun secret) : `LEGAL_REFRESH_ENABLED`, `LEGAL_REFRESH_INTERVAL`, `LEGAL_HTTP_TIMEOUT`, `LEGAL_RECHERCHE_BASE_URL`, `LEGAL_VIES_URL`, `LEGAL_TEDB_URL`, `LEGAL_BCE_URL`.
 
+## Pages légales
+
+Rédigées d’après le fonctionnement réel (données, chiffrement, conservation tant que le compte existe, export/suppression, cookies strictement nécessaires). Éditeur et hébergeur via variables d’environnement — **à compléter** et **à faire valider juridiquement**.
+
 ## Suite
 
-Landing / pages légales / refonte graphique ; SMTP reset MDP ; Factur-X V2 ; brancher Insee/PISTE si comptes fournis.
+SMTP reset MDP ; Factur-X V2 ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.

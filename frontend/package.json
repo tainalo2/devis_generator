@@ -1,7 +1,5 @@
 {
   "name": "devis-generator-vibed",
-
-
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,6 +11,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
+    "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/geist": "^5.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

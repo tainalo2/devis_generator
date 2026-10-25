@@ -13,7 +13,7 @@ export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  if (!loading && user) return <Navigate to="/" replace />
+  if (!loading && user) return <Navigate to="/tableau-de-bord" replace />
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -21,7 +21,7 @@ export function RegisterPage() {
     setPending(true)
     try {
       await register(email, password, displayName)
-      navigate("/", { replace: true })
+      navigate("/tableau-de-bord", { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Inscription impossible.")
     } finally {
@@ -30,9 +30,9 @@ export function RegisterPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-md space-y-6">
+    <section className="mx-auto w-full max-w-md space-y-6 px-4 py-12">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Inscription</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">Inscription</h1>
         <p className="text-muted-foreground">
           Créez un compte pour sauvegarder vos clients et documents. Le mode invité reste
           disponible.
