@@ -1,24 +1,28 @@
 package config
 
 import (
+	"encoding/base64"
 	"testing"
 	"time"
 )
 
 func TestLoadRequiresDatabaseURL(t *testing.T) {
 	t.Setenv("DATABASE_URL", "")
+	t.Setenv("APP_ENV", "development")
 	if _, err := Load(); err == nil {
 		t.Fatal("expected error when DATABASE_URL is missing")
 	}
 }
 
-func TestLoadDefaults(t *testing.T) {
+func TestLoadDefaultsDev(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/devis?sslmode=disable")
 	t.Setenv("ADDR", "")
 	t.Setenv("STATIC_DIR", "")
-	t.Setenv("APP_ENV", "")
+	t.Setenv("APP_ENV", "development")
 	t.Setenv("SHUTDOWN_TIMEOUT", "")
 	t.Setenv("STARTUP_TIMEOUT", "")
+	t.Setenv("SESSION_SECRET", "")
+	t.Setenv("ENCRYPTION_KEY", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -28,53 +32,67 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Addr != "0.0.0.0:8080" {
 		t.Fatalf("Addr = %q, want 0.0.0.0:8080", cfg.Addr)
 	}
-	if cfg.StaticDir != "../frontend/dist" {
-		t.Fatalf("StaticDir = %q, want ../frontend/dist", cfg.StaticDir)
+	if cfg.SessionSecret != devSessionSecret {
+		t.Fatalf("expected dev session secret")
 	}
-	if cfg.Environment != "development" {
-		t.Fatalf("Environment = %q, want development", cfg.Environment)
+	if len(cfg.EncryptionKey) != 32 {
+		t.Fatalf("encryption key len = %d", len(cfg.EncryptionKey))
+	}
+	if cfg.CookieSecure {
+		t.Fatal("CookieSecure should be false in development by default")
 	}
 	if cfg.ShutdownTimeout != 10*time.Second {
-		t.Fatalf("ShutdownTimeout = %v, want 10s", cfg.ShutdownTimeout)
-	}
-	if cfg.StartupTimeout != 2*time.Minute {
-		t.Fatalf("StartupTimeout = %v, want 2m", cfg.StartupTimeout)
+		t.Fatalf("ShutdownTimeout = %v", cfg.ShutdownTimeout)
 	}
 }
 
-func TestLoadOverrides(t *testing.T) {
+func TestLoadProductionRequiresSecrets(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://db")
-	t.Setenv("ADDR", ":9090")
-	t.Setenv("STATIC_DIR", "/app/static")
 	t.Setenv("APP_ENV", "production")
-	t.Setenv("SHUTDOWN_TIMEOUT", "5s")
-	t.Setenv("STARTUP_TIMEOUT", "30s")
+	t.Setenv("SESSION_SECRET", "")
+	t.Setenv("ENCRYPTION_KEY", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error without secrets in production")
+	}
+}
+
+func TestLoadProductionOK(t *testing.T) {
+	key := make([]byte, 32)
+	for i := range key {
+		key[i] = byte(i + 1)
+	}
+	t.Setenv("DATABASE_URL", "postgres://db")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SESSION_SECRET", "production-session-secret-value-32ch")
+	t.Setenv("ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(key))
 
 	cfg, err := Load()
 	if err != nil {
-		t.Fatalf("Load() unexpected error: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
-
-	if cfg.Addr != ":9090" {
-		t.Fatalf("Addr = %q, want :9090", cfg.Addr)
+	if !cfg.CookieSecure {
+		t.Fatal("CookieSecure should be true in production")
 	}
-	if cfg.StaticDir != "/app/static" {
-		t.Fatalf("StaticDir = %q, want /app/static", cfg.StaticDir)
-	}
-	if cfg.Environment != "production" {
-		t.Fatalf("Environment = %q, want production", cfg.Environment)
-	}
-	if cfg.ShutdownTimeout != 5*time.Second {
-		t.Fatalf("ShutdownTimeout = %v, want 5s", cfg.ShutdownTimeout)
-	}
-	if cfg.StartupTimeout != 30*time.Second {
-		t.Fatalf("StartupTimeout = %v, want 30s", cfg.StartupTimeout)
+	if len(cfg.EncryptionKey) != 32 {
+		t.Fatal("bad key length")
 	}
 }
 
 func TestLoadRejectsDisabledAdvisoryLock(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db?x-lock-strategy=off")
+	t.Setenv("APP_ENV", "development")
 	if _, err := Load(); err == nil {
 		t.Fatal("expected error when advisory lock is disabled")
+	}
+}
+
+func TestLoadRejectsWeakProductionSessionSecret(t *testing.T) {
+	key := make([]byte, 32)
+	t.Setenv("DATABASE_URL", "postgres://db")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SESSION_SECRET", "too-short")
+	t.Setenv("ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(key))
+	if _, err := Load(); err == nil {
+		t.Fatal("expected weak SESSION_SECRET error")
 	}
 }

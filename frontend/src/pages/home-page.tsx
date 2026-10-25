@@ -38,15 +38,18 @@ export function HomePage() {
           Devis Generator : VIBED
         </h1>
         <p className="max-w-2xl text-muted-foreground">
-          Devis et factures pour micro-entrepreneurs, indépendants et petites sociétés. Socle API Go,
-          PostgreSQL et interface React (français). Le formulaire de document arrive ensuite.
+          Devis et factures pour micro-entrepreneurs, indépendants et petites sociétés. Utilisable en
+          mode invité ; un compte optionnel permet de sauvegarder vos données.
         </p>
       </div>
 
-
       <div className="flex flex-wrap gap-3">
         <Button render={<Link to="/documents/nouveau" />}>Nouveau document</Button>
+        <Button variant="outline" render={<Link to="/inscription" />}>
+          Créer un compte
+        </Button>
       </div>
+
 
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
         <p className="font-medium text-foreground">Liaison API <code className="font-mono">/api/v1/healthz</code></p>

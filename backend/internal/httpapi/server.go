@@ -6,35 +6,62 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/tainalo2/devis_generator/backend/internal/auth"
+	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 )
 
 // Server is the HTTP API and static file server.
 type Server struct {
-	db        Pinger
-	staticDir string
-	version   string
-	router    chi.Router
+	db           Pinger
+	store        *authstore.Store
+	box          *crypto.Box
+	staticDir    string
+	version      string
+	router       chi.Router
+	cookieSecure bool
+	sessionTTL   time.Duration
+	argon2       auth.Argon2Params
+	authLimiter  *RateLimiter
 }
 
 // Options configures the HTTP server.
 type Options struct {
-	DB        Pinger
-	StaticDir string
-	Version   string
+	DB           Pinger
+	Store        *authstore.Store
+	Box          *crypto.Box
+	StaticDir    string
+	Version      string
+	CookieSecure bool
+	SessionTTL   time.Duration
+	Argon2       auth.Argon2Params
 }
 
-// New builds the chi router with health endpoints and SPA static serving.
+// New builds the chi router with health, auth and SPA static serving.
 func New(opts Options) *Server {
 	s := &Server{
-		db:        opts.DB,
-		staticDir: opts.StaticDir,
-		version:   opts.Version,
+		db:           opts.DB,
+		store:        opts.Store,
+		box:          opts.Box,
+		staticDir:    opts.StaticDir,
+		version:      opts.Version,
+		cookieSecure: opts.CookieSecure,
+		sessionTTL:   opts.SessionTTL,
+		argon2:       opts.Argon2,
+		authLimiter:  NewRateLimiter(20, time.Minute),
 	}
 	if s.version == "" {
 		s.version = "dev"
+	}
+	if s.sessionTTL <= 0 {
+		s.sessionTTL = 30 * 24 * time.Hour
+	}
+	if s.argon2.KeyLen == 0 {
+		s.argon2 = auth.DefaultArgon2Params()
 	}
 
 	r := chi.NewRouter()
@@ -49,8 +76,21 @@ func New(opts Options) *Server {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
-	})
 
+		r.Group(func(r chi.Router) {
+			r.Use(s.withOptionalSession)
+			r.Use(s.requireCSRF)
+
+			r.Post("/auth/register", s.handleRegister)
+			r.Post("/auth/login", s.handleLogin)
+			r.Post("/auth/logout", s.handleLogout)
+			r.Post("/auth/password-reset/request", s.handlePasswordResetRequest)
+
+			r.Get("/auth/me", s.requireAuth(s.handleMe))
+			r.Get("/auth/export", s.requireAuth(s.handleExport))
+			r.Delete("/auth/me", s.requireAuth(s.handleDeleteAccount))
+		})
+	})
 
 	s.mountStatic(r)
 	s.router = r
@@ -61,6 +101,9 @@ func New(opts Options) *Server {
 func (s *Server) Handler() http.Handler {
 	return s.router
 }
+
+// Box returns the application encryption box (may be nil in tests).
+func (s *Server) Box() *crypto.Box { return s.box }
 
 func (s *Server) mountStatic(r chi.Router) {
 	if s.staticDir == "" {
@@ -74,7 +117,6 @@ func (s *Server) mountStatic(r chi.Router) {
 				"service": "Devis Generator : VIBED",
 				"hint":    "frontend build not found; run npm run build in frontend/",
 			})
-
 		})
 		return
 	}
@@ -93,7 +135,6 @@ func (s *Server) mountStatic(r chi.Router) {
 			return
 		}
 
-		// SPA fallback: serve index.html for client-side routes.
 		index := filepath.Join(s.staticDir, "index.html")
 		if _, err := os.Stat(index); err == nil {
 			http.ServeFile(w, req, index)

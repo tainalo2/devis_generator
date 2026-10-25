@@ -7,44 +7,40 @@ Décisions produit : [DECISIONS.md](DECISIONS.md).
 ## Structure
 
 ```
-backend/                 Module Go (API + serveur HTTP)
-  cmd/server/            Point d'entrée
-  internal/config/       Variables d'environnement
-  internal/db/           Pool pgx + migrations embarquées
-  internal/httpapi/      Routes chi (/healthz, /api/v1, SPA)
-  internal/legal/        Interface Provider/Store (sources officielles à brancher)
-frontend/                React + TypeScript + Vite + Tailwind + shadcn/ui (FR)
-docs/                    Documentation VIBED
-compose.yaml             Postgres + app (dev)
-Dockerfile.vibed         Image multi-stage (ne remplace pas Dockerfile nginx)
-LICENSE.vibed            Apache-2.0 (code VIBED)
-LICENSE                  GPL-3.0 (site historique, inchangé)
+backend/
+  cmd/server/
+  internal/config/       Env (dont SESSION_SECRET, ENCRYPTION_KEY)
+  internal/auth/         argon2id, tokens
+  internal/authstore/    users / sessions / export / delete
+  internal/crypto/       AES-256-GCM versionné
+  internal/db/           pgx + migrations embarquées
+  internal/httpapi/      chi : health, auth, SPA
+  internal/legal/        stub sources officielles
+frontend/                React + TS + Vite + Tailwind + shadcn (FR)
+docs/
+compose.yaml
+Dockerfile.vibed
+LICENSE.vibed            Apache-2.0
+LICENSE                  GPL-3.0 (historique)
 ```
 
-## API minimale
+## API
 
 | Méthode | Chemin | Rôle |
 |---------|--------|------|
-| GET | `/healthz` | Liveness (200, sans Postgres) |
-| GET | `/readyz` | Readiness (Ping Postgres) |
-| GET | `/api/v1/healthz` | Idem liveness, préfixe versionné |
-| GET | `/api/v1/readyz` | Idem readiness, préfixe versionné |
-| GET | `/*` | Front statique (`frontend/dist`) + fallback SPA |
+| GET | `/healthz` | Liveness |
+| GET | `/readyz` | Readiness (Postgres) |
+| POST | `/api/v1/auth/register` | Inscription |
+| POST | `/api/v1/auth/login` | Connexion |
+| POST | `/api/v1/auth/logout` | Déconnexion |
+| GET | `/api/v1/auth/me` | Utilisateur courant |
+| GET | `/api/v1/auth/export` | Export JSON (RGPD) |
+| DELETE | `/api/v1/auth/me` | Suppression compte |
+| POST | `/api/v1/auth/password-reset/request` | Stub reset (pas d’e-mail) |
+| GET | `/*` | SPA |
 
-Au démarrage : retries vers Postgres, puis migrations golang-migrate (verrou consultatif PostgreSQL par défaut, sûr multi-réplicas).
-
-
-## Schéma (socle)
-
-- Types document : `quote`, `invoice`, `deposit_invoice`, `credit_note`
-- TVA : `vat_regime` sur le document + `tax_rate_bps` / `tax_cents` par ligne
-- Numérotation : table `document_number_sequences` (émetteur × type × année)
-- Comptes optionnels : `users.password_hash` ; invité = `user_id` NULL
-
-## Package `legal`
-
-Contrat uniquement : `Provider` / `Store`, table `legal_variables`. Sources officielles à brancher plus tard.
+Migrations au boot avec verrou advisory (multi-réplicas OK). Migration `000002` additive (sessions, reset tokens, colonnes chiffrées, CASCADE).
 
 ## Legacy
 
-`index.html`, `main.js`, `style.css`, `src/`, `Dockerfile`, `docker/nginx.conf` et le workflow `docker-release.yml` (tags `v*`) restent en place sous GPL-3.0.
+Site vanilla + `Dockerfile` nginx + `docker-release.yml` (`v*`, hors `vibed-v*`) inchangés sous GPL-3.0.

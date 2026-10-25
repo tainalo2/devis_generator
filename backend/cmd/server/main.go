@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 	"github.com/tainalo2/devis_generator/backend/internal/config"
+	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 )
@@ -21,7 +23,6 @@ import (
 var Version = "dev"
 
 func main() {
-	// Load .env from cwd or repo root when present (dev convenience).
 	_ = godotenv.Load()
 	_ = godotenv.Load(filepath.Join("..", ".env"))
 	_ = godotenv.Load(filepath.Join("..", "..", ".env"))
@@ -32,6 +33,12 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		slog.Error("config", "error", err)
+		os.Exit(1)
+	}
+
+	box, err := crypto.NewBox(cfg.EncryptionKey)
+	if err != nil {
+		slog.Error("encryption", "error", err)
 		os.Exit(1)
 	}
 
@@ -61,9 +68,14 @@ func main() {
 	}
 
 	api := httpapi.New(httpapi.Options{
-		DB:        pool,
-		StaticDir: staticDir,
-		Version:   Version,
+		DB:           pool,
+		Store:        authstore.New(pool),
+		Box:          box,
+		StaticDir:    staticDir,
+		Version:      Version,
+		CookieSecure: cfg.CookieSecure,
+		SessionTTL:   cfg.SessionTTL,
+		Argon2:       cfg.Argon2,
 	})
 
 	srv := &http.Server{

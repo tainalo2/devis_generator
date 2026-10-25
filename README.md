@@ -37,8 +37,12 @@ Image d’essai GHCR : `ghcr.io/tainalo2/devisgenerator-vibed` (tags `vibed-v*` 
 | `APP_ENV` | Environnement (`development` / `production`) | `development` |
 | `ADDR` | Adresse d’écoute HTTP (ex. `0.0.0.0:8080`) | `0.0.0.0:8080` |
 | `SHUTDOWN_TIMEOUT` | Délai max d’arrêt gracieux | `10s` |
+| `SESSION_SECRET` | Secret sessions / CSRF (≥ 32 car. en prod) | défaut dev (avertissement) |
+| `ENCRYPTION_KEY` | Clé AES-256-GCM, 32 octets **base64** | défaut dev (avertissement) |
 
-Optionnelles : `STATIC_DIR` (front buildé), `STARTUP_TIMEOUT` (retries Postgres/migrations au boot, défaut `2m`). Voir `.env.example`.
+En **production**, l’appli refuse de démarrer si `SESSION_SECRET` / `ENCRYPTION_KEY` sont absents ou faibles.  
+Optionnelles : `STATIC_DIR`, `STARTUP_TIMEOUT`, `SESSION_TTL`, `COOKIE_SECURE`, `ARGON2_*`. Voir `.env.example`.
+
 
 ## Développement local (sans image app)
 
