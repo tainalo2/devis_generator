@@ -45,10 +45,14 @@ export function HomePage() {
 
       <div className="flex flex-wrap gap-3">
         <Button render={<Link to="/documents/nouveau" />}>Nouveau document</Button>
-        <Button variant="outline" render={<Link to="/inscription" />}>
+        <Button variant="outline" render={<Link to="/documents" />}>
+          Mes documents
+        </Button>
+        <Button variant="ghost" render={<Link to="/inscription" />}>
           Créer un compte
         </Button>
       </div>
+
 
 
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">

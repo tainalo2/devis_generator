@@ -97,6 +97,12 @@ Voir [docs/architecture.md](docs/architecture.md) et les décisions produit dans
 - `Dockerfile.vibed` — image de la nouvelle stack (le `Dockerfile` nginx legacy reste pour les tags `v*`)
 - `.github/workflows/vibed-ci.yml` — lint / test / build (sans publication d'image)
 
-## Suite prévue
+## Fonctionnalités VIBED (branche)
 
-Voir [docs/DECISIONS.md](docs/DECISIONS.md) : auth invité + email/mot de passe, CRUD documents (devis / facture / acompte / avoir), TVA 293 B + taux par ligne, numérotation `F-2026-0001`, PDF serveur, sources `legal`.
+- Compte optionnel + mode invité (PDF sans conservation)
+- Clients / documents (brouillon → émission numérotée)
+- TVA franchise 293 B ou taux par ligne ; totaux en centimes
+- PDF serveur (gofpdf) : compte ou invité
+
+Voir [docs/DECISIONS.md](docs/DECISIONS.md). Suite : landing/pages légales, SMTP, sources `legal` officielles, Factur-X.
+

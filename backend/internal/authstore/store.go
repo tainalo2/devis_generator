@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrEmailTaken    = errors.New("email taken")
-	ErrInvalidCreds  = errors.New("invalid credentials")
+	ErrNotFound     = errors.New("not found")
+	ErrEmailTaken   = errors.New("email taken")
+	ErrInvalidCreds = errors.New("invalid credentials")
 )
 
 // User is a registered account.
@@ -184,10 +184,10 @@ func (s *Store) ExportUserData(ctx context.Context, userID uuid.UUID) (map[strin
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			id uuid.UUID
-			name string
+			id                                                             uuid.UUID
+			name                                                           string
 			email, a1, a2, postal, city, country, siren, siret, vat, notes *string
-			created, updated time.Time
+			created, updated                                               time.Time
 		)
 		if err := rows.Scan(&id, &name, &email, &a1, &a2, &postal, &city, &country, &siren, &siret, &vat, &notes, &created, &updated); err != nil {
 			return nil, err
@@ -216,13 +216,13 @@ func (s *Store) ExportUserData(ctx context.Context, userID uuid.UUID) (map[strin
 	defer drows.Close()
 	for drows.Next() {
 		var (
-			id uuid.UUID
-			clientID, related *uuid.UUID
+			id                                uuid.UUID
+			clientID, related                 *uuid.UUID
 			kind, status, currency, vatRegime string
-			number, notes, legal *string
-			issue, due *time.Time
-			sub, tax, total int64
-			created, updated time.Time
+			number, notes, legal              *string
+			issue, due                        *time.Time
+			sub, tax, total                   int64
+			created, updated                  time.Time
 		)
 		if err := drows.Scan(&id, &clientID, &kind, &status, &number, &issue, &due, &currency, &vatRegime, &notes, &legal, &related, &sub, &tax, &total, &created, &updated); err != nil {
 			return nil, err
@@ -237,10 +237,10 @@ func (s *Store) ExportUserData(ctx context.Context, userID uuid.UUID) (map[strin
 		lines := []map[string]any{}
 		for lineRows.Next() {
 			var (
-				lid uuid.UUID
-				pos int
-				desc string
-				qty string
+				lid                      uuid.UUID
+				pos                      int
+				desc                     string
+				qty                      string
 				unit, taxRate, taxC, tot int64
 			)
 			if err := lineRows.Scan(&lid, &pos, &desc, &qty, &unit, &taxRate, &taxC, &tot); err != nil {
@@ -274,9 +274,9 @@ func (s *Store) ExportUserData(ctx context.Context, userID uuid.UUID) (map[strin
 			"id": u.ID, "email": u.Email, "display_name": u.DisplayName,
 			"created_at": u.CreatedAt, "updated_at": u.UpdatedAt,
 		},
-		"clients":    clients,
-		"documents":  documents,
-		"note":       "Les champs chiffrés (IBAN/adresse) sont exportés déchiffrés uniquement via l'API applicative quand le chiffrement est branché sur le CRUD.",
+		"clients":   clients,
+		"documents": documents,
+		"note":      "Les champs chiffrés (IBAN/adresse) sont exportés déchiffrés uniquement via l'API applicative quand le chiffrement est branché sur le CRUD.",
 	}, nil
 }
 
@@ -284,4 +284,3 @@ func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }
-

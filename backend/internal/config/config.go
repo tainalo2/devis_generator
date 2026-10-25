@@ -14,7 +14,7 @@ import (
 
 // Dev defaults — intentionally weak; never use in production.
 const (
-	devSessionSecret  = "dev-only-session-secret-change-me-32b"
+	devSessionSecret    = "dev-only-session-secret-change-me-32b"
 	devEncryptionKeyB64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32 zero bytes
 )
 
@@ -28,11 +28,11 @@ type Config struct {
 	StartupTimeout  time.Duration
 	Environment     string
 
-	SessionSecret   string
-	EncryptionKey   []byte // 32 raw bytes
-	CookieSecure    bool
-	SessionTTL      time.Duration
-	Argon2          auth.Argon2Params
+	SessionSecret string
+	EncryptionKey []byte // 32 raw bytes
+	CookieSecure  bool
+	SessionTTL    time.Duration
+	Argon2        auth.Argon2Params
 }
 
 func (c Config) IsProduction() bool {

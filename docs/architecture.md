@@ -37,7 +37,15 @@ LICENSE                  GPL-3.0 (historique)
 | GET | `/api/v1/auth/export` | Export JSON (RGPD) |
 | DELETE | `/api/v1/auth/me` | Suppression compte |
 | POST | `/api/v1/auth/password-reset/request` | Stub reset (pas d’e-mail) |
+| CRUD | `/api/v1/clients`, `/api/v1/documents`, `/api/v1/issuer` | Métier (auth) |
+| POST | `/api/v1/documents/{id}/issue` | Numérotation + immutabilité |
+| GET | `/api/v1/documents/{id}/pdf` | PDF compte |
+| POST | `/api/v1/guest/pdf` | PDF invité (éphémère) |
+| POST | `/api/v1/billing/preview` | Totaux HT/TVA/TTC |
 | GET | `/*` | SPA |
+
+PDF : `internal/pdfgen` → `github.com/phpdave11/gofpdf` (MIT). Calculs : `internal/billing`.
+
 
 Migrations au boot avec verrou advisory (multi-réplicas OK). Migration `000002` additive (sessions, reset tokens, colonnes chiffrées, CASCADE).
 

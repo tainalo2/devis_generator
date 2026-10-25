@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 )
 
@@ -19,6 +20,7 @@ import (
 type Server struct {
 	db           Pinger
 	store        *authstore.Store
+	biz          *biz.Store
 	box          *crypto.Box
 	staticDir    string
 	version      string
@@ -33,6 +35,7 @@ type Server struct {
 type Options struct {
 	DB           Pinger
 	Store        *authstore.Store
+	Biz          *biz.Store
 	Box          *crypto.Box
 	StaticDir    string
 	Version      string
@@ -41,11 +44,12 @@ type Options struct {
 	Argon2       auth.Argon2Params
 }
 
-// New builds the chi router with health, auth and SPA static serving.
+// New builds the chi router with health, auth, business API and SPA.
 func New(opts Options) *Server {
 	s := &Server{
 		db:           opts.DB,
 		store:        opts.Store,
+		biz:          opts.Biz,
 		box:          opts.Box,
 		staticDir:    opts.StaticDir,
 		version:      opts.Version,
@@ -85,10 +89,32 @@ func New(opts Options) *Server {
 			r.Post("/auth/login", s.handleLogin)
 			r.Post("/auth/logout", s.handleLogout)
 			r.Post("/auth/password-reset/request", s.handlePasswordResetRequest)
-
 			r.Get("/auth/me", s.requireAuth(s.handleMe))
 			r.Get("/auth/export", s.requireAuth(s.handleExport))
 			r.Delete("/auth/me", s.requireAuth(s.handleDeleteAccount))
+
+			r.Post("/billing/preview", s.handlePreviewTotals)
+			r.Post("/guest/pdf", s.handleGuestPDF)
+
+			r.Get("/issuer", s.requireAuth(s.handleGetIssuer))
+			r.Put("/issuer", s.requireAuth(s.handlePutIssuer))
+
+			r.Get("/clients", s.requireAuth(s.handleListClients))
+			r.Post("/clients", s.requireAuth(s.handleCreateClient))
+			r.Get("/clients/{id}", s.requireAuth(s.handleGetClient))
+			r.Put("/clients/{id}", s.requireAuth(s.handleUpdateClient))
+			r.Delete("/clients/{id}", s.requireAuth(s.handleDeleteClient))
+
+			r.Get("/documents", s.requireAuth(s.handleListDocuments))
+			r.Post("/documents", s.requireAuth(s.handleCreateDocument))
+			r.Get("/documents/{id}", s.requireAuth(s.handleGetDocument))
+			r.Put("/documents/{id}", s.requireAuth(s.handleUpdateDocument))
+			r.Delete("/documents/{id}", s.requireAuth(s.handleDeleteDocument))
+			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))
+			r.Post("/documents/{id}/convert-to-invoice", s.requireAuth(s.handleConvertQuote))
+			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
+			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
+			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
 		})
 	})
 
@@ -97,19 +123,14 @@ func New(opts Options) *Server {
 	return s
 }
 
-// Handler returns the root HTTP handler.
-func (s *Server) Handler() http.Handler {
-	return s.router
-}
+func (s *Server) Handler() http.Handler { return s.router }
 
-// Box returns the application encryption box (may be nil in tests).
 func (s *Server) Box() *crypto.Box { return s.box }
 
 func (s *Server) mountStatic(r chi.Router) {
 	if s.staticDir == "" {
 		return
 	}
-
 	info, err := os.Stat(s.staticDir)
 	if err != nil || !info.IsDir() {
 		r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -120,7 +141,6 @@ func (s *Server) mountStatic(r chi.Router) {
 		})
 		return
 	}
-
 	fileServer := http.FileServer(http.Dir(s.staticDir))
 	r.Get("/*", func(w http.ResponseWriter, req *http.Request) {
 		urlPath := path.Clean(req.URL.Path)
@@ -128,13 +148,11 @@ func (s *Server) mountStatic(r chi.Router) {
 			fileServer.ServeHTTP(w, req)
 			return
 		}
-
 		full := filepath.Join(s.staticDir, filepath.FromSlash(strings.TrimPrefix(urlPath, "/")))
 		if fi, err := os.Stat(full); err == nil && !fi.IsDir() {
 			fileServer.ServeHTTP(w, req)
 			return
 		}
-
 		index := filepath.Join(s.staticDir, "index.html")
 		if _, err := os.Stat(index); err == nil {
 			http.ServeFile(w, req, index)

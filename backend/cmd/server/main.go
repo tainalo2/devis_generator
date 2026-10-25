@@ -13,6 +13,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/config"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
@@ -70,6 +71,7 @@ func main() {
 	api := httpapi.New(httpapi.Options{
 		DB:           pool,
 		Store:        authstore.New(pool),
+		Biz:          biz.NewStore(pool, box),
 		Box:          box,
 		StaticDir:    staticDir,
 		Version:      Version,

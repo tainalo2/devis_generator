@@ -15,7 +15,6 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 )
 
-
 func TestNormalizeEmailAndPassword(t *testing.T) {
 	email, err := normalizeEmail("  Alex@Example.COM ")
 	if err != nil || email != "alex@example.com" {

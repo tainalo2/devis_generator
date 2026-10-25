@@ -20,7 +20,7 @@ export function AppLayout() {
     <div className="flex min-h-svh flex-col bg-background">
       <header className="border-b border-border">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-6">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-4">
             <NavLink
               to="/"
               className="text-sm font-semibold tracking-tight text-foreground sm:text-base"
@@ -28,12 +28,22 @@ export function AppLayout() {
               Devis Generator : VIBED
             </NavLink>
             <nav className="flex flex-wrap items-center gap-1">
-              <NavLink to="/" end className={navLinkClass}>
-                Accueil
-              </NavLink>
               <NavLink to="/documents/nouveau" className={navLinkClass}>
-                Nouveau document
+                Nouveau
               </NavLink>
+              {user && (
+                <>
+                  <NavLink to="/documents" className={navLinkClass}>
+                    Documents
+                  </NavLink>
+                  <NavLink to="/clients" className={navLinkClass}>
+                    Clients
+                  </NavLink>
+                  <NavLink to="/entreprise" className={navLinkClass}>
+                    Entreprise
+                  </NavLink>
+                </>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-2">

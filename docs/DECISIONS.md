@@ -1,6 +1,6 @@
 # Décisions produit — Devis Generator : VIBED
 
-Décisions validées par le propriétaire. Ce fichier est la référence courte ; l’implémentation complète arrivera par itérations.
+Décisions validées par le propriétaire. Ce fichier est la référence courte.
 
 ## Identité
 
@@ -18,51 +18,53 @@ Micro-entrepreneurs, autres indépendants et petites sociétés.
 
 Types : **devis**, **facture**, **facture d’acompte**, **avoir**.
 
-Numérotation **continue par type et par année**, format exemple : `F-2026-0001`.
+- Brouillon éditable ; **émis** (`issued`) = **immuable** (correction via avoir)
+- Conversion devis → facture ; acompte / avoir liés au document d’origine
+- PDF simple V1 (**pas** Factur-X — prévu V2)
+- Valeurs légales **figées** dans le document à l’émission (`issuer_snapshot`, `legal_snapshot`)
 
-Préfixes prévus (à confirmer à l’implémentation du service de numérotation) :
+### Numérotation
 
-| Type | Préfixe |
-|------|---------|
-| Devis | `D` |
-| Facture | `F` |
-| Facture d’acompte | `FA` |
-| Avoir | `A` |
+Continue **par type et par année**, sans trou, transactionnelle (`INSERT … ON CONFLICT … RETURNING`) :
 
-## TVA
+| Type | Préfixe | Exemple |
+|------|---------|---------|
+| Devis | `D` | `D-2026-0001` |
+| Facture | `F` | `F-2026-0001` |
+| Facture d’acompte | `FA` | `FA-2026-0001` |
+| Avoir | `A` | `A-2026-0001` |
 
-- Régime **franchise en base (art. 293 B)** supporté
-- Et **TVA complète** avec **taux multiples par ligne** de document
-- Variables légales (taux, seuils…) via le package `legal` + cache PostgreSQL (sources officielles à brancher plus tard)
+## TVA (V1)
 
-## Comptes et authentification
+- Franchise art. **293 B** (mention obligatoire, TVA = 0)
+- Ou TVA normale avec taux **par ligne** : 0 / 2,1 / 5,5 / 10 / 20 % (points de base)
+- **Pas** d’autoliquidation ni exonérations UE/export pour l’instant
+- Montants en **centimes** ; arrondis half-up documentés dans `internal/billing`
 
-- Comptes **optionnels** : mode **invité** (sans compte) + compte **e-mail / mot de passe**
-- Aucune page métier ne force la connexion pour l’instant
-- Mots de passe : **argon2id** (paramètres configurables via `ARGON2_*`)
-- Sessions : cookie `vibed_session` **HttpOnly** + **Secure** (prod) + **SameSite=Lax**, token aléatoire stocké **hashé** en PostgreSQL (révocable)
-- CSRF : cookie `vibed_csrf` (lisible JS) + en-tête `X-CSRF-Token` (double submit) sur les mutations authentifiées
-- Limitation de débit en mémoire **par processus** sur login / inscription / reset (avec 2 réplicas ≈ 2× la limite)
-- Messages d’erreur **sans énumération** d’e-mails
-- RGPD : données conservées tant que le compte existe ; **effacement complet** à la suppression (cascade) ; **export JSON** proposé avant suppression
-- Réinitialisation de mot de passe : **stub API** prêt (`POST /api/v1/auth/password-reset/request`) — **aucun envoi d’e-mail** tant qu’aucun SMTP n’est choisi
+## Comptes
 
-Variables d’environnement à fournir à l’hébergeur (prod) :
+Optionnels (invité + email/mot de passe). En invité, le PDF est généré sans conservation serveur (`POST /api/v1/guest/pdf`).
 
-| Variable | Rôle |
-|----------|------|
-| `SESSION_SECRET` | Secret sessions/CSRF (≥ 32 caractères, pas le défaut dev) |
-| `ENCRYPTION_KEY` | Clé AES-256-GCM, **32 octets en base64** |
+## Chiffrement
 
-## Chiffrement applicatif
-
-- Package `internal/crypto` : **AES-256-GCM**, clé versionnée (octet d’id dans le blob) pour rotation
-- Colonnes `clients.iban_enc` / `clients.address_enc` prêtes ; le CRUD documents/clients les utilisera
+AES-256-GCM (`ENCRYPTION_KEY`) pour IBAN / adresses clients et profil émetteur.
 
 ## PDF
 
-Génération **côté serveur** (pas uniquement dans le navigateur).
+- Bibliothèque : **`github.com/phpdave11/gofpdf`** (MIT, compatible Apache-2.0)
+- Mentions via `internal/legal.DefaultMentions()` (source `defaults-v1`) tant que les APIs officielles ne sont pas branchées
+- Factures : conditions de paiement, pénalités de retard, indemnité forfaitaire **40 €**
+
+## Variables d’environnement (prod)
+
+| Variable | Rôle |
+|----------|------|
+| `SESSION_SECRET` | Sessions / CSRF (≥ 32 caractères) |
+| `ENCRYPTION_KEY` | AES-256-GCM, 32 octets base64 |
+| `DATABASE_URL`, `APP_ENV`, `ADDR`, `SHUTDOWN_TIMEOUT` | Runtime |
+
+Aucune nouvelle variable obligatoire pour ce lot CRUD/PDF.
 
 ## Suite
 
-CRUD clients/documents, branchement chiffrement sur le CRUD, SMTP pour reset MDP, sources `legal`, PDF.
+Landing / pages légales / refonte graphique ; SMTP reset MDP ; sources `legal` officielles ; Factur-X V2.

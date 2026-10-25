@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	ErrInvalidKey    = errors.New("encryption key must be 32 bytes")
-	ErrInvalidBlob   = errors.New("invalid ciphertext blob")
-	ErrUnknownKeyID  = errors.New("unknown encryption key id")
+	ErrInvalidKey     = errors.New("encryption key must be 32 bytes")
+	ErrInvalidBlob    = errors.New("invalid ciphertext blob")
+	ErrUnknownKeyID   = errors.New("unknown encryption key id")
 	ErrCipherTooShort = errors.New("ciphertext too short")
 )
 
