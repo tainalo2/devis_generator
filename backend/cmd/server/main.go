@@ -18,6 +18,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
+	"github.com/tainalo2/devis_generator/backend/internal/legal"
 )
 
 // Version is injected at build time via -ldflags.
@@ -68,11 +69,47 @@ func main() {
 		}
 	}
 
+	httpClient := legal.NewHTTPClient(cfg.LegalHTTPTimeout)
+	recherche := legal.NewRechercheClient(httpClient)
+	if cfg.LegalRechercheURL != "" {
+		recherche.BaseURL = cfg.LegalRechercheURL
+	}
+	vies := legal.NewVIESClient(httpClient)
+	if cfg.LegalVIESURL != "" {
+		vies.URL = cfg.LegalVIESURL
+	}
+	tedb := legal.NewTEDBProvider(httpClient)
+	if cfg.LegalTEDBURL != "" {
+		tedb.URL = cfg.LegalTEDBURL
+	}
+	bce := legal.NewBCEProvider(httpClient)
+	if cfg.LegalBCEURL != "" {
+		bce.URL = cfg.LegalBCEURL
+	}
+
+	legalStore := legal.NewPGStore(pool)
+	legalSvc := &legal.Service{
+		Store:     legalStore,
+		Provider:  legal.DefaultProvider{},
+		Recherche: recherche,
+		VIES:      vies,
+		TEDB:      tedb,
+		BCE:       bce,
+		Stubs:     legal.OfficialStubs(),
+		Logger:    slog.Default(),
+	}
+
+	bizStore := biz.NewStore(pool, box)
+	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
+		return legalSvc.MentionsForIssue(ctx)
+	})
+
 	api := httpapi.New(httpapi.Options{
 		DB:           pool,
 		Store:        authstore.New(pool),
-		Biz:          biz.NewStore(pool, box),
+		Biz:          bizStore,
 		Box:          box,
+		Legal:        legalSvc,
 		StaticDir:    staticDir,
 		Version:      Version,
 		CookieSecure: cfg.CookieSecure,
@@ -86,6 +123,15 @@ func main() {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+	if cfg.LegalRefreshEnabled {
+		refresher := legal.NewRefresher(pool, legalSvc, cfg.LegalRefreshInterval)
+		refresher.Logger = slog.Default()
+		go refresher.Start(runCtx)
+		slog.Info("legal refresh started", "interval", cfg.LegalRefreshInterval.String())
+	}
+
 	go func() {
 		slog.Info("listening", "addr", cfg.Addr, "env", cfg.Environment, "version", Version)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -97,6 +143,7 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	<-stop
+	runCancel()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	defer cancel()

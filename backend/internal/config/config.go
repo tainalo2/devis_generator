@@ -33,6 +33,15 @@ type Config struct {
 	CookieSecure  bool
 	SessionTTL    time.Duration
 	Argon2        auth.Argon2Params
+
+	// Legal sources (optional; defaults are public endpoints, no API keys).
+	LegalRefreshEnabled  bool
+	LegalRefreshInterval time.Duration
+	LegalHTTPTimeout     time.Duration
+	LegalRechercheURL    string
+	LegalVIESURL         string
+	LegalTEDBURL         string
+	LegalBCEURL          string
 }
 
 func (c Config) IsProduction() bool {
@@ -56,6 +65,13 @@ func Load() (Config, error) {
 			Threads: uint8(getIntEnv("ARGON2_THREADS", 2)),
 			KeyLen:  uint32(getIntEnv("ARGON2_KEYLEN", 32)),
 		},
+		LegalRefreshEnabled:  getBoolEnv("LEGAL_REFRESH_ENABLED", true),
+		LegalRefreshInterval: getDurationEnv("LEGAL_REFRESH_INTERVAL", 24*time.Hour),
+		LegalHTTPTimeout:     getDurationEnv("LEGAL_HTTP_TIMEOUT", 8*time.Second),
+		LegalRechercheURL:    getEnv("LEGAL_RECHERCHE_BASE_URL", ""),
+		LegalVIESURL:         getEnv("LEGAL_VIES_URL", ""),
+		LegalTEDBURL:         getEnv("LEGAL_TEDB_URL", ""),
+		LegalBCEURL:          getEnv("LEGAL_BCE_URL", ""),
 	}
 
 	if cfg.DatabaseURL == "" {

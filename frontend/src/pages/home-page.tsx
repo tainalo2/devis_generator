@@ -48,6 +48,9 @@ export function HomePage() {
         <Button variant="outline" render={<Link to="/documents" />}>
           Mes documents
         </Button>
+        <Button variant="outline" render={<Link to="/sources-legales" />}>
+          Sources légales
+        </Button>
         <Button variant="ghost" render={<Link to="/inscription" />}>
           Créer un compte
         </Button>

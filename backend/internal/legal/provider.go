@@ -1,7 +1,4 @@
-// Package legal defines the contract for fetching official French legal
-// variables (VAT rates, franchise thresholds, penalty rates, company data via
-// SIREN, etc.). Concrete providers and official data sources will be wired later;
-// values are expected to be persisted in PostgreSQL with source + fetched_at.
+// Package legal defines providers and cache for French/EU legal variables.
 package legal
 
 import (
@@ -10,22 +7,29 @@ import (
 	"time"
 )
 
-// Variable is a cached legal value retrieved from an official source.
+// Variable is a cached legal value retrieved from an official or manual source.
 type Variable struct {
-	Key       string
-	Value     json.RawMessage
-	Source    string
-	FetchedAt time.Time
+	Key       string          `json:"key"`
+	Value     json.RawMessage `json:"value"`
+	Source    string          `json:"source"`
+	FetchedAt time.Time       `json:"fetched_at"`
+	Status    string          `json:"status,omitempty"`
+}
+
+// StatusEntry is the public status of one legal key.
+type StatusEntry struct {
+	Key       string          `json:"key"`
+	Value     json.RawMessage `json:"value"`
+	Source    string          `json:"source"`
+	FetchedAt time.Time       `json:"fetched_at"`
+	Status    string          `json:"status"`
+	Fresh     bool            `json:"fresh"`
+	AgeSecs   int64           `json:"age_seconds"`
 }
 
 // Provider fetches legal variables from an upstream official source.
-// Implementations must be safe for concurrent use.
 type Provider interface {
-	// Fetch retrieves the current value for key from the official source.
-	// It must not write to the database; caching is the caller's responsibility.
 	Fetch(ctx context.Context, key string) (Variable, error)
-
-	// Name returns a stable identifier for this provider (used as source metadata).
 	Name() string
 }
 
@@ -33,21 +37,9 @@ type Provider interface {
 type Store interface {
 	Get(ctx context.Context, key string) (Variable, error)
 	Upsert(ctx context.Context, v Variable) error
-}
-
-// Service coordinates fetch + cache. Skeleton only — no official sources yet.
-type Service struct {
-	Provider Provider
-	Store    Store
-}
-
-// Get returns a cached value, or fetches and caches it when missing/stale logic
-// is added later. For now it only reads from the store.
-func (s *Service) Get(ctx context.Context, key string) (Variable, error) {
-	if s.Store == nil {
-		return Variable{}, ErrNotConfigured
-	}
-	return s.Store.Get(ctx, key)
+	Append(ctx context.Context, v Variable, status, errMsg string) error
+	Latest(ctx context.Context, key string) (Variable, string, error) // value + status
+	ListStatus(ctx context.Context) ([]StatusEntry, error)
 }
 
 // ErrNotConfigured is returned when legal dependencies are not wired.
@@ -55,15 +47,38 @@ var ErrNotConfigured = errNotConfigured{}
 
 type errNotConfigured struct{}
 
-func (errNotConfigured) Error() string {
-	return "legal service is not configured"
-}
+func (errNotConfigured) Error() string { return "legal service is not configured" }
 
-// NoopProvider is a placeholder until official sources are integrated.
+// NoopProvider is a placeholder.
 type NoopProvider struct{}
 
 func (NoopProvider) Name() string { return "noop" }
 
 func (NoopProvider) Fetch(context.Context, string) (Variable, error) {
 	return Variable{}, ErrNotConfigured
+}
+
+// StubProvider documents future sources that need credentials (Insee Sirene, Légifrance/PISTE).
+// They are listed in Status but never called — no API keys in this repository.
+type StubProvider struct {
+	SourceName string
+}
+
+func (s StubProvider) Name() string {
+	if s.SourceName == "" {
+		return "stub"
+	}
+	return s.SourceName
+}
+
+func (s StubProvider) Fetch(context.Context, string) (Variable, error) {
+	return Variable{}, ErrNotConfigured
+}
+
+// OfficialStubs returns placeholder providers for credentialed sources (not wired).
+func OfficialStubs() []Provider {
+	return []Provider{
+		StubProvider{SourceName: "insee.sirene"},
+		StubProvider{SourceName: "legifrance.piste"},
+	}
 }

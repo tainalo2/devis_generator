@@ -243,7 +243,7 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 	if err != nil {
 		return Document{}, err
 	}
-	mentions := legal.DefaultMentions()
+	mentions := s.resolveMentions(ctx)
 	issuerJSON, _ := json.Marshal(issuer)
 	legalJSON, _ := json.Marshal(mentions)
 

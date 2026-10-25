@@ -2,9 +2,28 @@ import { useEffect, useState, type FormEvent } from "react"
 import { Navigate } from "react-router-dom"
 
 import { useAuth } from "@/components/auth-provider"
+import { CompanyAutocomplete } from "@/components/company-autocomplete"
 import { Button } from "@/components/ui/button"
-import { getIssuer, saveIssuer } from "@/lib/api"
+import { VATValidator } from "@/components/vat-validator"
+import { getIssuer, saveIssuer, type CompanyHit } from "@/lib/api"
 import { emptyAddress, type IssuerProfile } from "@/lib/types"
+
+function applyCompanyHit(form: IssuerProfile, hit: CompanyHit): IssuerProfile {
+  const address = { ...form.address }
+  if (hit.address) address.line1 = hit.address
+  if (hit.postal_code) address.postal_code = hit.postal_code
+  if (hit.city) address.city = hit.city
+  return {
+    ...form,
+    legal_name: hit.name || form.legal_name,
+    trade_name: hit.trade_name || form.trade_name,
+    siren: hit.siren || form.siren,
+    siret: hit.siret || form.siret,
+    vat_number: hit.vat_number || form.vat_number,
+    ape_code: hit.naf || form.ape_code,
+    address,
+  }
+}
 
 export function IssuerPage() {
   const { user, loading } = useAuth()
@@ -41,6 +60,9 @@ export function IssuerPage() {
       <p className="text-muted-foreground">
         Identité figée dans les documents émis (SIRET, adresse chiffrée, régime TVA par défaut).
       </p>
+      <CompanyAutocomplete
+        onPick={(hit) => setForm((f) => (f ? applyCompanyHit(f, hit) : f))}
+      />
       <form onSubmit={onSubmit} className="space-y-3">
         <input
           className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
@@ -48,11 +70,23 @@ export function IssuerPage() {
           value={form.legal_name}
           onChange={(e) => setForm({ ...form, legal_name: e.target.value })}
         />
-        <input
-          className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-          placeholder="SIRET"
-          value={form.siret}
-          onChange={(e) => setForm({ ...form, siret: e.target.value })}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            placeholder="SIREN"
+            value={form.siren}
+            onChange={(e) => setForm({ ...form, siren: e.target.value })}
+          />
+          <input
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            placeholder="SIRET"
+            value={form.siret}
+            onChange={(e) => setForm({ ...form, siret: e.target.value })}
+          />
+        </div>
+        <VATValidator
+          value={form.vat_number}
+          onChange={(vat_number) => setForm({ ...form, vat_number })}
         />
         <input
           className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"

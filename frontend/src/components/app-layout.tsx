@@ -44,6 +44,9 @@ export function AppLayout() {
                   </NavLink>
                 </>
               )}
+              <NavLink to="/sources-legales" className={navLinkClass}>
+                Sources légales
+              </NavLink>
             </nav>
           </div>
           <div className="flex items-center gap-2">

@@ -189,3 +189,65 @@ export function downloadBlob(blob: Blob, filename: string) {
   a.click()
   URL.revokeObjectURL(url)
 }
+
+export type CompanyHit = {
+  siren: string
+  siret: string
+  name: string
+  trade_name?: string
+  address?: string
+  postal_code?: string
+  city?: string
+  naf?: string
+  vat_number?: string
+}
+
+export type VATValidation = {
+  country_code: string
+  vat_number: string
+  valid: boolean
+  name?: string
+  address?: string
+  checked_at: string
+  source: string
+  cached: boolean
+}
+
+export type LegalStatusEntry = {
+  key: string
+  value: unknown
+  source: string
+  fetched_at: string
+  status: string
+  fresh: boolean
+  age_seconds: number
+}
+
+export type LegalStatusResponse = {
+  variables: LegalStatusEntry[]
+  sources: { id: string; label: string; auth: string }[]
+  excluded: string[]
+}
+
+export async function searchCompanies(q: string, limit = 8): Promise<CompanyHit[]> {
+  const res = await apiFetch(
+    `/api/v1/legal/companies/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+  )
+  if (!res.ok) throw new Error(await readError(res, "Recherche d'entreprise impossible."))
+  return ((await res.json()) as { results: CompanyHit[] }).results ?? []
+}
+
+export async function validateVAT(vatNumber: string): Promise<VATValidation> {
+  const res = await apiFetch("/api/v1/legal/vat/validate", {
+    method: "POST",
+    body: JSON.stringify({ vat_number: vatNumber }),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Validation TVA impossible."))
+  return (await res.json()) as VATValidation
+}
+
+export async function fetchLegalStatus(): Promise<LegalStatusResponse> {
+  const res = await apiFetch("/api/v1/legal/status")
+  if (!res.ok) throw new Error(await readError(res, "Statut légal indisponible."))
+  return (await res.json()) as LegalStatusResponse
+}

@@ -10,6 +10,7 @@ import { DocumentDetailPage } from "@/pages/document-detail-page"
 import { DocumentsPage } from "@/pages/documents-page"
 import { HomePage } from "@/pages/home-page"
 import { IssuerPage } from "@/pages/issuer-page"
+import { LegalSourcesPage } from "@/pages/legal-sources-page"
 import { LoginPage } from "@/pages/login-page"
 import { NewDocumentPage } from "@/pages/new-document-page"
 import { RegisterPage } from "@/pages/register-page"
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="clients/nouveau" element={<ClientEditPage />} />
               <Route path="clients/:id" element={<ClientEditPage />} />
               <Route path="entreprise" element={<IssuerPage />} />
+              <Route path="sources-legales" element={<LegalSourcesPage />} />
               <Route path="connexion" element={<LoginPage />} />
               <Route path="inscription" element={<RegisterPage />} />
               <Route path="compte" element={<AccountPage />} />

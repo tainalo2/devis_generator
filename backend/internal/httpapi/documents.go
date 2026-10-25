@@ -251,6 +251,8 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 	mentions := legal.DefaultMentions()
 	if len(d.LegalSnapshot) > 0 {
 		_ = json.Unmarshal(d.LegalSnapshot, &mentions)
+	} else if s.legal != nil {
+		mentions = s.legal.MentionsForIssue(r.Context())
 	}
 	pdf, err := pdfgen.Render(d, issuer, client, mentions)
 	if err != nil {
@@ -318,6 +320,8 @@ func (s *Server) handleGuestPDF(w http.ResponseWriter, r *http.Request) {
 	mentions := legal.DefaultMentions()
 	if req.Mentions != nil {
 		mentions = *req.Mentions
+	} else if s.legal != nil {
+		mentions = s.legal.MentionsForIssue(r.Context())
 	}
 	pdf, err := pdfgen.Render(doc, req.Issuer, req.Client, mentions)
 	if err != nil {

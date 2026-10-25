@@ -14,21 +14,24 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
+	"github.com/tainalo2/devis_generator/backend/internal/legal"
 )
 
 // Server is the HTTP API and static file server.
 type Server struct {
-	db           Pinger
-	store        *authstore.Store
-	biz          *biz.Store
-	box          *crypto.Box
-	staticDir    string
-	version      string
-	router       chi.Router
-	cookieSecure bool
-	sessionTTL   time.Duration
-	argon2       auth.Argon2Params
-	authLimiter  *RateLimiter
+	db                Pinger
+	store             *authstore.Store
+	biz               *biz.Store
+	box               *crypto.Box
+	legal             *legal.Service
+	staticDir         string
+	version           string
+	router            chi.Router
+	cookieSecure      bool
+	sessionTTL        time.Duration
+	argon2            auth.Argon2Params
+	authLimiter       *RateLimiter
+	legalGuestLimiter *RateLimiter
 }
 
 // Options configures the HTTP server.
@@ -37,6 +40,7 @@ type Options struct {
 	Store        *authstore.Store
 	Biz          *biz.Store
 	Box          *crypto.Box
+	Legal        *legal.Service
 	StaticDir    string
 	Version      string
 	CookieSecure bool
@@ -47,16 +51,18 @@ type Options struct {
 // New builds the chi router with health, auth, business API and SPA.
 func New(opts Options) *Server {
 	s := &Server{
-		db:           opts.DB,
-		store:        opts.Store,
-		biz:          opts.Biz,
-		box:          opts.Box,
-		staticDir:    opts.StaticDir,
-		version:      opts.Version,
-		cookieSecure: opts.CookieSecure,
-		sessionTTL:   opts.SessionTTL,
-		argon2:       opts.Argon2,
-		authLimiter:  NewRateLimiter(20, time.Minute),
+		db:                opts.DB,
+		store:             opts.Store,
+		biz:               opts.Biz,
+		box:               opts.Box,
+		legal:             opts.Legal,
+		staticDir:         opts.StaticDir,
+		version:           opts.Version,
+		cookieSecure:      opts.CookieSecure,
+		sessionTTL:        opts.SessionTTL,
+		argon2:            opts.Argon2,
+		authLimiter:       NewRateLimiter(20, time.Minute),
+		legalGuestLimiter: NewRateLimiter(30, time.Minute),
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -95,6 +101,10 @@ func New(opts Options) *Server {
 
 			r.Post("/billing/preview", s.handlePreviewTotals)
 			r.Post("/guest/pdf", s.handleGuestPDF)
+
+			r.Get("/legal/status", s.handleLegalStatus)
+			r.Get("/legal/companies/search", s.handleCompanySearch)
+			r.Post("/legal/vat/validate", s.handleVATValidate)
 
 			r.Get("/issuer", s.requireAuth(s.handleGetIssuer))
 			r.Put("/issuer", s.requireAuth(s.handlePutIssuer))

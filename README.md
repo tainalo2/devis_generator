@@ -41,7 +41,7 @@ Image d’essai GHCR : `ghcr.io/tainalo2/devisgenerator-vibed` (tags `vibed-v*` 
 | `ENCRYPTION_KEY` | Clé AES-256-GCM, 32 octets **base64** | défaut dev (avertissement) |
 
 En **production**, l’appli refuse de démarrer si `SESSION_SECRET` / `ENCRYPTION_KEY` sont absents ou faibles.  
-Optionnelles : `STATIC_DIR`, `STARTUP_TIMEOUT`, `SESSION_TTL`, `COOKIE_SECURE`, `ARGON2_*`. Voir `.env.example`.
+Optionnelles : `STATIC_DIR`, `STARTUP_TIMEOUT`, `SESSION_TTL`, `COOKIE_SECURE`, `ARGON2_*`, et légales sans secret (`LEGAL_REFRESH_*`, `LEGAL_*_URL`). Voir `.env.example`.
 
 
 ## Développement local (sans image app)
@@ -92,7 +92,7 @@ cd frontend && npm run build
 
 Voir [docs/architecture.md](docs/architecture.md) et les décisions produit dans [docs/DECISIONS.md](docs/DECISIONS.md).
 
-- `backend/` — API Go (chi, pgx, migrations, package `legal` stub)
+- `backend/` — API Go (chi, pgx, migrations, package `legal` + providers officiels)
 - `frontend/` — React + TS + Vite + Tailwind + shadcn/ui (français uniquement)
 - `Dockerfile.vibed` — image de la nouvelle stack (le `Dockerfile` nginx legacy reste pour les tags `v*`)
 - `.github/workflows/vibed-ci.yml` — lint / test / build (sans publication d'image)
@@ -103,6 +103,7 @@ Voir [docs/architecture.md](docs/architecture.md) et les décisions produit dans
 - Clients / documents (brouillon → émission numérotée)
 - TVA franchise 293 B ou taux par ligne ; totaux en centimes
 - PDF serveur (gofpdf) : compte ou invité
+- Sources légales : Recherche d’entreprises, VIES, TEDB, BCE ; page `/sources-legales` ; cache + repli
 
-Voir [docs/DECISIONS.md](docs/DECISIONS.md). Suite : landing/pages légales, SMTP, sources `legal` officielles, Factur-X.
+Voir [docs/DECISIONS.md](docs/DECISIONS.md). Suite : landing/pages légales, SMTP, Factur-X V2.
 

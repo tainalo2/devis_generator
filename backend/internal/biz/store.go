@@ -1,11 +1,13 @@
 package biz
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
+	"github.com/tainalo2/devis_generator/backend/internal/legal"
 )
 
 var (
@@ -15,13 +17,29 @@ var (
 	ErrInvalidInput = errors.New("invalid input")
 )
 
+// MentionsFunc resolves legal mentions at document issue / PDF time.
+type MentionsFunc func(ctx context.Context) legal.Mentions
+
 type Store struct {
-	pool *pgxpool.Pool
-	box  *crypto.Box
+	pool     *pgxpool.Pool
+	box      *crypto.Box
+	mentions MentionsFunc
 }
 
 func NewStore(pool *pgxpool.Pool, box *crypto.Box) *Store {
 	return &Store{pool: pool, box: box}
+}
+
+// SetMentionsResolver wires verified legal values into document issuance.
+func (s *Store) SetMentionsResolver(fn MentionsFunc) {
+	s.mentions = fn
+}
+
+func (s *Store) resolveMentions(ctx context.Context) legal.Mentions {
+	if s.mentions != nil {
+		return s.mentions(ctx)
+	}
+	return legal.DefaultMentions()
 }
 
 func (s *Store) encryptAddr(a Address) ([]byte, error) {

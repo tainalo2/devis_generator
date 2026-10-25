@@ -2,8 +2,10 @@ import { useEffect, useState, type FormEvent } from "react"
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom"
 
 import { useAuth } from "@/components/auth-provider"
+import { CompanyAutocomplete } from "@/components/company-autocomplete"
 import { Button } from "@/components/ui/button"
-import { listClients, saveClient } from "@/lib/api"
+import { VATValidator } from "@/components/vat-validator"
+import { listClients, saveClient, type CompanyHit } from "@/lib/api"
 import { emptyAddress, type Client } from "@/lib/types"
 
 export function ClientEditPage() {
@@ -44,6 +46,22 @@ export function ClientEditPage() {
 
   if (!loading && !user) return <Navigate to="/connexion" replace />
 
+  function applyHit(hit: CompanyHit) {
+    setForm((f) => ({
+      ...f,
+      name: hit.name || f.name,
+      siren: hit.siren || f.siren,
+      siret: hit.siret || f.siret,
+      vat_number: hit.vat_number || f.vat_number,
+      address: {
+        ...f.address,
+        line1: hit.address || f.address.line1,
+        postal_code: hit.postal_code || f.address.postal_code,
+        city: hit.city || f.address.city,
+      },
+    }))
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setPending(true)
@@ -61,6 +79,7 @@ export function ClientEditPage() {
   return (
     <section className="mx-auto max-w-xl space-y-6">
       <h1 className="text-3xl font-semibold tracking-tight">{isNew ? "Nouveau client" : "Client"}</h1>
+      <CompanyAutocomplete onPick={applyHit} />
       <form onSubmit={onSubmit} className="space-y-4">
         <label className="block space-y-1 text-sm">
           <span className="font-medium">Nom</span>
@@ -104,14 +123,24 @@ export function ClientEditPage() {
             onChange={(e) => setForm({ ...form, address: { ...form.address, city: e.target.value } })}
           />
         </div>
-        <label className="block space-y-1 text-sm">
-          <span className="font-medium">SIRET</span>
+        <div className="grid gap-3 sm:grid-cols-2">
           <input
+            placeholder="SIREN"
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            value={form.siren}
+            onChange={(e) => setForm({ ...form, siren: e.target.value })}
+          />
+          <input
+            placeholder="SIRET"
             className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
             value={form.siret}
             onChange={(e) => setForm({ ...form, siret: e.target.value })}
           />
-        </label>
+        </div>
+        <VATValidator
+          value={form.vat_number}
+          onChange={(vat_number) => setForm({ ...form, vat_number })}
+        />
         <label className="block space-y-1 text-sm">
           <span className="font-medium">IBAN (chiffré)</span>
           <input
