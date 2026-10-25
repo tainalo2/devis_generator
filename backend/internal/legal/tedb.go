@@ -13,7 +13,18 @@ import (
 	"time"
 )
 
+// DefaultTEDBURL is the public TEDB SOAP endpoint (no API key).
 const DefaultTEDBURL = "https://ec.europa.eu/taxation_customs/tedb/ws/VatRetrievalService"
+
+// SOAP / XSD namespaces (WSDL targetNamespace vs message/types schemas diverge):
+//   - WSDL / SOAPAction:  urn:...:v1:VatRetrievalService
+//   - Request element:    urn:...:v1:IVatRetrievalService
+//   - Child elements:     urn:...:v1:IVatRetrievalService:types (elementFormDefault=qualified)
+const (
+	tedbSOAPAction = "urn:ec.europa.eu:taxud:tedb:services:v1:VatRetrievalService/RetrieveVatRates"
+	tedbMsgNS      = "urn:ec.europa.eu:taxud:tedb:services:v1:IVatRetrievalService"
+	tedbTypesNS    = "urn:ec.europa.eu:taxud:tedb:services:v1:IVatRetrievalService:types"
+)
 
 // TEDBProvider fetches FR VAT rates from the Commission TEDB SOAP service.
 type TEDBProvider struct {
@@ -55,7 +66,7 @@ func (p *TEDBProvider) Fetch(ctx context.Context, key string) (Variable, error) 
 			return err
 		}
 		req.Header.Set("Content-Type", "text/xml; charset=utf-8")
-		req.Header.Set("SOAPAction", "urn:ec.europa.eu:taxud:tedb:services:v1:VatRetrievalService/RetrieveVatRates")
+		req.Header.Set("SOAPAction", tedbSOAPAction)
 		req.Header.Set("Accept", "text/xml")
 		res, err := p.Client.Do(req)
 		if err != nil {
@@ -63,10 +74,18 @@ func (p *TEDBProvider) Fetch(ctx context.Context, key string) (Variable, error) 
 		}
 		defer res.Body.Close()
 		body, _ := io.ReadAll(io.LimitReader(res.Body, 2<<20))
-		if res.StatusCode < 200 || res.StatusCode >= 300 {
-			return &HTTPError{Status: res.StatusCode, Body: truncate(string(body), 500)}
+		text := string(body)
+		if fault := tedbFaultMessage(text); fault != "" {
+			status := res.StatusCode
+			if status < 400 {
+				status = http.StatusBadRequest
+			}
+			return &HTTPError{Status: status, Body: fault}
 		}
-		parsed, err := parseTEDBResponse(string(body))
+		if res.StatusCode < 200 || res.StatusCode >= 300 {
+			return &HTTPError{Status: res.StatusCode, Body: truncate(text, 500)}
+		}
+		parsed, err := parseTEDBResponse(text)
 		if err != nil {
 			return err
 		}
@@ -77,7 +96,9 @@ func (p *TEDBProvider) Fetch(ctx context.Context, key string) (Variable, error) 
 		return Variable{}, err
 	}
 	rates.MemberState = "FR"
-	rates.SituationOn = situationOn
+	if rates.SituationOn == "" {
+		rates.SituationOn = situationOn
+	}
 	raw, err := json.Marshal(rates)
 	if err != nil {
 		return Variable{}, err
@@ -100,80 +121,106 @@ type VATRates struct {
 	Note        string    `json:"note,omitempty"`
 }
 
+// buildTEDBRequest builds a document/literal SOAP envelope that validates against
+// VatRetrievalServiceMessage.xsd + VatRetrievalServiceType.xsd.
 func buildTEDBRequest(iso, situationOn string) string {
+	iso = strings.ToUpper(strings.TrimSpace(iso))
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:ec.europa.eu:taxud:tedb:services:v1:VatRetrievalService">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="%s" xmlns:t="%s">
   <soapenv:Header/>
   <soapenv:Body>
     <urn:retrieveVatRatesReqMsg>
-      <memberStates><isoCode>%s</isoCode></memberStates>
-      <situationOn>%s</situationOn>
+      <t:memberStates>
+        <t:isoCode>%s</t:isoCode>
+      </t:memberStates>
+      <t:situationOn>%s</t:situationOn>
     </urn:retrieveVatRatesReqMsg>
   </soapenv:Body>
-</soapenv:Envelope>`, iso, situationOn)
+</soapenv:Envelope>`, tedbMsgNS, tedbTypesNS, iso, situationOn)
 }
 
 var (
-	reType    = regexp.MustCompile(`(?i)<type>\s*(STANDARD|REDUCED)\s*</type>`)
-	reRateVal = regexp.MustCompile(`(?i)<rate[^>]*>[\s\S]*?<value>\s*([0-9]+(?:\.[0-9]+)?)\s*</value>`)
-	reSimple  = regexp.MustCompile(`(?i)<(?:rate|value)>\s*([0-9]+(?:\.[0-9]+)?)\s*</(?:rate|value)>`)
+	reFaultString = regexp.MustCompile(`(?is)<faultstring>\s*([^<]+)\s*</faultstring>`)
+	reFaultDesc   = regexp.MustCompile(`(?is)<(?:\w+:)?description>\s*([^<]+)\s*</(?:\w+:)?description>`)
+	reResultBlock = regexp.MustCompile(`(?is)<(?:\w+:)?vatRateResults\b[^>]*>[\s\S]*?</(?:\w+:)?vatRateResults>`)
+	reOuterType   = regexp.MustCompile(`(?is)<(?:\w+:)?type>\s*(STANDARD|REDUCED)\s*</(?:\w+:)?type>`)
+	reRateInner   = regexp.MustCompile(`(?is)<(?:\w+:)?rate\b[^>]*>\s*<(?:\w+:)?type>\s*([^<]+)\s*</(?:\w+:)?type>\s*(?:<(?:\w+:)?value>\s*([0-9]+(?:\.[0-9]+)?)\s*</(?:\w+:)?value>)?`)
+	reSituationOn = regexp.MustCompile(`(?is)<(?:\w+:)?situationOn>\s*([^<]+)\s*</(?:\w+:)?situationOn>`)
 )
 
+func tedbFaultMessage(xmlBody string) string {
+	if !strings.Contains(strings.ToLower(xmlBody), "fault") {
+		return ""
+	}
+	if !strings.Contains(xmlBody, "Fault") && !strings.Contains(strings.ToLower(xmlBody), ":fault") {
+		return ""
+	}
+	parts := make([]string, 0, 2)
+	if m := reFaultString.FindStringSubmatch(xmlBody); len(m) >= 2 {
+		parts = append(parts, strings.TrimSpace(m[1]))
+	}
+	if m := reFaultDesc.FindStringSubmatch(xmlBody); len(m) >= 2 {
+		parts = append(parts, strings.TrimSpace(m[1]))
+	}
+	if len(parts) == 0 {
+		if strings.Contains(xmlBody, "Fault") {
+			return truncate(xmlBody, 300)
+		}
+		return ""
+	}
+	return strings.Join(parts, " — ")
+}
+
 func parseTEDBResponse(xmlBody string) (VATRates, error) {
-	// Prefer structured blocks; fall back to any numeric rate tags.
+	if fault := tedbFaultMessage(xmlBody); fault != "" {
+		return VATRates{}, fmt.Errorf("TEDB SOAP fault: %s", fault)
+	}
+
 	var out VATRates
-	blocks := strings.Split(xmlBody, "vatRateResults")
-	for _, block := range blocks {
-		tm := reType.FindStringSubmatch(block)
-		vm := reRateVal.FindStringSubmatch(block)
-		if len(vm) < 2 {
+	if m := reSituationOn.FindStringSubmatch(xmlBody); len(m) >= 2 {
+		out.SituationOn = strings.TrimSpace(m[1])
+		// Keep YYYY-MM-DD when TEDB returns xs:date with offset (e.g. 2026-07-01+02:00).
+		if len(out.SituationOn) >= 10 && out.SituationOn[4] == '-' && out.SituationOn[7] == '-' {
+			out.SituationOn = out.SituationOn[:10]
+		}
+	}
+
+	for _, block := range reResultBlock.FindAllString(xmlBody, -1) {
+		tm := reOuterType.FindStringSubmatch(block)
+		rm := reRateInner.FindStringSubmatch(block)
+		if len(tm) < 2 || len(rm) < 2 {
 			continue
 		}
-		v, err := strconv.ParseFloat(vm[1], 64)
-		if err != nil {
+		kind := strings.ToUpper(strings.TrimSpace(tm[1]))
+		rateKind := strings.ToUpper(strings.TrimSpace(rm[1]))
+		switch rateKind {
+		case "EXEMPTED", "NOT_APPLICABLE", "OUT_OF_SCOPE":
 			continue
 		}
-		kind := ""
-		if len(tm) >= 2 {
-			kind = strings.ToUpper(tm[1])
+		if len(rm) < 3 || strings.TrimSpace(rm[2]) == "" {
+			continue
+		}
+		v, err := strconv.ParseFloat(rm[2], 64)
+		if err != nil || v <= 0 {
+			continue
 		}
 		switch kind {
 		case "STANDARD":
-			if out.Standard == 0 || v > out.Standard {
+			// Prefer DEFAULT; otherwise keep the highest STANDARD value seen.
+			if rateKind == "DEFAULT" || out.Standard == 0 || v > out.Standard {
 				out.Standard = v
 			}
 		case "REDUCED":
 			out.Reduced = appendUniqueFloat(out.Reduced, v)
-		default:
-			if v >= 15 {
-				out.Standard = v
-			} else {
-				out.Reduced = appendUniqueFloat(out.Reduced, v)
-			}
 		}
 	}
-	if out.Standard == 0 {
-		for _, m := range reSimple.FindAllStringSubmatch(xmlBody, -1) {
-			if len(m) < 2 {
-				continue
-			}
-			v, err := strconv.ParseFloat(m[1], 64)
-			if err != nil {
-				continue
-			}
-			if v >= 15 && (out.Standard == 0 || v > out.Standard) {
-				out.Standard = v
-			} else if v > 0 && v < 15 {
-				out.Reduced = appendUniqueFloat(out.Reduced, v)
-			}
-		}
-	}
+
 	if out.Standard == 0 && len(out.Reduced) == 0 {
 		return VATRates{}, fmt.Errorf("aucune taux TVA trouvé dans la réponse TEDB")
 	}
 	if out.Standard == 0 {
-		out.Standard = 20 // FR fallback only if SOAP omitted STANDARD but had reduced
-		out.Note = "taux standard absent de la réponse ; 20 % utilisé comme repère FR"
+		out.Standard = 20
+		out.Note = "taux standard absent de la réponse ; 20 % utilisé comme repère FR (repli documenté)"
 	}
 	return out, nil
 }

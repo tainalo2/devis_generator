@@ -65,7 +65,7 @@ AES-256-GCM (`ENCRYPTION_KEY`) pour IBAN / adresses clients et profil émetteur.
 |--------|--------|---------|
 | **Recherche d’entreprises** (DINUM) | Autocomplétion SIREN/SIRET/nom | ≈ 7 req/s → intervalle ≥ 200 ms |
 | **VIES** (Commission UE) | Validation n° TVA intracom | Bloque les re-checks du même n° → **cache 24 h** + rate limit |
-| **TEDB** | Taux de TVA FR (SOAP) | Timeout / retry mesuré |
+| **TEDB** | Taux de TVA FR (SOAP) | Envelope = `IVatRetrievalService` + enfants `:types` (le targetNamespace WSDL `VatRetrievalService` seul échoue en XSD). Timeout / retry. Repli : dernière `verified` / saisie `manual` visible dans `/api/v1/legal/status` ; les taux FR de référence restent 20 / 10 / 5,5 / 2,1 % |
 | **BCE SDMX** | Taux directeur (MRR) | Pour dériver les pénalités de retard |
 
 ### Emplacements (non branchés — compte requis)

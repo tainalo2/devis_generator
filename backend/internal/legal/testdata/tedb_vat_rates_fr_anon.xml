@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Header/>
+  <env:Body>
+    <ns0:retrieveVatRatesRespMsg
+      xmlns="urn:ec.europa.eu:taxud:tedb:services:v1:IVatRetrievalService:types"
+      xmlns:ns0="urn:ec.europa.eu:taxud:tedb:services:v1:IVatRetrievalService">
+      <additionalInformation/>
+      <vatRateResults>
+        <memberState>FR</memberState>
+        <type>REDUCED</type>
+        <rate><type>EXEMPTED</type><value>0.0</value></rate>
+        <situationOn>2026-07-01+02:00</situationOn>
+        <comment>Anonymized fixture — exempted sample (ignored by parser)</comment>
+      </vatRateResults>
+      <vatRateResults>
+        <memberState>FR</memberState>
+        <type>REDUCED</type>
+        <rate><type>REDUCED_RATE</type><value>2.1</value></rate>
+        <situationOn>2026-07-01+02:00</situationOn>
+        <comment>Anonymized fixture — FR reduced 2.1%</comment>
+      </vatRateResults>
+      <vatRateResults>
+        <memberState>FR</memberState>
+        <type>REDUCED</type>
+        <rate><type>REDUCED_RATE</type><value>5.5</value></rate>
+        <situationOn>2026-07-01+02:00</situationOn>
+        <comment>Anonymized fixture — FR reduced 5.5%</comment>
+      </vatRateResults>
+      <vatRateResults>
+        <memberState>FR</memberState>
+        <type>REDUCED</type>
+        <rate><type>REDUCED_RATE</type><value>10.0</value></rate>
+        <situationOn>2026-07-01+02:00</situationOn>
+        <comment>Anonymized fixture — FR reduced 10%</comment>
+      </vatRateResults>
+      <vatRateResults>
+        <memberState>FR</memberState>
+        <type>STANDARD</type>
+        <rate><type>DEFAULT</type><value>20.0</value></rate>
+        <situationOn>2026-07-01+02:00</situationOn>
+        <comment>Anonymized fixture — FR standard 20%</comment>
+      </vatRateResults>
+    </ns0:retrieveVatRatesRespMsg>
+  </env:Body>
+</env:Envelope>

@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -135,11 +137,22 @@ func TestTEDBFetchMock(t *testing.T) {
 		if r.Method != http.MethodPost {
 			t.Fatalf("method %s", r.Method)
 		}
+		body, _ := io.ReadAll(r.Body)
+		soap := string(body)
+		if !strings.Contains(soap, tedbMsgNS) || !strings.Contains(soap, tedbTypesNS) {
+			t.Fatalf("SOAP namespaces missing: %s", soap)
+		}
+		if !strings.Contains(soap, "<t:isoCode>FR</t:isoCode>") || !strings.Contains(soap, "<t:situationOn>") {
+			t.Fatalf("typed children missing: %s", soap)
+		}
+		if got := r.Header.Get("SOAPAction"); got != tedbSOAPAction {
+			t.Fatalf("SOAPAction=%q", got)
+		}
 		_, _ = w.Write([]byte(`<?xml version="1.0"?>
 		<soap:Envelope><soap:Body>
-		  <vatRateResults><type>STANDARD</type><rate><value>20.0</value></rate></vatRateResults>
-		  <vatRateResults><type>REDUCED</type><rate><value>5.5</value></rate></vatRateResults>
-		  <vatRateResults><type>REDUCED</type><rate><value>10.0</value></rate></vatRateResults>
+		  <vatRateResults><type>STANDARD</type><rate><type>DEFAULT</type><value>20.0</value></rate></vatRateResults>
+		  <vatRateResults><type>REDUCED</type><rate><type>REDUCED_RATE</type><value>5.5</value></rate></vatRateResults>
+		  <vatRateResults><type>REDUCED</type><rate><type>REDUCED_RATE</type><value>10.0</value></rate></vatRateResults>
 		</soap:Body></soap:Envelope>`))
 	}))
 	defer srv.Close()
@@ -158,6 +171,119 @@ func TestTEDBFetchMock(t *testing.T) {
 	}
 	if rates.Standard != 20 || len(rates.Reduced) < 2 {
 		t.Fatalf("rates=%+v", rates)
+	}
+}
+
+func TestTEDBParseRealAnonymizedFixture(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("testdata", "tedb_vat_rates_fr_anon.xml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rates, err := parseTEDBResponse(string(raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rates.Standard != 20 {
+		t.Fatalf("standard=%v", rates.Standard)
+	}
+	for _, want := range []float64{2.1, 5.5, 10} {
+		found := false
+		for _, got := range rates.Reduced {
+			if got == want {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("missing reduced %v in %+v", want, rates.Reduced)
+		}
+	}
+	for _, got := range rates.Reduced {
+		if got == 0 {
+			t.Fatalf("exempted 0 must be skipped: %+v", rates.Reduced)
+		}
+	}
+	if rates.SituationOn != "2026-07-01" {
+		t.Fatalf("situationOn=%q", rates.SituationOn)
+	}
+}
+
+func TestTEDBParseFaultFixture(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("testdata", "tedb_fault_xsd.xml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = parseTEDBResponse(string(raw))
+	if err == nil {
+		t.Fatal("expected fault error")
+	}
+	if !strings.Contains(err.Error(), "TEDB") && !strings.Contains(err.Error(), "XSD") && !strings.Contains(err.Error(), "fault") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestTEDBBuildRequestNamespaces(t *testing.T) {
+	soap := buildTEDBRequest("fr", "2026-10-25")
+	for _, want := range []string{tedbMsgNS, tedbTypesNS, "<t:isoCode>FR</t:isoCode>", "<t:situationOn>2026-10-25</t:situationOn>"} {
+		if !strings.Contains(soap, want) {
+			t.Fatalf("missing %q in %s", want, soap)
+		}
+	}
+	// Legacy unqualified children / wrong message NS must not appear as the request NS.
+	if strings.Contains(soap, "xmlns:urn=\"urn:ec.europa.eu:taxud:tedb:services:v1:VatRetrievalService\"") {
+		t.Fatal("must not bind request element to WSDL targetNamespace VatRetrievalService")
+	}
+}
+
+func TestTEDBRefreshFailureKeepsVerifiedAndIssuance(t *testing.T) {
+	store := NewMemStore()
+	_ = store.Upsert(context.Background(), Variable{
+		Key: KeyTEDBVATRatesFR,
+		Value: json.RawMessage(`{
+			"member_state":"FR","situation_on":"2026-01-01",
+			"standard_percent":20,"reduced_percent":[5.5,10]
+		}`),
+		Source: "tedb.ec.europa.eu", FetchedAt: time.Now().UTC(), Status: StatusVerified,
+	})
+	_ = store.Upsert(context.Background(), Variable{
+		Key: KeyManualMentions,
+		Value: json.RawMessage(`{
+			"franchise_293b":"TVA non applicable, art. 293 B du CGI",
+			"flat_indemnity_40e":"Indemnité forfaitaire : 40 €",
+			"payment_terms_default":"Paiement à 30 jours.",
+			"quote_validity_note":"Devis 15 jours."
+		}`),
+		Source: "manual-surveillance", FetchedAt: time.Now().UTC(), Status: StatusManual,
+	})
+
+	failing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><env:Fault><faultstring>TEDB-ERR-2 - Request is not valid</faultstring></env:Fault></env:Body></env:Envelope>`))
+	}))
+	defer failing.Close()
+
+	tedb := NewTEDBProvider(failing.Client())
+	tedb.URL = failing.URL
+	tedb.Limiter = NewRateLimiter(time.Millisecond)
+	tedb.Retry = RetryPolicy{MaxAttempts: 1}
+
+	svc := &Service{Store: store, TEDB: tedb}
+	r := &Refresher{Service: svc, Logger: slogDiscard()}
+	if err := r.refreshUnlocked(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	v, status, err := store.Latest(context.Background(), KeyTEDBVATRatesFR)
+	if err != nil || status != StatusVerified {
+		t.Fatalf("status=%s err=%v", status, err)
+	}
+	var rates VATRates
+	_ = json.Unmarshal(v.Value, &rates)
+	if rates.Standard != 20 {
+		t.Fatalf("lost verified TEDB value: %+v", rates)
+	}
+	m := svc.MentionsForIssue(context.Background())
+	if m.Franchise293B == "" {
+		t.Fatal("issuance mentions must remain available after TEDB failure")
 	}
 }
 
