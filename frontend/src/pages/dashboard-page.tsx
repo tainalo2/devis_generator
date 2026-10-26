@@ -368,7 +368,7 @@ export function DashboardPage() {
                         <tr>
                           <th className={table.th}>Document</th>
                           <th className={table.th}>Client</th>
-                          <th className={cn(table.th, "hidden xl:table-cell")}>Date</th>
+                          <th className={cn(table.th, "hidden 2xl:table-cell")}>Date</th>
                           <th className={cn(table.th, "text-right")}>Montant TTC</th>
                           <th className={table.th}>Statut</th>
                         </tr>
@@ -387,7 +387,7 @@ export function DashboardPage() {
                               <td className={cn(table.td, "max-w-44 truncate")}>
                                 {documentClientName(d, d.client_id ? clientById.get(d.client_id)?.name : undefined)}
                               </td>
-                              <td className={cn(table.td, "hidden text-muted-foreground tabular-nums xl:table-cell")}>
+                              <td className={cn(table.td, "hidden text-muted-foreground tabular-nums 2xl:table-cell")}>
                                 {formatDate(d.issue_date)}
                               </td>
                               <td className={cn(table.td, "text-right font-medium tabular-nums")}>

@@ -154,8 +154,26 @@ func (c *VIESClient) putCache(key string, v VATValidation) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	// Cache borné : chaque numéro distinct ajoute une entrée, la mémoire ne
+	// doit pas croître sans limite.
+	if len(c.cache) >= maxVIESCacheEntries {
+		now := time.Now()
+		for k, e := range c.cache {
+			if now.After(e.exp) {
+				delete(c.cache, k)
+			}
+		}
+		for k := range c.cache {
+			if len(c.cache) < maxVIESCacheEntries {
+				break
+			}
+			delete(c.cache, k)
+		}
+	}
 	c.cache[key] = cachedVAT{v: v, exp: time.Now().Add(ttl)}
 }
+
+const maxVIESCacheEntries = 10_000
 
 type viesResponse struct {
 	Valid   bool   `json:"valid"`

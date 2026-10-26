@@ -25,7 +25,7 @@ type AuthContextValue = {
   register: (email: string, password: string, displayName: string) => Promise<void>
   logout: () => Promise<void>
   exportData: () => Promise<void>
-  removeAccount: () => Promise<void>
+  removeAccount: (password: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -74,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       a.click()
       URL.revokeObjectURL(url)
     },
-    removeAccount: async () => {
-      await deleteAccount()
+    removeAccount: async (password) => {
+      await deleteAccount(password)
       setUser(null)
     },
   }

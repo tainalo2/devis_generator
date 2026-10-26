@@ -153,6 +153,9 @@ func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in Documen
 	if err := validateDocInput(in, false); err != nil {
 		return Document{}, err
 	}
+	if err := s.checkOwnedRefs(ctx, userID, in); err != nil {
+		return Document{}, err
+	}
 	calc, err := computeInput(in)
 	if err != nil {
 		return Document{}, err
@@ -193,6 +196,9 @@ func (s *Store) UpdateDocument(ctx context.Context, userID, id uuid.UUID, in Doc
 		return Document{}, ErrImmutable
 	}
 	if err := validateDocInput(in, false); err != nil {
+		return Document{}, err
+	}
+	if err := s.checkOwnedRefs(ctx, userID, in); err != nil {
 		return Document{}, err
 	}
 	calc, err := computeInput(in)
@@ -448,7 +454,35 @@ func computeInput(in DocumentInput) (billing.Result, error) {
 			TaxRateBps:     l.TaxRateBps,
 		})
 	}
-	return billing.Compute(in.VATRegime, inputs)
+	res, err := billing.Compute(in.VATRegime, inputs)
+	if err != nil {
+		return billing.Result{}, fmt.Errorf("%w: %s", ErrInvalidInput, err.Error())
+	}
+	return res, nil
+}
+
+// checkOwnedRefs vérifie que le client et le document lié appartiennent au
+// compte : sans cela, un document pourrait référencer les données d'un autre.
+func (s *Store) checkOwnedRefs(ctx context.Context, userID uuid.UUID, in DocumentInput) error {
+	if in.ClientID != nil {
+		var ok bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM clients WHERE id=$1 AND user_id=$2)`, *in.ClientID, userID).Scan(&ok); err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("%w: client inconnu", ErrInvalidInput)
+		}
+	}
+	if in.RelatedDocumentID != nil {
+		var ok bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM documents WHERE id=$1 AND user_id=$2)`, *in.RelatedDocumentID, userID).Scan(&ok); err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("%w: document lié inconnu", ErrInvalidInput)
+		}
+	}
+	return nil
 }
 
 func validateDocInput(in DocumentInput, requireLines bool) error {

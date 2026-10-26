@@ -193,10 +193,20 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Confirm string `json:"confirm"`
+		Confirm  string `json:"confirm"`
+		Password string `json:"password"`
 	}
 	if err := decodeJSON(r, &body); err != nil || strings.ToUpper(strings.TrimSpace(body.Confirm)) != "SUPPRIMER" {
-		writeAPIError(w, http.StatusBadRequest, `Pour confirmer, envoyez {"confirm":"SUPPRIMER"}.`)
+		writeAPIError(w, http.StatusBadRequest, `Pour confirmer, envoyez {"confirm":"SUPPRIMER","password":"…"}.`)
+		return
+	}
+	// Action irréversible : une session volée ou laissée ouverte ne suffit pas.
+	if !s.accountLimiter.Allow("delete:" + u.ID.String()) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
+		return
+	}
+	if ok, _ := auth.VerifyPassword(body.Password, u.PasswordHash); !ok {
+		writeAPIError(w, http.StatusForbidden, "Mot de passe incorrect.")
 		return
 	}
 	if err := s.store.DeleteUserHard(r.Context(), u.ID); err != nil {

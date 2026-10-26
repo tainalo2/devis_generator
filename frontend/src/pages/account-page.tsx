@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
 
 import { useAuth } from "@/components/auth-provider"
+import { PasswordInput } from "@/components/auth-ui"
 import { PageHeader } from "@/components/page"
 import { Seo } from "@/components/seo"
 import { useToast } from "@/components/toast-provider"
@@ -40,6 +41,7 @@ export function AccountPage() {
   const [pending, setPending] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmText, setConfirmText] = useState("")
+  const [password, setPassword] = useState("")
 
   if (!loading && !user) return <Navigate to="/connexion" replace />
 
@@ -58,7 +60,7 @@ export function AccountPage() {
   async function onDelete() {
     setPending(true)
     try {
-      await removeAccount()
+      await removeAccount(password)
       toast.push("Compte supprimé.", "success")
       navigate("/", { replace: true })
     } catch (err) {
@@ -159,6 +161,7 @@ export function AccountPage() {
         onOpenChange={(o) => {
           setConfirmOpen(o)
           setConfirmText("")
+          setPassword("")
         }}
         title="Supprimer le compte ?"
         description="Cette action est irréversible. Exportez d’abord vos données si vous devez conserver vos factures."
@@ -169,11 +172,15 @@ export function AccountPage() {
           </span>
           <Input autoComplete="off" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
         </Label>
+        <Label>
+          <span>Mot de passe</span>
+          <PasswordInput autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </Label>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" size="lg" disabled={pending} onClick={() => void onExport()}>
             Exporter avant
           </Button>
-          <Button variant="destructive" size="lg" disabled={pending || confirmText.trim() !== CONFIRM_WORD} onClick={() => void onDelete()}>
+          <Button variant="destructive" size="lg" disabled={pending || confirmText.trim() !== CONFIRM_WORD || !password} onClick={() => void onDelete()}>
             Supprimer définitivement
           </Button>
         </div>

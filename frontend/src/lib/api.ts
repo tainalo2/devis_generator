@@ -79,10 +79,10 @@ export async function exportAccount(): Promise<Blob> {
   return res.blob()
 }
 
-export async function deleteAccount(): Promise<void> {
+export async function deleteAccount(password: string): Promise<void> {
   const res = await apiFetch("/api/v1/auth/me", {
     method: "DELETE",
-    body: JSON.stringify({ confirm: "SUPPRIMER" }),
+    body: JSON.stringify({ confirm: "SUPPRIMER", password }),
   })
   if (!res.ok) throw new Error(await readError(res, "Suppression impossible."))
 }

@@ -3,7 +3,9 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -62,12 +64,8 @@ func (s *Server) handleCreateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	d, err := s.biz.CreateDocument(r.Context(), u.ID, in)
-	if errors.Is(err, biz.ErrInvalidInput) {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
-		return
-	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "Impossible d'enregistrer le document.")
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -99,7 +97,7 @@ func (s *Server) handleUpdateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "Impossible d'enregistrer le document.")
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"document": d})
@@ -153,7 +151,7 @@ func (s *Server) handleIssueDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"document": d})
@@ -210,7 +208,7 @@ func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -245,7 +243,7 @@ func (s *Server) createLinked(w http.ResponseWriter, r *http.Request, kind strin
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -457,4 +455,20 @@ func (s *Server) handlePreviewTotals(w http.ResponseWriter, r *http.Request) {
 
 func parseID(r *http.Request) (uuid.UUID, error) {
 	return uuid.Parse(chi.URLParam(r, "id"))
+}
+
+// writeBizError répond à une erreur de la couche métier sans exposer de détail
+// interne : les erreurs de validation gardent leur message (en français), les
+// autres sont journalisées et remplacées par un message générique.
+func (s *Server) writeBizError(w http.ResponseWriter, r *http.Request, err error) {
+	if errors.Is(err, biz.ErrInvalidInput) {
+		msg := strings.TrimPrefix(err.Error(), biz.ErrInvalidInput.Error()+": ")
+		if msg == biz.ErrInvalidInput.Error() {
+			msg = "Données invalides."
+		}
+		writeAPIError(w, http.StatusBadRequest, msg)
+		return
+	}
+	slog.Error("erreur métier", "path", r.URL.Path, "error", err)
+	writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 }
