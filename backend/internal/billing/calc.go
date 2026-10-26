@@ -11,9 +11,10 @@
 package billing
 
 import (
-	"errors"
 	"fmt"
+	"math/big"
 	"sort"
+	"unicode/utf8"
 )
 
 // Allowed VAT rates in basis points (0.00 %, 2.10 %, 5.50 %, 10 %, 20 %).
@@ -60,10 +61,24 @@ type Result struct {
 	VatRegime     string       `json:"vat_regime"`
 }
 
+// Limites d'un document : elles bornent le coût du calcul et du PDF, et
+// garantissent qu'aucun montant (ni TVA = HT × taux) ne dépasse un int64.
+const (
+	MaxLines          = 500
+	MaxDescriptionLen = 2000
+	// MaxAmountCents : 10 000 milliards d'euros, par ligne et par total HT.
+	MaxAmountCents int64 = 1_000_000_000_000_000
+)
+
+var errAmountTooLarge = fmt.Errorf("montant trop élevé (maximum %d €)", MaxAmountCents/100)
+
 // Compute prices a document.
 func Compute(regime string, lines []LineInput) (Result, error) {
 	if regime != RegimeFranchise293B && regime != RegimeStandard {
 		return Result{}, fmt.Errorf("régime TVA inconnu: %s", regime)
+	}
+	if len(lines) > MaxLines {
+		return Result{}, fmt.Errorf("trop de lignes (%d maximum)", MaxLines)
 	}
 	out := Result{VatRegime: regime, Lines: make([]LineResult, 0, len(lines))}
 	bucketHT := map[int]int64{}
@@ -74,6 +89,9 @@ func Compute(regime string, lines []LineInput) (Result, error) {
 		}
 		if in.DiscountBps < 0 || in.DiscountBps > 10000 {
 			return Result{}, fmt.Errorf("ligne %d: remise invalide", i+1)
+		}
+		if utf8.RuneCountInString(in.Description) > MaxDescriptionLen {
+			return Result{}, fmt.Errorf("ligne %d: désignation trop longue (%d caractères maximum)", i+1, MaxDescriptionLen)
 		}
 		rate := in.TaxRateBps
 		if regime == RegimeFranchise293B {
@@ -96,6 +114,9 @@ func Compute(regime string, lines []LineInput) (Result, error) {
 		})
 		bucketHT[rate] += ht
 		out.SubtotalCents += ht
+		if abs(bucketHT[rate]) > MaxAmountCents || abs(out.SubtotalCents) > MaxAmountCents {
+			return Result{}, errAmountTooLarge
+		}
 	}
 
 	rates := make([]int, 0, len(bucketHT))
@@ -117,13 +138,31 @@ func Compute(regime string, lines []LineInput) (Result, error) {
 }
 
 func lineHT(qtyMilli, unitCents int64, discountBps int) (int64, error) {
-	// ht = qtyMilli * unitCents * (10000 - discount) / (1000 * 10000)
-	numer := qtyMilli * unitCents * int64(10000-discountBps)
-	denom := int64(1000 * 10000)
-	if denom == 0 {
-		return 0, errors.New("dénominateur nul")
+	// ht = qtyMilli * unitCents * (10000 - discount) / (1000 * 10000), calculé
+	// exactement : le produit dépasse vite un int64 pour de grandes valeurs.
+	numer := new(big.Int).Mul(big.NewInt(qtyMilli), big.NewInt(unitCents))
+	numer.Mul(numer, big.NewInt(int64(10000-discountBps)))
+	denom := big.NewInt(1000 * 10000)
+	// Arrondi commercial (demi vers l'extérieur) : (|n| + d/2) / d, avec le signe de n.
+	neg := numer.Sign() < 0
+	numer.Abs(numer)
+	numer.Add(numer, new(big.Int).Rsh(denom, 1))
+	numer.Quo(numer, denom)
+	if !numer.IsInt64() || numer.Int64() > MaxAmountCents {
+		return 0, errAmountTooLarge
 	}
-	return roundHalfUp(numer, denom), nil
+	ht := numer.Int64()
+	if neg {
+		ht = -ht
+	}
+	return ht, nil
+}
+
+func abs(v int64) int64 {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 // roundHalfUp divides numer/denom with half-away-from-zero / commercial rounding.

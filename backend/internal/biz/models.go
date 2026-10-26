@@ -16,6 +16,25 @@ type Address struct {
 	Country    string `json:"country"`
 }
 
+// ClientSnapshot : ce qui figure sur le document (sans notes internes ni IBAN).
+type ClientSnapshot struct {
+	Name      string  `json:"name"`
+	Email     string  `json:"email"`
+	Address   Address `json:"address"`
+	SIREN     string  `json:"siren"`
+	SIRET     string  `json:"siret"`
+	VATNumber string  `json:"vat_number"`
+}
+
+func snapshotOf(c Client) ClientSnapshot {
+	return ClientSnapshot{Name: c.Name, Email: c.Email, Address: c.Address, SIREN: c.SIREN, SIRET: c.SIRET, VATNumber: c.VATNumber}
+}
+
+// AsClient rend le client figé sous la forme attendue par le rendu PDF.
+func (c ClientSnapshot) AsClient() Client {
+	return Client{Name: c.Name, Email: c.Email, Address: c.Address, SIREN: c.SIREN, SIRET: c.SIRET, VATNumber: c.VATNumber}
+}
+
 type Client struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -78,11 +97,17 @@ type Document struct {
 	TaxCents          int64           `json:"tax_cents"`
 	TotalCents        int64           `json:"total_cents"`
 	IssuedAt          *time.Time      `json:"issued_at"`
+	SentAt            *time.Time      `json:"sent_at"`
+	AcceptedAt        *time.Time      `json:"accepted_at"`
+	PaidAt            *time.Time      `json:"paid_at"`
 	IssuerSnapshot    json.RawMessage `json:"issuer_snapshot,omitempty"`
-	LegalSnapshot     json.RawMessage `json:"legal_snapshot,omitempty"`
-	Lines             []DocLine       `json:"lines"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
+	ClientSnapshot    *ClientSnapshot `json:"client_snapshot,omitempty"`
+	// ClientName : nom du client figé à l'émission (liste des documents).
+	ClientName    string          `json:"client_name,omitempty"`
+	LegalSnapshot json.RawMessage `json:"legal_snapshot,omitempty"`
+	Lines         []DocLine       `json:"lines"`
+	CreatedAt     time.Time       `json:"created_at"`
+	UpdatedAt     time.Time       `json:"updated_at"`
 }
 
 // GuestParty is a client/issuer identity for ephemeral guest PDF (no UUID required).

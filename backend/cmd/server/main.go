@@ -103,6 +103,21 @@ func main() {
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
 	})
+	if n, err := bizStore.SealLegacySnapshots(startupCtx); err != nil {
+		slog.Error("chiffrement des instantanés émetteur", "error", err)
+	} else if n > 0 {
+		slog.Info("instantanés émetteur chiffrés", "documents", n)
+	}
+	if n, err := bizStore.SealClientAddresses(startupCtx); err != nil {
+		slog.Error("chiffrement des adresses clients", "error", err)
+	} else if n > 0 {
+		slog.Info("adresses clients chiffrées", "clients", n)
+	}
+	if n, err := bizStore.SnapshotClientsOfIssuedDocuments(startupCtx); err != nil {
+		slog.Error("instantanés client des documents émis", "error", err)
+	} else if n > 0 {
+		slog.Info("clients figés sur les documents émis", "documents", n)
+	}
 
 	api := httpapi.New(httpapi.Options{
 		DB:    pool,
@@ -120,17 +135,22 @@ func main() {
 			LegalHostAddr:       cfg.LegalHostAddr,
 			LegalHostURL:        cfg.LegalHostURL,
 		},
-		StaticDir:    staticDir,
-		Version:      Version,
-		CookieSecure: cfg.CookieSecure,
-		SessionTTL:   cfg.SessionTTL,
-		Argon2:       cfg.Argon2,
+		StaticDir:      staticDir,
+		Version:        Version,
+		CookieSecure:   cfg.CookieSecure,
+		SessionTTL:     cfg.SessionTTL,
+		TrustedProxies: cfg.TrustedProxies,
+		Argon2:         cfg.Argon2,
 	})
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           api.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    64 << 10,
 	}
 
 	runCtx, runCancel := context.WithCancel(context.Background())

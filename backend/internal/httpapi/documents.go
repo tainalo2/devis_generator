@@ -3,7 +3,9 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -62,12 +64,8 @@ func (s *Server) handleCreateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	d, err := s.biz.CreateDocument(r.Context(), u.ID, in)
-	if errors.Is(err, biz.ErrInvalidInput) {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
-		return
-	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "Impossible d'enregistrer le document.")
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -99,7 +97,7 @@ func (s *Server) handleUpdateDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, "Impossible d'enregistrer le document.")
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"document": d})
@@ -153,7 +151,41 @@ func (s *Server) handleIssueDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"document": d})
+}
+
+func (s *Server) handleDocumentStatus(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	id, err := parseID(r)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Identifiant invalide.")
+		return
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Corps JSON invalide.")
+		return
+	}
+	d, err := s.biz.UpdateDocumentStatus(r.Context(), u.ID, id, body.Status)
+	if errors.Is(err, biz.ErrNotFound) {
+		writeAPIError(w, http.StatusNotFound, "Document introuvable.")
+		return
+	}
+	if errors.Is(err, biz.ErrInvalidInput) {
+		writeAPIError(w, http.StatusConflict, "Ce changement de statut n’est pas possible pour ce document.")
+		return
+	}
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Mise à jour du statut impossible.")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"document": d})
@@ -176,7 +208,7 @@ func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -211,7 +243,7 @@ func (s *Server) createLinked(w http.ResponseWriter, r *http.Request, kind strin
 		return
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
+		s.writeBizError(w, r, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
@@ -242,8 +274,18 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
+	// Un document émis garde l'émetteur figé à l'émission.
+	if len(d.IssuerSnapshot) > 0 {
+		var snap biz.IssuerProfile
+		if err := json.Unmarshal(d.IssuerSnapshot, &snap); err == nil {
+			issuer = snap
+		}
+	}
 	client := biz.Client{Name: "Client"}
-	if d.ClientID != nil {
+	if d.ClientSnapshot != nil {
+		// Document émis : le client figé à l'émission fait foi.
+		client = d.ClientSnapshot.AsClient()
+	} else if d.ClientID != nil {
 		if c, err := s.biz.GetClient(r.Context(), u.ID, *d.ClientID); err == nil {
 			client = c
 		}
@@ -270,6 +312,10 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGuestPDF(w http.ResponseWriter, r *http.Request) {
+	if !s.guestLimiter.Allow("pdf:" + s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de PDF générés. Réessayez dans une minute.")
+		return
+	}
 	var req biz.GuestPDFRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "Requête invalide.")
@@ -379,6 +425,11 @@ func (s *Server) handlePutIssuer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePreviewTotals(w http.ResponseWriter, r *http.Request) {
+	// Appelé pendant la saisie : seuls les visiteurs sans compte sont limités.
+	if _, authed := UserFromContext(r.Context()); !authed && !s.previewLimiter.Allow("preview:"+s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de calculs. Réessayez dans une minute.")
+		return
+	}
 	var body struct {
 		VATRegime string        `json:"vat_regime"`
 		Lines     []biz.DocLine `json:"lines"`
@@ -404,4 +455,20 @@ func (s *Server) handlePreviewTotals(w http.ResponseWriter, r *http.Request) {
 
 func parseID(r *http.Request) (uuid.UUID, error) {
 	return uuid.Parse(chi.URLParam(r, "id"))
+}
+
+// writeBizError répond à une erreur de la couche métier sans exposer de détail
+// interne : les erreurs de validation gardent leur message (en français), les
+// autres sont journalisées et remplacées par un message générique.
+func (s *Server) writeBizError(w http.ResponseWriter, r *http.Request, err error) {
+	if errors.Is(err, biz.ErrInvalidInput) {
+		msg := strings.TrimPrefix(err.Error(), biz.ErrInvalidInput.Error()+": ")
+		if msg == biz.ErrInvalidInput.Error() {
+			msg = "Données invalides."
+		}
+		writeAPIError(w, http.StatusBadRequest, msg)
+		return
+	}
+	slog.Error("erreur métier", "path", r.URL.Path, "error", err)
+	writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 }

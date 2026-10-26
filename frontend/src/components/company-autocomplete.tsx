@@ -1,5 +1,7 @@
+import { Search } from "lucide-react"
 import { useEffect, useId, useState } from "react"
 
+import { Input } from "@/components/ui/input"
 import { searchCompanies, type CompanyHit } from "@/lib/api"
 
 type Props = {
@@ -10,7 +12,7 @@ type Props = {
 
 export function CompanyAutocomplete({
   label = "Rechercher une entreprise",
-  placeholder = "Nom, SIREN ou SIRET…",
+  placeholder = "Nom, SIREN ou SIRET",
   onPick,
 }: Props) {
   const listId = useId()
@@ -27,7 +29,7 @@ export function CompanyAutocomplete({
     const handle = window.setTimeout(() => {
       setPending(true)
       setError(null)
-      void searchCompanies(query)
+      void searchCompanies(query, 5)
         .then((list) => setHits(list))
         .catch((err: unknown) => {
           setHits([])
@@ -39,52 +41,51 @@ export function CompanyAutocomplete({
   }, [q, canSearch])
 
   return (
-    <div className="space-y-2">
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium">{label}</span>
-        <input
-          className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-          placeholder={placeholder}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          autoComplete="off"
-          aria-autocomplete="list"
-          aria-controls={listId}
-        />
+    <div className="flex flex-col gap-2">
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        <span>{label}</span>
+        <span className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            type="search"
+            className="pl-9"
+            placeholder={placeholder}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            autoComplete="off"
+            aria-autocomplete="list"
+            aria-controls={listId}
+          />
+        </span>
       </label>
       {pending && <p className="text-xs text-muted-foreground">Recherche…</p>}
       {error && <p className="text-xs text-destructive">{error}</p>}
       {visibleHits.length > 0 && (
-        <ul
-          id={listId}
-          className="max-h-48 overflow-auto border border-border bg-background text-sm"
-          role="listbox"
-        >
+        <ul id={listId} className="flex max-h-56 flex-col overflow-auto rounded-lg border border-border bg-card p-1">
           {visibleHits.map((h) => (
             <li key={`${h.siren}-${h.siret}`}>
               <button
                 type="button"
-                className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-accent"
+                className="flex w-full items-center justify-between gap-3 rounded-md px-3 py-2.5 text-left hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:[box-shadow:inset_0_0_0_2px_var(--ring)]"
                 onClick={() => {
                   onPick(h)
-                  setQ(h.name)
+                  setQ("")
                   setHits([])
                 }}
               >
-                <span className="font-medium">{h.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {[h.siren && `SIREN ${h.siren}`, h.siret && `SIRET ${h.siret}`, h.city]
-                    .filter(Boolean)
-                    .join(" · ")}
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium">{h.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {[h.siren && `SIREN ${h.siren}`, h.city].filter(Boolean).join(" · ")}
+                  </span>
                 </span>
+                <span className="text-xs font-medium whitespace-nowrap text-brand">Utiliser</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted-foreground">
-        Source : API Recherche d&apos;entreprises (DINUM) — aucune clé requise.
-      </p>
+      <p className="text-xs text-muted-foreground">Source : annuaire Recherche d’entreprises de l’État.</p>
     </div>
   )
 }

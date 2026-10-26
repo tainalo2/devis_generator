@@ -96,3 +96,41 @@ func TestFormatNumber(t *testing.T) {
 		t.Fatalf("prefix=%s err=%v", p, err)
 	}
 }
+
+func TestComputeRejectsOverflow(t *testing.T) {
+	// 1 000 000 unités à 1 milliard d'euros : 10^15 € dépasse le plafond.
+	_, err := Compute(RegimeFranchise293B, []LineInput{{Description: "x", QuantityMilli: 1_000_000_000, UnitPriceCents: 100_000_000_000}})
+	if err == nil {
+		t.Fatal("un montant hors plafond doit être refusé, pas tronqué")
+	}
+	// Produit intermédiaire > int64 mais montant final raisonnable : calcul exact.
+	res, err := Compute(RegimeStandard, []LineInput{{Description: "x", QuantityMilli: 2_000_000_000, UnitPriceCents: 1_000_000, TaxRateBps: 2000}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.SubtotalCents != 2_000_000_000_000 || res.TaxCents != 400_000_000_000 {
+		t.Fatalf("calcul exact attendu, obtenu HT=%d TVA=%d", res.SubtotalCents, res.TaxCents)
+	}
+}
+
+func TestComputeLimits(t *testing.T) {
+	lines := make([]LineInput, MaxLines+1)
+	for i := range lines {
+		lines[i] = LineInput{Description: "x", QuantityMilli: 1000, UnitPriceCents: 100}
+	}
+	if _, err := Compute(RegimeFranchise293B, lines); err == nil {
+		t.Fatal("au-delà de MaxLines, le calcul doit être refusé")
+	}
+	long := make([]rune, MaxDescriptionLen+1)
+	for i := range long {
+		long[i] = 'a'
+	}
+	if _, err := Compute(RegimeFranchise293B, []LineInput{{Description: string(long), QuantityMilli: 1000, UnitPriceCents: 1}}); err == nil {
+		t.Fatal("une désignation trop longue doit être refusée")
+	}
+	// Arrondi négatif inchangé (avoirs).
+	res, err := Compute(RegimeFranchise293B, []LineInput{{Description: "avoir", QuantityMilli: 1500, UnitPriceCents: -333}})
+	if err != nil || res.SubtotalCents != -500 {
+		t.Fatalf("arrondi négatif : %d (%v)", res.SubtotalCents, err)
+	}
+}

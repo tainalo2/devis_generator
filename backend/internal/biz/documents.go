@@ -34,7 +34,8 @@ func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, created_at, updated_at
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, created_at, updated_at,
+		       COALESCE(client_snapshot->>'name', '')
 		FROM documents WHERE user_id = $1 ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
@@ -63,7 +64,8 @@ func scanDocHeader(row scannable) (Document, error) {
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.ClientName,
 	)
 	if err != nil {
 		return Document{}, err
@@ -79,18 +81,19 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, issuer_snapshot, legal_snapshot,
-		       created_at, updated_at
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, issuer_snapshot, legal_snapshot,
+		       created_at, updated_at, client_snapshot
 		FROM documents WHERE id = $1 AND user_id = $2
 	`, id, userID)
 	var d Document
 	var issue, due *string
+	var clientSnap []byte
 	err := row.Scan(
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.IssuerSnapshot, &d.LegalSnapshot,
-		&d.CreatedAt, &d.UpdatedAt,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.IssuerSnapshot, &d.LegalSnapshot,
+		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Document{}, ErrNotFound
@@ -100,6 +103,24 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 	}
 	d.IssueDate = issue
 	d.DueDate = due
+	// L'instantané est stocké chiffré ; le propriétaire le reçoit en clair.
+	if len(d.IssuerSnapshot) > 0 {
+		snap, err := s.openIssuerSnapshot(d.IssuerSnapshot)
+		if err != nil {
+			return Document{}, err
+		}
+		if d.IssuerSnapshot, err = json.Marshal(snap); err != nil {
+			return Document{}, err
+		}
+	}
+	if len(clientSnap) > 0 {
+		c, err := s.openClientSnapshot(clientSnap)
+		if err != nil {
+			return Document{}, err
+		}
+		d.ClientSnapshot = &c
+		d.ClientName = c.Name
+	}
 	lines, err := s.loadLines(ctx, d.ID)
 	if err != nil {
 		return Document{}, err
@@ -130,6 +151,9 @@ func (s *Store) loadLines(ctx context.Context, docID uuid.UUID) ([]DocLine, erro
 
 func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in DocumentInput) (Document, error) {
 	if err := validateDocInput(in, false); err != nil {
+		return Document{}, err
+	}
+	if err := s.checkOwnedRefs(ctx, userID, in); err != nil {
 		return Document{}, err
 	}
 	calc, err := computeInput(in)
@@ -172,6 +196,9 @@ func (s *Store) UpdateDocument(ctx context.Context, userID, id uuid.UUID, in Doc
 		return Document{}, ErrImmutable
 	}
 	if err := validateDocInput(in, false); err != nil {
+		return Document{}, err
+	}
+	if err := s.checkOwnedRefs(ctx, userID, in); err != nil {
 		return Document{}, err
 	}
 	calc, err := computeInput(in)
@@ -244,7 +271,23 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 		return Document{}, err
 	}
 	mentions := s.resolveMentions(ctx)
-	issuerJSON, _ := json.Marshal(issuer)
+	issuerJSON, err := s.sealIssuerSnapshot(issuer)
+	if err != nil {
+		return Document{}, err
+	}
+	// Le client est figé avec le document : la fiche peut ensuite changer ou disparaître.
+	var clientJSON []byte
+	if cur.ClientID != nil {
+		c, err := s.GetClient(ctx, userID, *cur.ClientID)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return Document{}, err
+		}
+		if err == nil {
+			if clientJSON, err = s.sealClientSnapshot(snapshotOf(c)); err != nil {
+				return Document{}, err
+			}
+		}
+	}
 	legalJSON, _ := json.Marshal(mentions)
 
 	issueDate := time.Now()
@@ -278,9 +321,9 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 
 	_, err = tx.Exec(ctx, `
 		UPDATE documents SET status='issued', number=$1, issue_date=$2::date, issued_at=NOW(),
-		                     issuer_snapshot=$3, legal_snapshot=$4, legal_mentions=$5, updated_at=NOW()
-		WHERE id=$6 AND user_id=$7
-	`, number, issueDate.Format("2006-01-02"), issuerJSON, legalJSON, legalMentions, id, userID)
+		                     issuer_snapshot=$3, legal_snapshot=$4, legal_mentions=$5, client_snapshot=$6, updated_at=NOW()
+		WHERE id=$7 AND user_id=$8
+	`, number, issueDate.Format("2006-01-02"), issuerJSON, legalJSON, legalMentions, clientJSON, id, userID)
 	if err != nil {
 		return Document{}, err
 	}
@@ -411,7 +454,35 @@ func computeInput(in DocumentInput) (billing.Result, error) {
 			TaxRateBps:     l.TaxRateBps,
 		})
 	}
-	return billing.Compute(in.VATRegime, inputs)
+	res, err := billing.Compute(in.VATRegime, inputs)
+	if err != nil {
+		return billing.Result{}, fmt.Errorf("%w: %s", ErrInvalidInput, err.Error())
+	}
+	return res, nil
+}
+
+// checkOwnedRefs vérifie que le client et le document lié appartiennent au
+// compte : sans cela, un document pourrait référencer les données d'un autre.
+func (s *Store) checkOwnedRefs(ctx context.Context, userID uuid.UUID, in DocumentInput) error {
+	if in.ClientID != nil {
+		var ok bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM clients WHERE id=$1 AND user_id=$2)`, *in.ClientID, userID).Scan(&ok); err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("%w: client inconnu", ErrInvalidInput)
+		}
+	}
+	if in.RelatedDocumentID != nil {
+		var ok bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM documents WHERE id=$1 AND user_id=$2)`, *in.RelatedDocumentID, userID).Scan(&ok); err != nil {
+			return err
+		}
+		if !ok {
+			return fmt.Errorf("%w: document lié inconnu", ErrInvalidInput)
+		}
+	}
+	return nil
 }
 
 func validateDocInput(in DocumentInput, requireLines bool) error {
@@ -435,7 +506,7 @@ func validateDocInput(in DocumentInput, requireLines bool) error {
 }
 
 func isImmutable(status string) bool {
-	return status == "issued" || status == "sent" || status == "paid" || status == "accepted"
+	return status == "issued" || status == "sent" || status == "paid" || status == "accepted" || status == "rejected"
 }
 
 func defaultCurrency(c string) string {
@@ -459,4 +530,44 @@ func abs64(v int64) int64 {
 		return -v
 	}
 	return v
+}
+
+// StatusTransitionAllowed indique si un document émis peut passer au statut demandé.
+// Le contenu reste figé : seul le suivi (envoi, acceptation, paiement) évolue.
+func StatusTransitionAllowed(kind, from, to string) bool {
+	if from == "draft" || from == to {
+		return false
+	}
+	switch to {
+	case "sent":
+		return from == "issued"
+	case "accepted", "rejected":
+		return kind == "quote" && (from == "issued" || from == "sent")
+	case "paid":
+		return (kind == "invoice" || kind == "deposit_invoice") && (from == "issued" || from == "sent")
+	}
+	return false
+}
+
+func (s *Store) UpdateDocumentStatus(ctx context.Context, userID, id uuid.UUID, to string) (Document, error) {
+	cur, err := s.GetDocument(ctx, userID, id)
+	if err != nil {
+		return Document{}, err
+	}
+	if !StatusTransitionAllowed(cur.Kind, cur.Status, to) {
+		return Document{}, fmt.Errorf("%w: transition de statut impossible", ErrInvalidInput)
+	}
+	col := map[string]string{"sent": "sent_at", "accepted": "accepted_at", "rejected": "accepted_at", "paid": "paid_at"}[to]
+	// col provient d'une table fixe ci-dessus : pas d'injection possible.
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE documents SET status=$1::document_status, `+col+`=NOW(), updated_at=NOW()
+		WHERE id=$2 AND user_id=$3 AND status::text=$4
+	`, to, id, userID, cur.Status)
+	if err != nil {
+		return Document{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return Document{}, fmt.Errorf("%w: statut modifié entre-temps", ErrInvalidInput)
+	}
+	return s.GetDocument(ctx, userID, id)
 }

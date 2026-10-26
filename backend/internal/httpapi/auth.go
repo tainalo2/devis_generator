@@ -54,7 +54,7 @@ func userToDTO(u authstore.User) userDTO {
 }
 
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
-	if !s.authLimiter.Allow("register:" + clientIP(r)) {
+	if !s.authLimiter.Allow("register:" + s.clientIP(r)) {
 		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
 		return
 	}
@@ -101,7 +101,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	if !s.authLimiter.Allow("login:" + clientIP(r)) {
+	if !s.authLimiter.Allow("login:" + s.clientIP(r)) {
 		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
 		return
 	}
@@ -113,6 +113,11 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	email, err := normalizeEmail(body.Email)
 	if err != nil || body.Password == "" {
 		writeAPIError(w, http.StatusUnauthorized, "Identifiants incorrects.")
+		return
+	}
+	// Limite par compte, indépendante de l'IP : freine la force brute distribuée.
+	if !s.accountLimiter.Allow("login:" + email) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
 		return
 	}
 	if s.store == nil {
@@ -167,6 +172,16 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
+	if s.biz != nil {
+		business, err := s.biz.ExportBusinessData(r.Context(), u.ID)
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+			return
+		}
+		for k, v := range business {
+			data[k] = v
+		}
+	}
 	w.Header().Set("Content-Disposition", `attachment; filename="devisgenerator-vibed-export.json"`)
 	writeJSON(w, http.StatusOK, data)
 }
@@ -178,10 +193,20 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Confirm string `json:"confirm"`
+		Confirm  string `json:"confirm"`
+		Password string `json:"password"`
 	}
 	if err := decodeJSON(r, &body); err != nil || strings.ToUpper(strings.TrimSpace(body.Confirm)) != "SUPPRIMER" {
-		writeAPIError(w, http.StatusBadRequest, `Pour confirmer, envoyez {"confirm":"SUPPRIMER"}.`)
+		writeAPIError(w, http.StatusBadRequest, `Pour confirmer, envoyez {"confirm":"SUPPRIMER","password":"…"}.`)
+		return
+	}
+	// Action irréversible : une session volée ou laissée ouverte ne suffit pas.
+	if !s.accountLimiter.Allow("delete:" + u.ID.String()) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
+		return
+	}
+	if ok, _ := auth.VerifyPassword(body.Password, u.PasswordHash); !ok {
+		writeAPIError(w, http.StatusForbidden, "Mot de passe incorrect.")
 		return
 	}
 	if err := s.store.DeleteUserHard(r.Context(), u.ID); err != nil {
@@ -194,7 +219,7 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 // handlePasswordResetRequest is a stub: always returns the same message (no email sent).
 func (s *Server) handlePasswordResetRequest(w http.ResponseWriter, r *http.Request) {
-	if !s.authLimiter.Allow("reset:" + clientIP(r)) {
+	if !s.authLimiter.Allow("reset:" + s.clientIP(r)) {
 		writeAPIError(w, http.StatusTooManyRequests, "Trop de tentatives. Réessayez plus tard.")
 		return
 	}
@@ -217,7 +242,7 @@ func (s *Server) issueSession(w http.ResponseWriter, r *http.Request, u authstor
 	if err != nil {
 		return err
 	}
-	ip := clientIP(r)
+	ip := s.clientIP(r)
 	var ipPtr *string
 	if ip != "" {
 		ipPtr = &ip

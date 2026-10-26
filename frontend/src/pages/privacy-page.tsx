@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
+import { LegalLayout } from "@/components/legal-layout"
 import { Seo } from "@/components/seo"
 import { fetchSiteConfig, placeholder, type SiteConfig } from "@/lib/site-config"
+
+const keyPoints = [
+  { title: "Sans compte, rien n’est gardé", text: "Le mode invité génère le PDF sans rien enregistrer." },
+  { title: "Données sensibles chiffrées", text: "IBAN et adresses sont chiffrés sur nos serveurs." },
+  { title: "Vos données vous suivent", text: "Export JSON et suppression complète en un clic." },
+]
 
 export function PrivacyPage() {
   const [cfg, setCfg] = useState<SiteConfig | null>(null)
@@ -12,104 +19,113 @@ export function PrivacyPage() {
   const email = placeholder(cfg?.legal_publisher_email ?? "")
 
   return (
-    <article className="mx-auto w-full max-w-3xl space-y-8 px-4 py-12 sm:px-6">
+    <>
       <Seo
         title="Politique de confidentialité"
         path="/confidentialite"
-        description="Politique de confidentialité de Devis Generator : VIBED — données, conservation, RGPD."
+        description="Politique de confidentialité de Devis Generator : VIBED : données, conservation, RGPD."
       />
-      <header className="space-y-2">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">Politique de confidentialité</h1>
-        <p className="text-sm text-amber-800 dark:text-amber-200">
-          Document à faire valider juridiquement. Rédigé d’après le fonctionnement réel de
-          l’application VIBED.
-        </p>
-      </header>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Responsable du traitement</h2>
-        <p>
-          {placeholder(cfg?.legal_publisher_name ?? "")} — contact : {email}. Adresse :{" "}
-          {placeholder(cfg?.legal_publisher_address ?? "")}.
-        </p>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Données collectées</h2>
-        <ul className="list-disc space-y-1 pl-5">
-          <li>
-            <strong>Compte (optionnel) :</strong> adresse e-mail, mot de passe (stocké sous forme de
-            empreinte argon2id), nom d’affichage éventuel, sessions et jeton CSRF.
-          </li>
-          <li>
-            <strong>Profil émetteur / clients / documents :</strong> identité professionnelle
-            (SIREN/SIRET, TVA, coordonnées), lignes de facturation, totaux, snapshots à l’émission.
-          </li>
-          <li>
-            <strong>Données sensibles chiffrées :</strong> IBAN et adresses (AES-256-GCM côté serveur).
-          </li>
-          <li>
-            <strong>Mode invité :</strong> le PDF est généré à la volée ; aucune conservation serveur
-            des documents invités.
-          </li>
-          <li>
-            <strong>Sources légales / VIES / recherche d’entreprise :</strong> requêtes techniques
-            (requête, horodatage) pour cache et anti-abus ; pas de finalité publicitaire.
-          </li>
-        </ul>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Finalités</h2>
-        <p>
-          Fournir le service de génération de devis/factures, sécuriser les comptes, respecter les
-          obligations d’information (mentions, sources légales), et permettre l’exercice des droits
-          RGPD (export / suppression).
-        </p>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Conservation</h2>
-        <p>
-          Les données de compte et métier sont conservées <strong>tant que le compte existe</strong>.
-          La suppression du compte entraîne l’effacement complet des données associées (cascade
-          applicative). Les journaux techniques éventuels de l’hébergeur suivent sa propre politique
-          ({placeholder(cfg?.legal_host_name ?? "", "hébergeur à compléter")}).
-        </p>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Cookies</h2>
-        <p>
-          Cookies strictement nécessaires uniquement : session authentifiée et jeton CSRF. Pas de
-          cookies publicitaires ou de mesure d’audience tierce dans l’application VIBED.
-        </p>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Vos droits</h2>
-        <p>
-          Accès, rectification, export et effacement via la page{" "}
-          <Link className="underline underline-offset-4" to="/compte">
-            Mon compte
-          </Link>{" "}
-          (export JSON, suppression définitive). Vous pouvez aussi contacter {email}. Vous disposez
-          d’un droit de réclamation auprès de la CNIL.
-        </p>
-      </section>
-
-      <section className="space-y-2 text-sm leading-relaxed">
-        <h2 className="font-heading text-xl font-semibold">Transferts / sous-traitants</h2>
-        <p>
-          L’hébergement est assuré par {placeholder(cfg?.legal_host_name ?? "")}. Des appels sortants
-          vers des sources publiques (DINUM, Commission européenne, BCE) peuvent être effectués pour
-          la recherche d’entreprise, VIES, TEDB et taux BCE — voir{" "}
-          <Link className="underline underline-offset-4" to="/sources-legales">
-            Sources légales
-          </Link>
-          .
-        </p>
-      </section>
-    </article>
+      <LegalLayout
+        title="Politique de confidentialité"
+        subtitle="Document à faire valider juridiquement. Rédigé d’après le fonctionnement réel de l’application VIBED."
+        keyPoints={keyPoints}
+        sections={[
+          {
+            id: "responsable",
+            label: "Responsable du traitement",
+            content: (
+              <p>
+                {placeholder(cfg?.legal_publisher_name ?? "")}, contact : {email}. Adresse : {placeholder(cfg?.legal_publisher_address ?? "")}.
+              </p>
+            ),
+          },
+          {
+            id: "donnees",
+            label: "Données collectées",
+            content: (
+              <ul>
+                <li>
+                  <strong>Compte (facultatif) :</strong> adresse e-mail, mot de passe (stocké sous forme d’empreinte argon2id), nom
+                  d’affichage éventuel, sessions et jeton CSRF.
+                </li>
+                <li>
+                  <strong>Émetteur, clients et documents :</strong> identité professionnelle (SIREN, SIRET, TVA, coordonnées), lignes de
+                  facturation, totaux, instantanés figés à l’émission.
+                </li>
+                <li>
+                  <strong>Sources légales, VIES et recherche d’entreprise :</strong> requêtes techniques (requête, horodatage) pour le cache
+                  et l’anti-abus ; aucune finalité publicitaire.
+                </li>
+              </ul>
+            ),
+          },
+          {
+            id: "chiffrement",
+            label: "Données chiffrées",
+            title: "Données sensibles chiffrées",
+            content: <p>Les IBAN et les adresses sont chiffrés côté serveur (AES-256-GCM) avant d’être enregistrés.</p>,
+          },
+          {
+            id: "invite",
+            label: "Mode invité",
+            content: <p>Sans compte, le PDF est généré à la volée : aucun document invité n’est conservé sur nos serveurs.</p>,
+          },
+          {
+            id: "finalites",
+            label: "Finalités",
+            content: (
+              <p>
+                Fournir le service de génération de devis et de factures, sécuriser les comptes, respecter les obligations d’information
+                (mentions, sources légales) et permettre l’exercice des droits RGPD (export, suppression).
+              </p>
+            ),
+          },
+          {
+            id: "conservation",
+            label: "Durée de conservation",
+            content: (
+              <p>
+                Les données de compte et métier sont conservées <strong>tant que le compte existe</strong>. La suppression du compte efface
+                toutes les données associées. Vous devez de votre côté conserver vos factures émises pendant dix ans : exportez-les avant de
+                supprimer votre compte. Les journaux techniques de l’hébergeur suivent sa propre politique (
+                {placeholder(cfg?.legal_host_name ?? "", "hébergeur à compléter")}).
+              </p>
+            ),
+          },
+          {
+            id: "cookies",
+            label: "Cookies",
+            content: (
+              <p>
+                Cookies strictement nécessaires uniquement : session authentifiée et jeton CSRF. Aucun cookie publicitaire ni de mesure
+                d’audience tierce.
+              </p>
+            ),
+          },
+          {
+            id: "droits",
+            label: "Vos droits",
+            content: (
+              <p>
+                Accès, rectification, export et effacement depuis <Link to="/compte">Mon compte</Link> (export JSON, suppression définitive).
+                Pour toute autre demande : {email}. Vous pouvez aussi saisir la CNIL.
+              </p>
+            ),
+          },
+          {
+            id: "tiers",
+            label: "Services interrogés",
+            title: "Hébergement et services interrogés",
+            content: (
+              <p>
+                L’hébergement est assuré par {placeholder(cfg?.legal_host_name ?? "")}. Pour vérifier une entreprise, un n° de TVA ou un taux,
+                l’outil interroge des sources publiques (DINUM, Commission européenne, BCE). Le détail est sur la page{" "}
+                <Link to="/sources-legales">Sources légales</Link>.
+              </p>
+            ),
+          },
+        ]}
+      />
+    </>
   )
 }

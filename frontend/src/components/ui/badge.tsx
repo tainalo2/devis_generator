@@ -20,6 +20,8 @@ const badgeVariants = cva(
   },
 )
 
+export type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+
 export function Badge({
   className,
   variant,

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -32,7 +33,10 @@ type Config struct {
 	EncryptionKey []byte // 32 raw bytes
 	CookieSecure  bool
 	SessionTTL    time.Duration
-	Argon2        auth.Argon2Params
+	// TrustedProxies : réseaux des reverse proxies autorisés à fournir
+	// X-Forwarded-For (TRUSTED_PROXIES, CIDR séparés par des virgules).
+	TrustedProxies []*net.IPNet
+	Argon2         auth.Argon2Params
 
 	// Legal sources (optional; defaults are public endpoints, no API keys).
 	LegalRefreshEnabled  bool
@@ -44,14 +48,14 @@ type Config struct {
 	LegalBCEURL          string
 
 	// Site public (landing / pages légales) — aucune identité inventée.
-	DonateURL            string
-	LegalPublisherName   string
-	LegalPublisherAddr   string
-	LegalPublisherEmail  string
-	LegalPublisherSIRET  string
-	LegalHostName        string
-	LegalHostAddr        string
-	LegalHostURL         string
+	DonateURL           string
+	LegalPublisherName  string
+	LegalPublisherAddr  string
+	LegalPublisherEmail string
+	LegalPublisherSIRET string
+	LegalHostName       string
+	LegalHostAddr       string
+	LegalHostURL        string
 }
 
 func (c Config) IsProduction() bool {
@@ -99,6 +103,12 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("DATABASE_URL must not disable golang-migrate advisory locking (unsafe for multi-replica)")
 	}
 
+	proxies, err := parseCIDRs(os.Getenv("TRUSTED_PROXIES"))
+	if err != nil {
+		return Config{}, fmt.Errorf("TRUSTED_PROXIES: %w", err)
+	}
+	cfg.TrustedProxies = proxies
+
 	sessionSecret := strings.TrimSpace(os.Getenv("SESSION_SECRET"))
 	encKeyB64 := strings.TrimSpace(os.Getenv("ENCRYPTION_KEY"))
 
@@ -135,6 +145,34 @@ func Load() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// parseCIDRs lit une liste « 10.0.0.0/8, 172.16.0.1 » ; une IP seule vaut /32 (ou /128).
+func parseCIDRs(raw string) ([]*net.IPNet, error) {
+	var out []*net.IPNet
+	for _, part := range strings.Split(raw, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if !strings.Contains(part, "/") {
+			ip := net.ParseIP(part)
+			if ip == nil {
+				return nil, fmt.Errorf("adresse invalide %q", part)
+			}
+			bits := 128
+			if ip.To4() != nil {
+				bits = 32
+			}
+			part = fmt.Sprintf("%s/%d", ip.String(), bits)
+		}
+		_, n, err := net.ParseCIDR(part)
+		if err != nil {
+			return nil, fmt.Errorf("réseau invalide %q", part)
+		}
+		out = append(out, n)
+	}
+	return out, nil
 }
 
 func validateProductionSecrets(sessionSecret, encKeyB64 string) error {

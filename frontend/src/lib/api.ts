@@ -79,10 +79,10 @@ export async function exportAccount(): Promise<Blob> {
   return res.blob()
 }
 
-export async function deleteAccount(): Promise<void> {
+export async function deleteAccount(password: string): Promise<void> {
   const res = await apiFetch("/api/v1/auth/me", {
     method: "DELETE",
-    body: JSON.stringify({ confirm: "SUPPRIMER" }),
+    body: JSON.stringify({ confirm: "SUPPRIMER", password }),
   })
   if (!res.ok) throw new Error(await readError(res, "Suppression impossible."))
 }
@@ -250,4 +250,47 @@ export async function fetchLegalStatus(): Promise<LegalStatusResponse> {
   const res = await apiFetch("/api/v1/legal/status")
   if (!res.ok) throw new Error(await readError(res, "Statut légal indisponible."))
   return (await res.json()) as LegalStatusResponse
+}
+
+export type TrackedStatus = "sent" | "accepted" | "rejected" | "paid"
+
+export async function updateDocumentStatus(id: string, status: TrackedStatus): Promise<Document> {
+  const res = await apiFetch(`/api/v1/documents/${id}/status`, {
+    method: "POST",
+    body: JSON.stringify({ status }),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Mise à jour du statut impossible."))
+  return ((await res.json()) as { document: Document }).document
+}
+
+export async function deleteDocument(id: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/documents/${id}`, { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Suppression du brouillon impossible."))
+}
+
+async function createFrom(path: string, fallback: string, body: unknown = {}): Promise<Document> {
+  const res = await apiFetch(path, { method: "POST", body: JSON.stringify(body) })
+  if (!res.ok) throw new Error(await readError(res, fallback))
+  return ((await res.json()) as { document: Document }).document
+}
+
+export const convertQuoteToInvoice = (id: string) =>
+  createFrom(`/api/v1/documents/${id}/convert-to-invoice`, "Conversion du devis impossible.")
+
+export const createCreditNote = (id: string) =>
+  createFrom(`/api/v1/documents/${id}/credit-note`, "Création de l’avoir impossible.")
+
+export const createDepositInvoice = (id: string) =>
+  createFrom(`/api/v1/documents/${id}/deposit-invoice`, "Création de la facture d’acompte impossible.")
+
+export async function getClient(id: string): Promise<Client> {
+  const res = await apiFetch(`/api/v1/clients/${id}`)
+  if (!res.ok) throw new Error(await readError(res, "Client introuvable."))
+  return ((await res.json()) as { client: Client }).client
+}
+
+export async function requestPasswordReset(email: string): Promise<string> {
+  const res = await apiFetch("/api/v1/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) })
+  if (!res.ok) throw new Error(await readError(res, "Demande impossible."))
+  return ((await res.json()) as { message: string }).message
 }
