@@ -100,6 +100,16 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 	}
 	d.IssueDate = issue
 	d.DueDate = due
+	// L'instantané est stocké chiffré ; le propriétaire le reçoit en clair.
+	if len(d.IssuerSnapshot) > 0 {
+		snap, err := s.openIssuerSnapshot(d.IssuerSnapshot)
+		if err != nil {
+			return Document{}, err
+		}
+		if d.IssuerSnapshot, err = json.Marshal(snap); err != nil {
+			return Document{}, err
+		}
+	}
 	lines, err := s.loadLines(ctx, d.ID)
 	if err != nil {
 		return Document{}, err
@@ -244,7 +254,10 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 		return Document{}, err
 	}
 	mentions := s.resolveMentions(ctx)
-	issuerJSON, _ := json.Marshal(issuer)
+	issuerJSON, err := s.sealIssuerSnapshot(issuer)
+	if err != nil {
+		return Document{}, err
+	}
 	legalJSON, _ := json.Marshal(mentions)
 
 	issueDate := time.Now()

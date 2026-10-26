@@ -103,6 +103,11 @@ func main() {
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
 	})
+	if n, err := bizStore.SealLegacySnapshots(startupCtx); err != nil {
+		slog.Error("chiffrement des instantanés émetteur", "error", err)
+	} else if n > 0 {
+		slog.Info("instantanés émetteur chiffrés", "documents", n)
+	}
 
 	api := httpapi.New(httpapi.Options{
 		DB:    pool,

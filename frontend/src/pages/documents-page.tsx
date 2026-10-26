@@ -59,8 +59,14 @@ const kindFilterLabels: Record<string, string> = {
   credit_note: "Avoirs",
 }
 
+/**
+ * Cellule CSV sûre : un texte commençant par = + - @ (ou tabulation) serait
+ * exécuté comme formule par le tableur ; on le neutralise par une apostrophe.
+ * Les montants (« -120,00 ») restent des nombres.
+ */
 function csvCell(v: string) {
-  return /[";\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+  const safe = /^[=+\-@\t\r]/.test(v) && !/^-?\d+(,\d+)?$/.test(v) ? `'${v}` : v
+  return /[";\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
 function exportCSV(rows: Document[], clientName: (id: string | null) => string) {
