@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Barre du document</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-seg{display:inline-flex;padding:2px;gap:2px;border-radius:var(--radius-lg);background-color:var(--muted)}
+.dg-seg button{height:28px;padding:0 12px;border:0;margin:0;border-radius:6px;background:transparent;font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer;white-space:nowrap;transition:color 150ms,background-color 150ms}
+.dg-seg button:hover{color:var(--foreground)}
+.dg-seg button[aria-pressed="true"]{background-color:var(--card);color:var(--foreground);box-shadow:0 1px 2px rgb(15 40 60 / 0.1)}
+.dg-seg button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; height: 56px; box-sizing: border-box; padding: 0 16px 0 12px; display: flex; align-items: center; gap: 16px; font-family: var(--font-sans); color: var(--foreground); background-color: var(--card); border-bottom: 1px solid var(--border);">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto;">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon-sm" aria-label="Retour aux documents">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+</x-import>
+<h1 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em; white-space: nowrap;">{{title}}</h1>
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">Brouillon</x-import>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground); white-space: nowrap;">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+Enregistré automatiquement
+</span>
+</div>
+<div class="dg-seg" role="group" aria-label="Type de document">
+<button type="button" aria-pressed="{{pDevis}}" onClick="{{pickDevis}}">Devis</button>
+<button type="button" aria-pressed="{{pFacture}}" onClick="{{pickFacture}}">Facture</button>
+<button type="button" aria-pressed="{{pAcompte}}" onClick="{{pickAcompte}}">Facture d’acompte</button>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex: 1 1 auto; justify-content: flex-end;">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost">Enregistrer</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+Télécharger le PDF
+</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+{{emit}}
+</x-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"onPick":{"editor":null},"$preview":{"width":1440,"height":56}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { local: null };
+}
+renderVals() {
+var self = this;
+var k = this.props.onPick ? (this.props.kind || 'devis') : (this.state.local || this.props.kind || 'devis');
+function mk(id) {
+return function () {
+if (self.props.onPick) self.props.onPick(id);
+else self.setState({ local: id });
+};
+}
+var titles = { devis: 'Nouveau devis', facture: 'Nouvelle facture', acompte: 'Nouvelle facture d’acompte' };
+return {
+title: titles[k],
+emit: k === 'devis' ? 'Émettre le devis' : 'Émettre la facture',
+pDevis: k === 'devis' ? 'true' : 'false',
+pFacture: k === 'facture' ? 'true' : 'false',
+pAcompte: k === 'acompte' ? 'true' : 'false',
+pickDevis: mk('devis'),
+pickFacture: mk('facture'),
+pickAcompte: mk('acompte')
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Connexion, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:1440px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:12px 16px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:14px;line-height:20px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:64px;justify-content:center;padding:0 24px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.sub{height:44px;border-radius:6px;background-color:rgb(255 255 255 / 0.6);display:flex;align-items:center;padding:0 12px;font-size:12px;color:#5b6b78}
+</style>
+</helmet>
+<div class="wf" style="height: 900px;">
+<div class="z n"><b>Barre de navigation · invité</b><span>Connexion · Créer un compte · thème</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px;">
+<div class="z c1" style="width: 440px; gap: 12px; padding: 24px;">
+<b>Carte de connexion</b>
+<span>titre « Connexion », phrase courte</span>
+<div class="sub">E-mail</div>
+<div class="sub">Mot de passe (afficher / masquer)</div>
+<div class="sub" style="justify-content: flex-end;">Mot de passe oublié ?</div>
+<div class="sub" style="background-color: #4a5596; color: #ffffff; justify-content: center;">Se connecter</div>
+<div class="sub" style="background-color: #fbecea; color: #9a3b32;">Zone d’erreur (identifiants incorrects)</div>
+<span style="text-align: center;">Pas encore de compte ? Créer un compte</span>
+</div>
+<div class="z c7" style="width: 440px; flex-direction: row; align-items: center; justify-content: space-between;"><span>Pas besoin de compte pour un devis ponctuel</span><b>Créer un devis sans compte</b></div>
+</div>
+<div class="z" style="flex-shrink: 0; height: 120px; border-radius: 0; border-width: 1.5px 0 0 0; background-color: #e3e7ec; border-color: #8a96a3; padding: 16px 24px;"><b>Pied de page</b><span>le même que sur la landing</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

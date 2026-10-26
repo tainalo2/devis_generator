@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Barre de navigation, thème sombre</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);
+--background:oklch(0.18 0.025 240);--foreground:oklch(0.95 0.01 220);--card:oklch(0.22 0.03 240);--primary:oklch(0.82 0.05 195);--primary-foreground:oklch(0.2 0.03 240);--secondary:oklch(0.28 0.03 240);--secondary-foreground:oklch(0.95 0.01 220);--muted:oklch(0.26 0.025 240);--muted-foreground:oklch(0.72 0.02 220);--accent:oklch(0.3 0.04 200);--destructive:oklch(0.68 0.18 25);--border:oklch(1 0 0 / 12%);--input:oklch(1 0 0 / 14%);--ring:oklch(0.65 0.08 195);--brand:oklch(0.7 0.1 195);--brand-foreground:oklch(0.18 0.03 240)}
+.dg-root a:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-nav{display:inline-flex;align-items:center;height:32px;padding:0 12px;border-radius:var(--radius-md);font-size:14px;line-height:20px;font-weight:500;text-decoration:none;color:var(--muted-foreground);transition:color 150ms,background-color 150ms}
+.dg-nav:hover{color:var(--foreground);background-color:color-mix(in oklab,var(--muted) 80%,transparent)}
+.dg-nav[aria-current="page"]{color:var(--secondary-foreground);background-color:var(--secondary)}
+.dg-brand{color:var(--foreground);text-decoration:none}
+.dg-root .dg-button,.dg-nav{white-space:nowrap}
+</style>
+</helmet>
+<div class="dg-root" data-theme="dark" style="width: 100%; height: 64px; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background); background-image: radial-gradient(1200px 600px at 10% -10%, color-mix(in oklch, var(--brand) 12%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 0%, color-mix(in oklch, var(--accent) 55%, transparent), transparent 55%);">
+<header style="height: 64px; box-sizing: border-box; border-bottom: 1px solid var(--border); background-color: color-mix(in oklab, var(--background) 85%, transparent);">
+<div style="max-width: 1280px; height: 100%; margin: 0 auto; padding: 0 24px; box-sizing: border-box; display: flex; align-items: center; gap: 24px;">
+<a href="#" class="dg-brand" style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; border-radius: 6px;">
+<svg width="28" height="28" viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1b3a4b"></rect><path d="M18 16h22c2.2 0 4 1.8 4 4v28c0 1.1-.9 2-2 2H20c-2.2 0-4-1.8-4-4V20c0-2.2 1.8-4 4-4z" fill="#e8f4f2"></path><path d="M40 16v8c0 1.1.9 2 2 2h8" stroke="#2f6f6a" stroke-width="2"></path><path d="M22 28h16M22 34h14M22 40h10" stroke="#1b3a4b" stroke-width="2" stroke-linecap="round"></path><circle cx="46" cy="46" r="10" fill="#2f9e94"></circle><path d="M42.5 46.2l2.6 2.6 4.8-5.2" stroke="#e8f4f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: var(--font-heading); font-optical-sizing: auto; font-size: 17px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em;">Devis Generator : VIBED</span>
+</a>
+<nav aria-label="Navigation principale" style="display: flex; align-items: center; gap: 4px; flex-grow: 1; min-width: 0;">
+<a href="#" class="dg-nav">Tableau de bord</a>
+<a href="#" class="dg-nav" aria-current="page">Documents</a>
+<a href="#" class="dg-nav">Clients</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+<x-import component-from-global-scope="DevisUI.Button" variant="default">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+Nouveau document
+</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Passer en thème clair">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Separator" orientation="vertical" style="height: 20px;"></x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" aria-haspopup="menu" aria-expanded="false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
+Mon compte
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+</x-import>
+</div>
+</div>
+</header>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":64}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pied de page</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-foot-link{color:var(--muted-foreground);text-decoration:none;transition:color 150ms}
+.dg-foot-link:hover{color:var(--foreground)}
+.dg-brand-link{color:var(--brand);text-decoration:none;text-underline-offset:4px}
+.dg-brand-link:hover{text-decoration:underline}
+</style>
+</helmet>
+<footer class="dg-root" style="width: 100%; min-height: {{minH}}; box-sizing: border-box; display: flex; align-items: center; font-family: var(--font-sans); color: var(--foreground); background-color: color-mix(in oklab, var(--card) 40%, var(--background)); border-top: 1px solid var(--border);">
+<div style="width: 100%; max-width: 1152px; margin: 0 auto; padding: 40px clamp(16px, 4vw, 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 24px 48px;">
+<div style="flex: 0 1 24rem; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<svg width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1b3a4b"></rect><path d="M18 16h22c2.2 0 4 1.8 4 4v28c0 1.1-.9 2-2 2H20c-2.2 0-4-1.8-4-4V20c0-2.2 1.8-4 4-4z" fill="#e8f4f2"></path><path d="M40 16v8c0 1.1.9 2 2 2h8" stroke="#2f6f6a" stroke-width="2"></path><path d="M22 28h16M22 34h14M22 40h10" stroke="#1b3a4b" stroke-width="2" stroke-linecap="round"></path><circle cx="46" cy="46" r="10" fill="#2f9e94"></circle><path d="M42.5 46.2l2.6 2.6 4.8-5.2" stroke="#e8f4f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<p style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 18px; line-height: 28px; font-weight: 600; letter-spacing: -0.025em;">Devis Generator : VIBED</p>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Outil gratuit pour micro-entrepreneurs, indépendants et petites sociétés. Financé par des dons, sans prestataire de paiement intégré.</p>
+<p style="margin: 0; font-size: 14px; line-height: 20px;"><a href="#" class="dg-brand-link">Soutenir le projet</a></p>
+</div>
+<nav aria-label="Pied de page" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 40px; row-gap: 8px; font-size: 14px; line-height: 20px;">
+<a href="#" class="dg-foot-link">Créer un devis</a>
+<a href="#" class="dg-foot-link">Sources légales</a>
+<a href="#" class="dg-foot-link">Mentions légales</a>
+<a href="#" class="dg-foot-link">Confidentialité</a>
+<a href="#" class="dg-foot-link">Connexion</a>
+<a href="https://www.apache.org/licenses/LICENSE-2.0" class="dg-foot-link">Licence Apache-2.0</a>
+</nav>
+</div>
+<x-import component-from-global-scope="DevisUI.Separator"></x-import>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Code VIBED sous Apache-2.0. Le site statique historique à la racine du dépôt reste sous GPL-3.0.</p>
+</div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":280}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+return { minH: c ? '0px' : '280px' };
+}
+}
+</script>
+</body>
+</html>

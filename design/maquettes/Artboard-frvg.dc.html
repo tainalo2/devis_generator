@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Éditeur de document, zonage bureau</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{--fg:oklch(0.22 0.03 240);--muted-fg:oklch(0.48 0.025 240);--bg:oklch(0.985 0.008 220)}
+</style>
+</helmet>
+<div class="wf" style="width: 1440px; height: 900px; box-sizing: border-box; display: flex; flex-direction: column; font-family: 'Geist Variable', ui-sans-serif, sans-serif; color: var(--fg); background-color: var(--bg);">
+<div style="height: 64px; flex-shrink: 0; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; gap: 12px; background-color: #e3e7ec; border-bottom: 1.5px dashed #8a96a3;">
+<strong style="font-size: 14px;">Barre de navigation</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">celle de la page Nav, variante B</span>
+</div>
+<div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 16px 24px 24px; display: flex; flex-direction: column; gap: 16px;">
+<div style="height: 56px; flex-shrink: 0; box-sizing: border-box; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-radius: 10px; background-color: #dfe3f3; border: 1.5px dashed #6b76b8;">
+<div style="display: flex; flex-direction: column; gap: 2px;"><strong style="font-size: 14px;">Barre du document</strong><span style="font-size: 12px; color: var(--muted-fg);">type (devis, facture, acompte), numéro, statut « Brouillon », enregistrement auto</span></div>
+<div style="display: flex; gap: 8px;">
+<span style="padding: 6px 12px; border-radius: 8px; font-size: 12px; background-color: #c9cfee;">Télécharger le PDF</span>
+<span style="padding: 6px 12px; border-radius: 8px; font-size: 12px; background-color: #c9cfee;">Enregistrer</span>
+<span style="padding: 6px 12px; border-radius: 8px; font-size: 12px; color: #fff; background-color: #4a5596;">Émettre</span>
+</div>
+</div>
+<div style="flex-grow: 1; min-height: 0; display: flex; gap: 16px;">
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<div style="height: 84px; flex-shrink: 0; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-radius: 10px; background-color: #d8eeec; border: 1.5px dashed #3f8f88;">
+<strong style="font-size: 14px;">Infos du document</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">objet, date d’émission, date d’échéance ou de validité</span>
+</div>
+<div style="height: 116px; flex-shrink: 0; display: flex; gap: 12px;">
+<div style="flex: 1; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-radius: 10px; background-color: #dcefe0; border: 1.5px dashed #4f9a62;">
+<strong style="font-size: 14px;">Émetteur</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">pré-rempli depuis Entreprise ; invité : saisie + recherche SIRET</span>
+</div>
+<div style="flex: 1; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-radius: 10px; background-color: #dcefe0; border: 1.5px dashed #4f9a62;">
+<strong style="font-size: 14px;">Client</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">choisir un client enregistré ou en créer un ; contrôle TVA VIES</span>
+</div>
+</div>
+<div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; border-radius: 10px; background-color: #f4ead6; border: 1.5px dashed #b38a3d;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><strong style="font-size: 14px;">Lignes</strong><span style="font-size: 12px; color: var(--muted-fg);">désignation · qté · unité · PU HT · TVA · total</span></div>
+<div style="height: 36px; border-radius: 6px; background-color: #ead9b6;"></div>
+<div style="height: 36px; border-radius: 6px; background-color: #ead9b6;"></div>
+<div style="height: 36px; border-radius: 6px; background-color: #ead9b6;"></div>
+<div style="height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 12px; border: 1.5px dashed #c9a96a;">+ Ajouter une ligne</div>
+</div>
+<div style="height: 84px; flex-shrink: 0; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-radius: 10px; background-color: #e9e1f0; border: 1.5px dashed #8a6fa3;">
+<strong style="font-size: 14px;">Conditions et notes</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">régime de TVA (franchise 293 B ou par ligne), conditions de paiement, notes</span>
+</div>
+</div>
+<div style="width: 600px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
+<div style="flex-grow: 1; min-height: 0; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; border-radius: 10px; background-color: #e6edf3; border: 1.5px dashed #5d7f9c;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;"><strong style="font-size: 14px;">Aperçu PDF en direct</strong><span style="font-size: 12px; color: var(--muted-fg);">se met à jour à chaque saisie · zoom</span></div>
+<div style="flex-grow: 1; display: flex; justify-content: center; align-items: flex-start;">
+<div style="height: 100%; aspect-ratio: 210 / 297; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 12px; color: var(--muted-fg); background-color: #ffffff; border: 1px solid #c3d0db;">Page A4</div>
+</div>
+</div>
+<div style="height: 104px; flex-shrink: 0; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border-radius: 10px; background-color: #d3ecef; border: 1.5px dashed #2f8c97;">
+<strong style="font-size: 14px;">Totaux</strong>
+<span style="font-size: 12px; color: var(--muted-fg);">total HT, TVA par taux, total TTC ; mention de franchise si applicable</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

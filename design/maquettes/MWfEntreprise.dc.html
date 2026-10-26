@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entreprise mobile, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:390px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:13px;line-height:18px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:60px;justify-content:center;padding:0 16px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.m{flex:1;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:12px}
+</style>
+</helmet>
+<div class="wf" style="height: 1280px;">
+<div class="z n"><b>Barre de navigation mobile</b><span>logo, thème, menu</span></div>
+<div class="m">
+<div class="z c1" style="height: 64px; justify-content: center;"><b>En-tête</b><span>titre « Entreprise », phrase courte</span></div>
+<div class="z c7" style="height: 44px; flex-direction: row; align-items: center;"><span>Sommaire en pastilles, défilement horizontal, collé en haut au défilement</span></div>
+<div class="z c3" style="height: 220px;"><b>Identité légale</b><span>raison sociale, nom commercial, forme, SIRET, APE, RCS/RM, TVA</span></div>
+<div class="z c2" style="height: 170px;"><b>Coordonnées</b><span>adresse, e-mail, téléphone, site</span></div>
+<div class="z c5" style="height: 110px;"><b>Banque</b><span>IBAN, BIC (chiffrés)</span></div>
+<div class="z c4" style="height: 230px;"><b>Valeurs par défaut</b><span>TVA, conditions, pénalités, validité des devis, numérotation</span></div>
+<div class="z c6" style="flex: 1;"><b>Apparence du PDF</b><span>logo, couleur, miniature</span></div>
+</div>
+<div class="z c1" style="flex-shrink: 0; height: 76px; border-radius: 0; border-width: 1.5px 0 0 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 16px;"><b>Barre fixe</b><span>« Enregistrer », visible dès qu’un champ change</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1280}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

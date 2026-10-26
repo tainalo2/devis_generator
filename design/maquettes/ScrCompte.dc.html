@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Mon compte</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-h1{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:30px;line-height:36px;font-weight:600;letter-spacing:-0.025em}
+.dg-h2{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:17px;line-height:24px;font-weight:600;letter-spacing:-0.025em}
+.dg-row{display:grid;gap:12px 32px;padding:24px 0;border-top:1px solid var(--border)}
+.dg-desc{margin:0;font-size:13px;line-height:18px;color:var(--muted-foreground)}
+.dg-box{box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:14px;background-color:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl)}
+.dg-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.dg-link{color:var(--brand);text-decoration:none;font-size:13px;line-height:18px;font-weight:500;text-underline-offset:4px}
+.dg-link:hover{text-decoration:underline}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-seg{display:inline-flex;padding:2px;gap:2px;border-radius:var(--radius-lg);background-color:var(--muted)}
+.dg-seg button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:0;margin:0;border-radius:6px;background:transparent;font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer}
+.dg-seg button[aria-pressed="true"]{background-color:var(--card);color:var(--foreground);box-shadow:0 1px 2px rgb(15 40 60 / 0.1)}
+.dg-seg button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="aucun" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="width: 100%; max-width: 880px; margin: 0 auto; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; flex-direction: column; gap: 4px; padding-bottom: 16px;">
+<h1 class="dg-h1">Mon compte</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Connecté avec claire.dupont@exemple.fr · compte créé le 12/03/2026</p>
+</div>
+<section class="dg-row" style="grid-template-columns: {{cols}};" aria-labelledby="s-profil">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="s-profil" class="dg-h2">Profil</h2><p class="dg-desc">Votre nom n’apparaît pas sur les documents : c’est l’émetteur qui compte.</p></div>
+<div class="dg-box">
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>Nom</span><x-import component-from-global-scope="DevisUI.Input" default-value="Claire Dupont"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>E-mail</span><x-import component-from-global-scope="DevisUI.Input" type="email" default-value="claire.dupont@exemple.fr"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Button" variant="default" style="align-self: flex-end;">Enregistrer</x-import>
+</div>
+</section>
+<section class="dg-row" style="grid-template-columns: {{cols}};" aria-labelledby="s-secu">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="s-secu" class="dg-h2">Sécurité</h2><p class="dg-desc">Changez de mot de passe ou fermez vos sessions ouvertes ailleurs.</p></div>
+<div class="dg-box">
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>Mot de passe actuel</span><x-import component-from-global-scope="DevisUI.Input" type="password" autocomplete="current-password"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Nouveau mot de passe</span><x-import component-from-global-scope="DevisUI.Input" type="password" autocomplete="new-password"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" style="align-self: flex-end;">Changer le mot de passe</x-import>
+<x-import component-from-global-scope="DevisUI.Separator"></x-import>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+<span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">Sessions actives</span><span class="dg-desc">2 appareils · dernier accès aujourd’hui à 10:40</span></span>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost">Se déconnecter partout</x-import>
+</div>
+</div>
+</section>
+<section class="dg-row" style="grid-template-columns: {{cols}};" aria-labelledby="s-pref">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="s-pref" class="dg-h2">Préférences</h2><p class="dg-desc">L’interface reste en français.</p></div>
+<div class="dg-box" style="flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+<span style="font-size: 14px; line-height: 20px; font-weight: 500;">Thème</span>
+<div class="dg-seg" role="group" aria-label="Thème">
+<sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><button type="button" aria-pressed="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for>
+</div>
+</div>
+</section>
+<section class="dg-row" style="grid-template-columns: {{cols}};" aria-labelledby="s-data">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="s-data" class="dg-h2">Mes données</h2><p class="dg-desc">Vos données vous appartiennent (RGPD).</p></div>
+<div class="dg-box">
+<p style="margin: 0; font-size: 14px; line-height: 20px;">Téléchargez en un fichier JSON votre profil, la fiche Entreprise, vos clients et tous vos documents.</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+<a href="#" class="dg-link">Lire la politique de confidentialité</a>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>Exporter mes données</x-import>
+</div>
+</div>
+</section>
+<section class="dg-row" style="grid-template-columns: {{cols}};" aria-labelledby="s-danger">
+<div style="display: flex; flex-direction: column; gap: 4px;"><h2 id="s-danger" class="dg-h2" style="color: var(--destructive);">Zone sensible</h2><p class="dg-desc">Action définitive.</p></div>
+<div class="dg-box" style="border-color: color-mix(in oklab, var(--destructive) 35%, var(--border)); background-color: color-mix(in oklab, var(--destructive) 5%, var(--card));">
+<p style="margin: 0; font-size: 14px; line-height: 20px;">Supprimer le compte efface vos clients, vos brouillons et vos documents. Pensez à exporter vos factures émises : vous devez les conserver dix ans.</p>
+<x-import component-from-global-scope="DevisUI.Button" variant="destructive" style="align-self: flex-end;" aria-haspopup="dialog">Supprimer mon compte</x-import>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440, theme: 'systeme' };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var self = this;
+var m = !!this.props.mobile || this.state.w < 700;
+return {
+desk: !m, mob: m,
+pad: m ? '20px 16px 32px' : '32px 24px 48px',
+cols: m ? 'minmax(0, 1fr)' : '240px minmax(0, 1fr)',
+themes: [['systeme', 'Système'], ['clair', 'Clair'], ['sombre', 'Sombre']].map(function (t) {
+return { label: t[1], sel: self.state.theme === t[0] ? 'true' : 'false', pick: function () { self.setState({ theme: t[0] }); } };
+})
+};
+}
+}
+</script>
+</body>
+</html>

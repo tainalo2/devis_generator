@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Mon compte mobile, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:390px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:13px;line-height:18px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:60px;justify-content:center;padding:0 16px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.m{flex:1;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:12px}
+</style>
+</helmet>
+<div class="wf" style="height: 860px;">
+<div class="z n"><b>Barre de navigation mobile</b><span>logo, thème, menu</span></div>
+<div class="m">
+<div class="z c1" style="height: 64px; justify-content: center;"><b>En-tête</b><span>titre « Mon compte », e-mail</span></div>
+<div class="z c3" style="height: 140px;"><b>Profil</b><span>nom, e-mail, Enregistrer</span></div>
+<div class="z c5" style="height: 130px;"><b>Sécurité</b><span>mot de passe, déconnexion de tous les appareils</span></div>
+<div class="z c2" style="height: 84px;"><b>Préférences</b><span>thème : système, clair, sombre</span></div>
+<div class="z c4" style="height: 100px;"><b>Mes données</b><span>exporter (JSON), confidentialité</span></div>
+<div class="z c8" style="flex: 1;"><b>Zone sensible</b><span>supprimer le compte ; confirmation avec saisie de l’e-mail</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":860}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

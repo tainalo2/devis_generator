@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Landing, conformité</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+</style>
+</helmet>
+<section class="dg-root" style="width: 100%; min-height: {{minH}}; box-sizing: border-box; display: flex; align-items: center; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<div style="width: 100%; max-width: 1152px; margin: 0 auto; padding: {{padY}} clamp(16px, 4vw, 32px); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: {{gap}};">
+<div style="flex: 1 1 440px; min-width: 0; max-width: 42rem; display: flex; flex-direction: column; gap: 12px;">
+<h2 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.025em;">Conformité utile, pas du marketing</h2>
+<p style="margin: 0; font-size: 16px; line-height: 24px; color: var(--muted-foreground);">Numérotation continue, documents émis immuables, chiffrement des IBAN et adresses, export et suppression RGPD. Les pages légales détaillent ce que l’application fait vraiment.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 8px;">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline">Voir les sources légales</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost">Politique de confidentialité</x-import>
+</div>
+</div>
+<ul style="flex: 1 1 320px; min-width: 0; margin: 0; padding: 20px 24px; box-sizing: border-box; list-style: none; display: flex; flex-direction: column; gap: 14px; border: 1px solid var(--border); border-radius: var(--radius-xl); background-color: color-mix(in oklab, var(--card) 70%, transparent);">
+<li style="display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="M20 6 9 17l-5-5"></path></svg>Numérotation continue des documents</li>
+<li style="display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="M20 6 9 17l-5-5"></path></svg>Documents émis immuables, corrigés par un avoir</li>
+<li style="display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="M20 6 9 17l-5-5"></path></svg>IBAN et adresses chiffrés</li>
+<li style="display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 20px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0;"><path d="M20 6 9 17l-5-5"></path></svg>Export et suppression RGPD</li>
+</ul>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":340}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+return { minH: c ? '0px' : '340px', padY: c ? '48px' : '64px', gap: c ? '28px' : '48px' };
+}
+}
+</script>
+</body>
+</html>

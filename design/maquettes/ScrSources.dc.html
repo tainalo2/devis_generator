@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Sources légales</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-card{box-sizing:border-box;background-color:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl)}
+.dg-h1{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:30px;line-height:36px;font-weight:600;letter-spacing:-0.025em}
+.dg-h2{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:20px;line-height:28px;font-weight:600;letter-spacing:-0.025em}
+.dg-num{font-variant-numeric:tabular-nums}
+.dg-tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:20px}
+.dg-tbl th{padding:10px 16px;text-align:left;font-size:12px;line-height:16px;font-weight:500;color:var(--muted-foreground);border-bottom:1px solid var(--border)}
+.dg-tbl td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:top}
+.dg-tbl tr:last-child td{border-bottom:0}
+.dg-root details{border-bottom:1px solid var(--border)}
+.dg-root details:last-child{border-bottom:0}
+.dg-root summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;font-size:15px;line-height:22px;font-weight:600}
+.dg-root summary::-webkit-details-marker{display:none}
+.dg-root summary:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--ring)}
+.dg-root details[open] summary svg{transform:rotate(180deg)}
+.dg-root details ul{margin:0;padding:0 16px 16px 36px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:20px;color:var(--foreground)}
+.dg-link{color:var(--brand);text-decoration:none;font-weight:500;text-underline-offset:4px}
+.dg-link:hover{text-decoration:underline}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="aucun" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="width: 100%; max-width: 1088px; margin: 0 auto; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h1 class="dg-h1">Sources légales</h1>
+<p style="margin: 0; max-width: 40rem; font-size: 15px; line-height: 22px; color: var(--muted-foreground);">D’où viennent les contrôles d’entreprise, les taux de TVA et les mentions que l’outil ajoute à vos documents. Les réponses sont mises en cache ; si une source ne répond pas, l’outil utilise la dernière valeur connue et vous le signale.</p>
+</div>
+<section aria-labelledby="t-src" style="display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-src" class="dg-h2">État des sources</h2>
+<div style="display: grid; grid-template-columns: {{srcCols}}; gap: 12px;">
+<sc-for list="{{sources}}" as="s" hint-placeholder-count="4">
+<div class="dg-card" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap;"><span style="font-size: 15px; line-height: 22px; font-weight: 600;">{{s.name}}</span><x-import component-from-global-scope="DevisUI.Badge" variant="{{s.variant}}">{{s.status}}</x-import></div>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">{{s.role}}</span>
+<span class="dg-num" style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{s.updated}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section aria-labelledby="t-tva" style="display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-tva" class="dg-h2">Taux de TVA en France métropolitaine</h2>
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<div class="dg-card" style="overflow: hidden;">
+<table class="dg-tbl">
+<thead><tr><th style="width: 90px;">Taux</th><th style="width: 160px;">Nom</th><th>Exemples d’usage</th></tr></thead>
+<tbody>
+<sc-for list="{{rates}}" as="r" hint-placeholder-count="4">
+<tr><td class="dg-num" style="font-family: var(--font-heading); font-size: 18px; line-height: 24px; font-weight: 600;">{{r.rate}}</td><td style="font-weight: 500;">{{r.name}}</td><td style="color: var(--muted-foreground);">{{r.use}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{rates}}" as="r" hint-placeholder-count="4">
+<div class="dg-card" style="padding: 12px 14px; display: flex; gap: 14px; align-items: flex-start;"><span class="dg-num" style="width: 56px; flex-shrink: 0; font-family: var(--font-heading); font-size: 20px; line-height: 26px; font-weight: 600;">{{r.rate}}</span><span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">{{r.name}}</span><span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">{{r.use}}</span></span></div>
+</sc-for>
+</div>
+</sc-if>
+<div style="padding: 12px 16px; border-radius: var(--radius-lg); font-size: 14px; line-height: 20px; background-color: color-mix(in oklab, var(--accent) 60%, var(--card));"><strong style="font-weight: 600;">Franchise en base :</strong> sous les seuils de chiffre d’affaires, vous ne facturez pas la TVA. L’outil ajoute alors la mention « TVA non applicable, art. 293 B du CGI ».</div>
+</section>
+<section aria-labelledby="t-fe" style="display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-fe" class="dg-h2">Calendrier de la facturation électronique</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="2">
+<li style="display: flex; gap: 14px;">
+<span aria-hidden="true" style="display: flex; flex-direction: column; align-items: center;"><span style="width: 14px; height: 14px; margin-top: 4px; border-radius: 9999px; box-sizing: border-box; border: 2px solid {{s.ring}}; background-color: {{s.fill}};"></span><span style="width: 2px; flex: 1; min-height: 24px; background-color: var(--border);"></span></span>
+<div class="dg-card" style="flex: 1; margin-bottom: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; border-color: {{s.border}};">
+<span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;"><span class="dg-num" style="font-size: 15px; line-height: 22px; font-weight: 600;">{{s.date}}</span><x-import component-from-global-scope="DevisUI.Badge" variant="{{s.variant}}">{{s.tag}}</x-import></span>
+<span style="font-size: 14px; line-height: 20px;">{{s.text}}</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">{{s.tool}}</span>
+</div>
+</li>
+</sc-for>
+</ol>
+</section>
+<section aria-labelledby="t-mo" style="display: flex; flex-direction: column; gap: 14px;">
+<h2 id="t-mo" class="dg-h2">Mentions obligatoires par document</h2>
+<div class="dg-card" style="overflow: hidden;">
+<sc-for list="{{mentions}}" as="d" hint-placeholder-count="4">
+<details>
+<summary>{{d.title}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg></summary>
+<ul><sc-for list="{{d.items}}" as="it" hint-placeholder-count="4"><li>{{it.t}}</li></sc-for></ul>
+</details>
+</sc-for>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 18px; color: var(--muted-foreground);">Ces informations sont un rappel, pas un conseil juridique. En cas de doute, référez-vous à <a href="#" class="dg-link">service-public.fr</a> ou à votre expert-comptable.</p>
+</section>
+</main>
+<dc-import name="SiteFooter" compact="{{mob}}" hint-size="100%,280px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440 };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var m = !!this.props.mobile || this.state.w < 700;
+function li(arr) { return arr.map(function (t) { return { t: t }; }); }
+return {
+desk: !m, mob: m,
+pad: m ? '20px 16px 40px' : '40px 24px 64px',
+srcCols: m ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+sources: [
+{ name: 'Recherche d’entreprises', role: 'Identité, SIREN et adresse des entreprises', status: 'Disponible', variant: 'success', updated: 'Vérifié il y a 5 min' },
+{ name: 'VIES', role: 'Validité des n° de TVA intracommunautaires', status: 'Cache', variant: 'warning', updated: 'Dernière réponse il y a 2 h' },
+{ name: 'TEDB', role: 'Taux de TVA des États membres', status: 'Disponible', variant: 'success', updated: 'Mis à jour le 01/10/2026' },
+{ name: 'BCE', role: 'Taux directeur pour les pénalités de retard', status: 'Disponible', variant: 'success', updated: 'Mis à jour le 01/07/2026' }
+],
+rates: [
+{ rate: '20 %', name: 'Taux normal', use: 'La plupart des prestations de services et des ventes de biens.' },
+{ rate: '10 %', name: 'Taux intermédiaire', use: 'Restauration, transport de voyageurs, certains travaux dans les logements.' },
+{ rate: '5,5 %', name: 'Taux réduit', use: 'Produits alimentaires, livres, travaux de rénovation énergétique.' },
+{ rate: '2,1 %', name: 'Taux particulier', use: 'Médicaments remboursables, presse.' }
+],
+steps: [
+{ date: '1er septembre 2026', tag: 'En vigueur', variant: 'success', ring: 'var(--brand)', fill: 'var(--brand)', border: 'var(--border)', text: 'Toutes les entreprises doivent pouvoir recevoir des factures électroniques. Les grandes entreprises et les ETI doivent les émettre.', tool: 'L’outil produit des PDF, toujours acceptés entre particuliers et pour vos clients qui ne sont pas concernés.' },
+{ date: '1er septembre 2027', tag: 'À venir', variant: 'warning', ring: 'oklch(0.7 0.14 70)', fill: 'transparent', border: 'color-mix(in oklab, oklch(0.7 0.14 70) 50%, var(--border))', text: 'Les PME et les micro-entrepreneurs doivent émettre leurs factures en format électronique.', tool: 'Factur-X n’est pas encore inclus. Il est prévu avant cette date.' }
+],
+mentions: [
+{ title: 'Devis', items: li(['Date et durée de validité', 'Identité complète de l’émetteur et du client', 'Détail des prestations : quantités, prix unitaires', 'Totaux HT et TTC, ou mention de franchise de TVA', 'Zone « Bon pour accord » : date et signature du client']) },
+{ title: 'Facture', items: li(['Numéro unique et continu, date d’émission', 'Date de la vente ou de la prestation', 'SIREN, adresse et n° de TVA si assujetti', 'Date d’échéance et pénalités de retard', 'Indemnité forfaitaire de 40 € pour frais de recouvrement (clients professionnels)', 'Conditions d’escompte, ou leur absence']) },
+{ title: 'Facture d’acompte', items: li(['Toutes les mentions d’une facture', 'Référence du devis ou de la commande', 'Montant de l’acompte et part du total']) },
+{ title: 'Avoir', items: li(['Numéro propre dans la série des avoirs', 'Référence de la facture corrigée', 'Montant remboursé ou déduit, et motif']) }
+]
+};
+}
+}
+</script>
+</body>
+</html>

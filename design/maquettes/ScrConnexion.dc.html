@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Connexion</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-root .dg-full{width:100%;height:40px;font-size:14px}
+.dg-link{color:var(--brand);text-decoration:none;font-weight:500;text-underline-offset:4px}
+.dg-link:hover{text-decoration:underline}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-root .dg-pw{padding-right:44px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background); background-image: radial-gradient(1200px 600px at 10% -10%, color-mix(in oklch, var(--brand) 12%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 0%, color-mix(in oklch, var(--accent) 55%, transparent), transparent 55%);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Invite" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="flex: 1; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;">
+<div style="width: 100%; max-width: 420px; box-sizing: border-box; padding: {{cardPad}}; display: flex; flex-direction: column; gap: 18px; background-color: var(--card); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: 0 30px 80px -40px rgba(15, 40, 60, 0.35);">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<h1 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.025em;">Connexion</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Retrouvez vos brouillons, vos clients et vos documents.</p>
+</div>
+<sc-if value="{{error}}" hint-placeholder-val="{{false}}">
+<div role="alert" style="padding: 10px 12px; border-radius: var(--radius-lg); font-size: 14px; line-height: 20px; color: var(--destructive); background-color: color-mix(in oklab, var(--destructive) 10%, transparent);">E-mail ou mot de passe incorrect.</div>
+</sc-if>
+<form style="display: flex; flex-direction: column; gap: 14px; margin: 0;">
+<x-import component-from-global-scope="DevisUI.Label"><span>E-mail</span><x-import component-from-global-scope="DevisUI.Input" type="email" autocomplete="email" placeholder="nom@exemple.fr"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span style="display: flex; justify-content: space-between; align-items: baseline;">Mot de passe<a href="#" class="dg-link" style="font-size: 13px; line-height: 18px;">Mot de passe oublié ?</a></span>
+<span style="position: relative; display: block;">
+<x-import component-from-global-scope="DevisUI.Input" type="password" autocomplete="current-password" class="dg-pw" default-value="motdepasse"></x-import>
+<span style="position: absolute; right: 2px; top: 2px;"><x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Afficher le mot de passe"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></x-import></span>
+</span>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default" type="submit" class="dg-full">Se connecter</x-import>
+</form>
+<p style="margin: 0; text-align: center; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Pas encore de compte ? <a href="#" class="dg-link">Créer un compte</a></p>
+</div>
+<div style="width: 100%; max-width: 420px; box-sizing: border-box; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border-radius: var(--radius-xl); background-color: color-mix(in oklab, var(--muted) 70%, transparent);">
+<span style="font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Un devis ponctuel ?</span>
+<a href="#" class="dg-link" style="font-size: 14px; line-height: 20px;">Créer un devis sans compte</a>
+</div>
+</main>
+<dc-import name="SiteFooter" compact="{{mob}}" hint-size="100%,280px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"error":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":860}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440 };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var m = !!this.props.mobile || this.state.w < 700;
+return {
+desk: !m, mob: m,
+error: !!this.props.error,
+pad: m ? '24px 16px 32px' : '56px 24px',
+cardPad: m ? '20px' : '28px'
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Émetteur et client</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-inline-link{color:var(--brand);text-decoration:none;font-family:var(--font-sans);font-size:12px;line-height:16px;font-weight:500;text-underline-offset:4px;border:0;margin:0;padding:6px 4px;background:transparent;cursor:pointer;border-radius:4px}
+.dg-inline-link:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+.dg-inline-link:hover{text-decoration:underline}
+.dg-overline{font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)}
+</style>
+</helmet>
+<section class="dg-root" aria-label="Émetteur et client" style="width: 100%; box-sizing: border-box; display: grid; grid-template-columns: {{cols}}; font-family: var(--font-sans); color: var(--foreground); background-color: oklch(0.965 0.03 155); border: 1px solid oklch(0.85 0.06 155); border-radius: var(--radius-xl);">
+<div style="box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 10px; border-right: {{divR}}; border-bottom: {{divB}};">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+<h2 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em;"><span aria-hidden="true" style="display: inline-flex; vertical-align: middle; margin: -2px 8px 0 0; width: 24px; height: 24px; border-radius: 6px; align-items: center; justify-content: center; color: #ffffff; background-color: oklch(0.5 0.1 155);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"></path><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"></path><path d="M10 6h4"></path><path d="M10 10h4"></path><path d="M10 14h4"></path></svg></span>Émetteur</h2>
+<button type="button" class="dg-inline-link" aria-haspopup="dialog" onClick="{{editIssuer}}">Modifier</button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 14px; line-height: 20px; font-weight: 600;">[Votre raison sociale]</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">[Adresse]</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">[Code postal, ville]</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">SIRET [numéro]</span>
+</div>
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Repris de la fiche Entreprise</span>
+</div>
+<div style="box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+<h2 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em;"><span aria-hidden="true" style="display: inline-flex; vertical-align: middle; margin: -2px 8px 0 0; width: 24px; height: 24px; border-radius: 6px; align-items: center; justify-content: center; color: #ffffff; background-color: oklch(0.5 0.1 155);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg></span>Client</h2>
+<button type="button" class="dg-inline-link" aria-haspopup="dialog" onClick="{{newClient}}">+ Nouveau client</button>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px;">
+<span class="dg-overline" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0);">Choisir un client</span>
+<select class="dg-input" style="cursor: pointer;">
+<option>[Nom du client]</option>
+<option>Autre client enregistré</option>
+</select>
+</label>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">[Adresse du client]</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">SIREN [numéro]</span>
+</div>
+<div><x-import component-from-global-scope="DevisUI.Badge" variant="success">Entreprise vérifiée</x-import></div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"onNewClient":{"editor":null},"onEditIssuer":{"editor":null},"$preview":{"width":600,"height":230}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+var nc = this.props.onNewClient, ei = this.props.onEditIssuer;
+var line = '1px solid oklch(0.85 0.06 155)';
+return {
+cols: c ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))',
+divR: c ? '0' : line,
+divB: c ? line : '0',
+newClient: function () { if (nc) nc(); },
+editIssuer: function () { if (ei) ei(); }
+};
+}
+}
+</script>
+</body>
+</html>

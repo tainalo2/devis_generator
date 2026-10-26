@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Fiche client, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:1440px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:12px 16px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:14px;line-height:20px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:64px;justify-content:center;padding:0 24px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.m{flex:1;width:100%;max-width:1088px;margin:0 auto;box-sizing:border-box;padding:32px;display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:16px}
+</style>
+</helmet>
+<div class="wf" style="height: 900px;">
+<div class="z n"><b>Barre de navigation · connecté</b><span>lien actif « Clients »</span></div>
+<div class="m">
+<div class="z c1" style="height: 72px; flex-direction: row; align-items: center; justify-content: space-between;"><div style="display: flex; flex-direction: column; gap: 2px;"><b>En-tête de la fiche</b><span>retour aux clients, nom du client, badge « Professionnel » ou « Particulier »</span></div><span>« Nouveau document pour ce client » · Enregistrer · ⋯ (Supprimer)</span></div>
+<div class="row" style="flex: 1;">
+<div style="flex: 1; display: flex; flex-direction: column; gap: 16px;">
+<div class="z c3" style="height: 200px;"><b>Identité</b><span>raison sociale, SIREN, SIRET, n° de TVA avec contrôle VIES ; recherche d’entreprise pour pré-remplir</span></div>
+<div class="z c3" style="height: 180px;"><b>Coordonnées</b><span>adresse, code postal, ville, pays, e-mail de facturation, contact</span></div>
+<div class="z c7" style="flex: 1;"><b>Notes internes</b><span>non visibles sur les documents</span></div>
+</div>
+<div style="width: 420px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px;">
+<div class="row" style="height: 110px;">
+<div class="z c2" style="flex: 1;"><b>CA facturé</b><span>depuis le début</span></div>
+<div class="z c2" style="flex: 1;"><b>À encaisser</b><span>factures non payées</span></div>
+</div>
+<div class="z c4" style="flex: 1;"><b>Documents du client</b><span>liste : type, numéro, date, montant, statut ; filtre par type</span></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

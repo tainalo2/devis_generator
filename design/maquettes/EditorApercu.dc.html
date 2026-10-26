@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Aperçu PDF</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.pdf{color:#1b3a4b;font-family:var(--font-sans);font-variant-numeric:tabular-nums}
+.pdf-muted{color:#5b6b78}
+.pdf-table{width:100%;border-collapse:collapse;font-size:12px;line-height:18px}
+.pdf-table th{padding:8px 10px;text-align:left;font-weight:600;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#5b6b78;background-color:#eef3f5;border-bottom:1px solid #d9e1e7}
+.pdf-table td{padding:10px;border-bottom:1px solid #e3e9ed;vertical-align:top}
+.pdf-table .r{text-align:right}
+</style>
+</helmet>
+<div class="dg-root" style="position: relative; width: 100%; height: {{h}}; overflow: hidden; font-family: var(--font-sans); color: var(--foreground); background-color: color-mix(in oklab, var(--muted) 90%, var(--foreground) 4%);">
+<div style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; overflow: auto; box-sizing: border-box; padding: {{pad}}; display: flex; justify-content: center;">
+<article class="pdf" aria-label="Aperçu du document" style="width: {{pageW}}; max-width: {{pageMax}}; zoom: {{zoom}}; flex-shrink: 0; align-self: flex-start; aspect-ratio: 210 / 297; box-sizing: border-box; padding: 56px 60px; display: flex; flex-direction: column; gap: 28px; background-color: #ffffff; border-radius: 2px; box-shadow: 0 1px 3px rgb(15 40 60 / 0.12), 0 12px 32px -12px rgb(15 40 60 / 0.25);">
+<header style="display: flex; justify-content: space-between; gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 3px; font-size: 12px; line-height: 18px;">
+<span style="font-size: 15px; line-height: 22px; font-weight: 600;">[Votre raison sociale]</span>
+<span class="pdf-muted">[Adresse]</span>
+<span class="pdf-muted">[Code postal, ville]</span>
+<span class="pdf-muted">SIRET [numéro]</span>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 12px; line-height: 18px; text-align: right;">
+<span style="font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap;">{{docTitle}}</span>
+<span class="pdf-muted">{{numLine}}</span>
+<sc-for list="{{meta}}" as="m" hint-placeholder-count="2"><span>{{m.text}}</span></sc-for>
+</div>
+</header>
+<div style="height: 3px; width: 56px; background-color: #2f9e94;"></div>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 32px;">
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; line-height: 18px;">
+<span class="pdf-muted" style="font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;">Objet</span>
+<span style="font-size: 14px; line-height: 20px; font-weight: 600;">{{objet}}</span>
+</div>
+<div style="min-width: 240px; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; line-height: 18px; border: 1px solid #d9e1e7; border-radius: 4px;">
+<span class="pdf-muted" style="font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;">{{clientLabel}}</span>
+<span style="font-weight: 600;">[Nom du client]</span>
+<span class="pdf-muted">[Adresse du client]</span>
+<span class="pdf-muted">SIREN [numéro]</span>
+</div>
+</div>
+<table class="pdf-table">
+<thead><tr><th>Désignation</th><th class="r">Qté</th><th class="r">PU HT</th><th class="r">Total HT</th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<tr><td>{{r.d}}</td><td class="r">{{r.q}}</td><td class="r">{{r.pu}}</td><td class="r">{{r.t}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+<div style="display: flex; justify-content: flex-end;">
+<div style="width: 280px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; line-height: 18px;">
+<sc-for list="{{totals}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; justify-content: space-between; gap: 16px;"><span class="pdf-muted">{{t.label}}</span><span>{{t.value}}</span></div>
+</sc-for>
+<div style="display: flex; justify-content: space-between; gap: 16px; padding-top: 8px; border-top: 1.5px solid #1b3a4b; font-size: 14px; line-height: 20px; font-weight: 700;"><span>{{finalLabel}}</span><span>{{finalValue}}</span></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; line-height: 16px;">
+<sc-for list="{{mentions}}" as="mn" hint-placeholder-count="2"><span>{{mn.text}}</span></sc-for>
+</div>
+<div style="flex-grow: 1;"></div>
+<sc-if value="{{showSignature}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; justify-content: flex-end;">
+<div class="pdf-muted" style="width: 260px; height: 96px; box-sizing: border-box; padding: 10px 12px; font-size: 11px; line-height: 16px; border: 1px dashed #c3d0db; border-radius: 4px;">Bon pour accord : date et signature</div>
+</div>
+</sc-if>
+<footer class="pdf-muted" style="padding-top: 12px; border-top: 1px solid #e3e9ed; font-size: 10px; line-height: 14px; text-align: center;">[Votre raison sociale] · SIRET [numéro] · Page 1 sur 1</footer>
+</article>
+</div>
+<div style="position: absolute; top: 16px; right: 20px; padding: 4px 10px; font-size: 12px; line-height: 16px; color: var(--muted-foreground); background-color: color-mix(in oklab, var(--popover) 90%, transparent); border: 1px solid var(--border); border-radius: 9999px;">Page 1 sur 1</div>
+<div role="toolbar" aria-label="Affichage de l’aperçu" style="position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); padding: 4px; display: flex; align-items: center; gap: 2px; background-color: var(--popover); border: 1px solid var(--border); border-radius: 9999px; box-shadow: 0 10px 15px -3px rgb(15 40 60 / 0.12), 0 4px 6px -4px rgb(15 40 60 / 0.12);">
+<sc-if value="{{showToggle}}" hint-placeholder-val="{{true}}">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="{{toggleLabel}}" title="{{toggleLabel}}" on-click="{{toggle}}" style="border-radius: 9999px;">
+<sc-if value="{{formOpen}}" hint-placeholder-val="{{true}}">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m16 15-3-3 3-3"></path></svg>
+</sc-if>
+<sc-if value="{{formClosed}}" hint-placeholder-val="{{false}}">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path><path d="m14 9 3 3-3 3"></path></svg>
+</sc-if>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Separator" orientation="vertical" style="height: 20px; margin: 0 4px;"></x-import>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Zoom arrière" style="border-radius: 9999px;">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+</x-import>
+<span style="min-width: {{zoomLabelW}}; text-align: center; font-size: 13px; line-height: 20px; font-weight: 500; white-space: nowrap;">{{zoomLabel}}</span>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Zoom avant" style="border-radius: 9999px;">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Separator" orientation="vertical" style="height: 20px; margin: 0 4px;"></x-import>
+<sc-if value="{{showToggle}}" hint-placeholder-val="{{true}}">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Afficher la page entière" title="Afficher la page entière" style="border-radius: 9999px;">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
+</x-import>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Plein écran" title="Plein écran" style="border-radius: 9999px;">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"></path><path d="M21 8V5a2 2 0 0 0-2-2h-3"></path><path d="M3 16v3a2 2 0 0 0 2 2h3"></path><path d="M16 21h3a2 2 0 0 0 2-2v-3"></path></svg>
+</x-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"compact":{"editor":"boolean","default":false},"number":{"editor":"text","default":""},"h":{"editor":null,"default":"780px"},"formOpen":{"editor":null,"default":true},"onToggleForm":{"editor":null},"$preview":{"width":840,"height":780}}'>
+class Component extends DCLogic {
+renderVals() {
+var k = this.props.kind || 'devis';
+var c = !!this.props.compact;
+var open = this.props.formOpen === undefined ? true : !!this.props.formOpen;
+var cb = this.props.onToggleForm;
+var lines = [
+{ d: 'Conception graphique', q: '1', pu: '800,00 €', t: '800,00 €' },
+{ d: 'Intégration (jour)', q: '3', pu: '450,00 €', t: '1 350,00 €' },
+{ d: 'Hébergement (mois)', q: '12', pu: '25,00 €', t: '300,00 €' }
+];
+var tva = 'TVA non applicable, art. 293 B du CGI.';
+var lateFees = 'En cas de retard : pénalités à trois fois le taux d’intérêt légal et indemnité forfaitaire de 40 € pour frais de recouvrement. Pas d’escompte pour paiement anticipé.';
+var doc;
+if (k === 'facture') {
+doc = {
+docTitle: 'FACTURE',
+meta: [{ text: 'Date : 26/10/2026' }, { text: 'Prestation : 23/10/2026' }, { text: 'Échéance : 25/11/2026' }],
+objet: 'Refonte du site vitrine',
+clientLabel: 'Facturé à',
+rows: lines,
+totals: [{ label: 'Total HT', value: '2 450,00 €' }, { label: 'TVA', value: '—' }],
+finalLabel: 'Net à payer',
+finalValue: '2 450,00 €',
+mentions: [{ text: tva }, { text: 'Paiement à 30 jours, au plus tard le 25/11/2026. IBAN : [IBAN]' }, { text: lateFees }],
+showSignature: false
+};
+} else if (k === 'acompte') {
+doc = {
+docTitle: 'FACTURE D’ACOMPTE',
+meta: [{ text: 'Date : 26/10/2026' }, { text: 'Échéance : 25/11/2026' }, { text: 'Devis du 26/10/2026' }],
+objet: 'Acompte : refonte du site vitrine',
+clientLabel: 'Facturé à',
+rows: [{ d: 'Acompte de 30 % sur le devis du 26/10/2026', q: '1', pu: '735,00 €', t: '735,00 €' }],
+totals: [{ label: 'Total du devis HT', value: '2 450,00 €' }, { label: 'Acompte (30 %)', value: '735,00 €' }, { label: 'TVA', value: '—' }],
+finalLabel: 'Acompte à payer',
+finalValue: '735,00 €',
+mentions: [{ text: tva }, { text: 'Reste à facturer après cet acompte : 1 715,00 €.' }, { text: 'Paiement à 30 jours, au plus tard le 25/11/2026. IBAN : [IBAN]' }, { text: lateFees }],
+showSignature: false
+};
+} else {
+doc = {
+docTitle: 'DEVIS',
+meta: [{ text: 'Date : 26/10/2026' }, { text: 'Valable jusqu’au : 25/11/2026' }],
+objet: 'Refonte du site vitrine',
+clientLabel: 'Adressé à',
+rows: lines,
+totals: [{ label: 'Total HT', value: '2 450,00 €' }, { label: 'TVA', value: '—' }],
+finalLabel: 'Total à payer',
+finalValue: '2 450,00 €',
+mentions: [{ text: tva }, { text: 'Conditions de paiement : paiement à réception.' }],
+showSignature: true
+};
+}
+doc.h = this.props.h || '780px';
+doc.numLine = this.props.number ? ('N° ' + this.props.number) : 'N° attribué à l’émission';
+doc.pad = c ? '12px 12px 84px' : '24px 24px 96px';
+doc.pageW = c ? '794px' : '100%';
+doc.pageMax = c ? 'none' : '880px';
+doc.zoom = c ? '0.44' : '1';
+doc.showToggle = !c;
+doc.zoomLabel = c ? 'Ajusté' : 'Ajusté à la largeur';
+doc.zoomLabelW = c ? '56px' : '108px';
+doc.formOpen = open;
+doc.formClosed = !open;
+doc.toggleLabel = open ? 'Agrandir l’aperçu' : 'Afficher le formulaire';
+doc.toggle = function () { if (cb) cb(); };
+return doc;
+}
+}
+</script>
+</body>
+</html>

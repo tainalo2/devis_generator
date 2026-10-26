@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Landing, questions fréquentes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+</style>
+</helmet>
+<section class="dg-root" style="width: 100%; min-height: {{minH}}; box-sizing: border-box; display: flex; align-items: center; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<div style="width: 100%; max-width: 1152px; margin: 0 auto; padding: {{padY}} clamp(16px, 4vw, 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+<h2 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 28px; line-height: 36px; font-weight: 600; letter-spacing: -0.025em;">Questions fréquentes</h2>
+<dl style="margin: 0; max-width: 48rem; display: flex; flex-direction: column; gap: 20px;">
+<div style="padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+<dt style="font-size: 16px; line-height: 24px; font-weight: 500;">Dois-je créer un compte ?</dt>
+<dd style="margin: 4px 0 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Non. Le mode invité permet de générer un PDF sans conservation serveur. Un compte optionnel sauvegarde clients et documents.</dd>
+</div>
+<div style="padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+<dt style="font-size: 16px; line-height: 24px; font-weight: 500;">Que deviennent mes données ?</dt>
+<dd style="margin: 4px 0 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Elles restent tant que le compte existe. Export JSON et suppression complète sont disponibles dans Mon compte.</dd>
+</div>
+<div style="padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+<dt style="font-size: 16px; line-height: 24px; font-weight: 500;">Factur-X est-il inclus ?</dt>
+<dd style="margin: 4px 0 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Pas en V1 (PDF simple). Le calendrier d’obligation pour les micro-entrepreneurs est rappelé dans les sources légales (à partir du 1er sept. 2027).</dd>
+</div>
+</dl>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":500}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+return { minH: c ? '0px' : '500px', padY: c ? '48px' : '64px' };
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Facture F-2026-042</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-card{box-sizing:border-box;background-color:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl)}
+.dg-h2{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:16px;line-height:24px;font-weight:600;letter-spacing:-0.025em}
+.dg-num{font-variant-numeric:tabular-nums}
+.dg-link{color:var(--brand);text-decoration:none;font-size:13px;line-height:18px;font-weight:500;text-underline-offset:4px}
+.dg-link:hover{text-decoration:underline}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-root .dg-tall{height:44px;padding:0 16px;font-size:14px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; height: {{rootH}}; min-height: {{rootMin}}; display: flex; flex-direction: column; overflow: {{rootOverflow}}; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="documents" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<header style="flex-shrink: 0; box-sizing: border-box; min-height: 64px; padding: {{headPad}}; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; background-color: var(--card); border-bottom: 1px solid var(--border);">
+<div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap;">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon-sm" aria-label="Retour aux documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></x-import>
+<h1 class="dg-num" style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: {{titleSize}}; line-height: 28px; font-weight: 600; letter-spacing: -0.025em; white-space: nowrap;">Facture F-2026-042</h1>
+<x-import component-from-global-scope="DevisUI.Badge" variant="secondary">À encaisser</x-import>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 16px; color: var(--muted-foreground); white-space: nowrap;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Émise le 26/10/2026 · non modifiable</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px;">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>Télécharger le PDF</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>Envoyer par e-mail</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Marquer comme payée</x-import>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Autres actions : créer un avoir, dupliquer" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></x-import>
+</div>
+</header>
+<div style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: {{bodyDir}};">
+<sc-if value="{{showSide}}" hint-placeholder-val="{{true}}">
+<aside aria-label="Informations du document" style="flex: 0 0 {{sideW}}; min-height: 0; overflow-y: {{sideOverflow}}; box-sizing: border-box; padding: {{sidePad}}; display: flex; flex-direction: column; gap: 12px; border-right: {{sideBorder}};">
+<section class="dg-card" aria-labelledby="paiement-titre" style="padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+<h2 id="paiement-titre" class="dg-h2">Paiement</h2>
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Échéance le 25/11/2026</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Reste à payer</span>
+<span class="dg-num" style="font-family: var(--font-heading); font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.025em;">2 450,00 €</span>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0;">
+<sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+<li style="display: flex; gap: 10px;">
+<span aria-hidden="true" style="display: flex; flex-direction: column; align-items: center;"><span style="width: 18px; height: 18px; border-radius: 9999px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{s.ring}}; background-color: {{s.fill}}; color: var(--brand-foreground);"><sc-if value="{{s.done}}" hint-placeholder-val="{{true}}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span><span style="width: 1.5px; flex: 1; min-height: 14px; background-color: {{s.line}};"></span></span>
+<span style="display: flex; flex-direction: column; gap: 0; padding-bottom: 12px;"><span style="font-size: 14px; line-height: 20px; font-weight: 500; color: {{s.color}};">{{s.label}}</span><span class="dg-num" style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{s.date}}</span></span>
+</li>
+</sc-for>
+</ol>
+<a href="#" class="dg-link">Enregistrer un paiement partiel</a>
+</section>
+<section class="dg-card" aria-labelledby="client-titre" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px;"><h2 id="client-titre" class="dg-h2">Client</h2><a href="#" class="dg-link">Voir la fiche</a></div>
+<span style="font-size: 14px; line-height: 20px; font-weight: 600;">Studio Lumen</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">[Adresse du client] · SIREN [numéro]</span>
+<span style="font-size: 13px; line-height: 18px; color: var(--muted-foreground);">compta@studio-lumen.example</span>
+</section>
+<section class="dg-card" aria-labelledby="lies-titre" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+<h2 id="lies-titre" class="dg-h2">Documents liés</h2>
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-lg); background-color: color-mix(in oklab, var(--muted) 70%, transparent); text-decoration: none; color: inherit;">
+<span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">Devis D-2026-019</span><span class="dg-num" style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">20/10/2026 · 2 450,00 €</span></span>
+<x-import component-from-global-scope="DevisUI.Badge" variant="success">Accepté</x-import>
+</a>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Une erreur sur cette facture ? Elle se corrige par un avoir.</p>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" style="align-self: flex-start;">Créer un avoir</x-import>
+</section>
+<section class="dg-card" aria-labelledby="histo-titre" style="padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+<h2 id="histo-titre" class="dg-h2">Historique</h2>
+<sc-for list="{{history}}" as="h" hint-placeholder-count="4">
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px; line-height: 18px;"><span>{{h.label}}</span><span class="dg-num" style="color: var(--muted-foreground); white-space: nowrap;">{{h.date}}</span></div>
+</sc-for>
+</section>
+</aside>
+</sc-if>
+<div style="flex: 1 1 0; min-width: 0; min-height: 0; order: {{previewOrder}};">
+<dc-import name="EditorApercu" kind="facture" number="F-2026-042" compact="{{mob}}" h="{{previewH}}" form-open="{{showSide}}" on-toggle-form="{{toggle}}" hint-size="100%,{{previewH}}"></dc-import>
+</div>
+</div>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="position: sticky; bottom: 0; z-index: 5; box-sizing: border-box; height: 76px; padding: 0 12px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background-color: var(--card); border-top: 1px solid var(--border); box-shadow: 0 -8px 16px -12px rgb(15 40 60 / 0.25);">
+<span style="display: flex; flex-direction: column;"><span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Reste à payer</span><span class="dg-num" style="font-family: var(--font-heading); font-size: 20px; line-height: 26px; font-weight: 600;">2 450,00 €</span></span>
+<x-import component-from-global-scope="DevisUI.Button" variant="default" class="dg-tall">Marquer comme payée</x-import>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440, side: true };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var self = this;
+var m = !!this.props.mobile || this.state.w < 700;
+var ok = { ring: 'var(--brand)', fill: 'var(--brand)', line: 'var(--brand)', color: 'var(--foreground)', done: true };
+var todo = { ring: 'var(--border)', fill: 'transparent', line: 'transparent', color: 'var(--muted-foreground)', done: false };
+return {
+desk: !m, mob: m,
+rootH: m ? 'auto' : '100vh',
+rootMin: m ? '0' : '640px',
+rootOverflow: m ? 'visible' : 'hidden',
+headPad: m ? '10px 8px 10px 4px' : '0 16px 0 12px',
+titleSize: m ? '18px' : '20px',
+bodyDir: m ? 'column' : 'row',
+showSide: m ? true : this.state.side,
+sideW: m ? 'auto' : '400px',
+sideOverflow: m ? 'visible' : 'auto',
+sidePad: m ? '16px' : '20px',
+sideBorder: m ? '0' : '1px solid var(--border)',
+previewOrder: m ? '-1' : '0',
+previewH: m ? '520px' : 'calc(max(100vh, 640px) - 128px)',
+toggle: function () { self.setState({ side: !self.state.side }); },
+steps: [
+Object.assign({ label: 'Émise', date: '26/10/2026 à 10:40' }, ok),
+Object.assign({ label: 'Envoyée au client', date: '26/10/2026 à 10:42' }, ok, { line: 'var(--border)' }),
+Object.assign({ label: 'Payée', date: 'En attente' }, todo)
+],
+history: [
+{ label: 'Envoyée à compta@studio-lumen.example', date: '26/10 · 10:42' },
+{ label: 'Émise, numéro F-2026-042 attribué', date: '26/10 · 10:40' },
+{ label: 'Créée depuis le devis D-2026-019', date: '26/10 · 10:12' },
+{ label: 'Devis accepté par le client', date: '24/10 · 16:05' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

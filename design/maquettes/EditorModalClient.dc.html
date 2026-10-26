@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Nouveau client</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-seg{display:flex;padding:2px;gap:2px;border-radius:var(--radius-lg);background-color:var(--muted)}
+.dg-seg button{flex:1;height:32px;padding:0 12px;border:0;margin:0;border-radius:6px;background:transparent;font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer}
+.dg-seg button[aria-pressed="true"]{background-color:var(--card);color:var(--foreground);box-shadow:0 1px 2px rgb(15 40 60 / 0.1)}
+.dg-seg button:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+.dg-result{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;box-sizing:border-box;padding:10px 12px;border:0;margin:0;background:transparent;text-align:left;font-family:var(--font-sans);cursor:pointer;border-radius:6px;color:var(--foreground)}
+.dg-result:hover{background-color:var(--muted)}
+.dg-result:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--ring)}
+.dg-check{display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;font-weight:500;cursor:pointer}
+.dg-check input{width:16px;height:16px;margin:0;accent-color:var(--primary)}
+.dg-root .dg-search{padding-left:36px}
+</style>
+</helmet>
+<div class="dg-root" role="dialog" aria-modal="true" aria-labelledby="client-titre" aria-describedby="client-desc" style="width: 100%; max-height: calc(100vh - 48px); box-sizing: border-box; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--popover); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: 0 24px 48px -12px rgb(15 40 60 / 0.35); overflow: hidden;">
+<header style="flex-shrink: 0; padding: 20px 20px 16px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border);">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<h2 id="client-titre" style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.025em;"><span aria-hidden="true" style="display: inline-flex; vertical-align: middle; margin: -3px 10px 0 0; width: 28px; height: 28px; border-radius: 7px; align-items: center; justify-content: center; color: #ffffff; background-color: oklch(0.5 0.1 155);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"></circle><path d="M20 21a8 8 0 0 0-16 0"></path></svg></span>Nouveau client</h2>
+<p id="client-desc" style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">{{desc}}</p>
+</div>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Fermer" on-click="{{close}}">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+</x-import>
+</header>
+<div style="flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px;">
+<div class="dg-seg" role="group" aria-label="Type de client">
+<button type="button" aria-pressed="{{pPro}}" onClick="{{setPro}}">Professionnel</button>
+<button type="button" aria-pressed="{{pPart}}" onClick="{{setPart}}">Particulier</button>
+</div>
+<sc-if value="{{isPro}}" hint-placeholder-val="{{true}}">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Rechercher une entreprise</span>
+<div style="position: relative;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 12px; top: 10px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<x-import component-from-global-scope="DevisUI.Input" class="dg-search" placeholder="Nom, SIREN ou SIRET"></x-import>
+</div>
+</x-import>
+<div style="display: flex; flex-direction: column; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-lg); background-color: var(--card);">
+<button type="button" class="dg-result">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">[Entreprise trouvée]</span><span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">SIREN [numéro] · [Ville]</span></span>
+<span style="font-size: 12px; line-height: 16px; color: var(--brand); font-weight: 500; white-space: nowrap;">Utiliser</span>
+</button>
+<button type="button" class="dg-result">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">[Autre résultat]</span><span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">SIREN [numéro] · [Ville]</span></span>
+<span style="font-size: 12px; line-height: 16px; color: var(--brand); font-weight: 500; white-space: nowrap;">Utiliser</span>
+</button>
+</div>
+<p style="margin: -6px 0 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Source : annuaire Recherche d’entreprises de l’État.</p>
+<div style="display: flex; align-items: center; gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Separator" style="flex: 1;"></x-import>
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground); white-space: nowrap;">ou saisissez les informations</span>
+<x-import component-from-global-scope="DevisUI.Separator" style="flex: 1;"></x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Raison sociale</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="[Raison sociale]"></x-import>
+</x-import>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>SIREN</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="9 chiffres"></x-import>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>N° de TVA intracommunautaire</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="FR 00 000000000"></x-import>
+</x-import>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; margin-top: -4px;">
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">Vérification VIES à la saisie</x-import>
+</div>
+</sc-if>
+<sc-if value="{{isPart}}" hint-placeholder-val="{{false}}">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Nom et prénom</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="[Nom et prénom]"></x-import>
+</x-import>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Adresse</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="Numéro et voie"></x-import>
+</x-import>
+<div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Code postal</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="75000"></x-import>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Ville</span>
+<x-import component-from-global-scope="DevisUI.Input" placeholder="[Ville]"></x-import>
+</x-import>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Pays</span>
+<select class="dg-input" style="cursor: pointer;"><option>France</option><option>Belgique</option><option>Autre pays</option></select>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>E-mail de facturation</span>
+<x-import component-from-global-scope="DevisUI.Input" type="email" placeholder="nom@exemple.fr"></x-import>
+</x-import>
+</div>
+<label class="dg-check"><input type="checkbox" checked="checked" />Enregistrer dans mes clients</label>
+</div>
+<footer style="flex-shrink: 0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); background-color: var(--card);">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="lg" on-click="{{close}}">Annuler</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default" size="lg" on-click="{{close}}">Ajouter le client</x-import>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"particulier":{"editor":"boolean","default":false},"onClose":{"editor":null},"$preview":{"width":560,"height":760}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { part: !!props.particulier };
+}
+componentDidUpdate(prev) {
+if (prev.particulier !== this.props.particulier) this.setState({ part: !!this.props.particulier });
+}
+renderVals() {
+var self = this;
+var part = this.state.part;
+var cb = this.props.onClose;
+return {
+isPro: !part,
+isPart: part,
+pPro: part ? 'false' : 'true',
+pPart: part ? 'true' : 'false',
+desc: part ? 'Saisissez les coordonnées du client.' : 'Recherchez l’entreprise pour pré-remplir ses informations.',
+setPro: function () { self.setState({ part: false }); },
+setPart: function () { self.setState({ part: true }); },
+close: function () { if (cb) cb(); }
+};
+}
+}
+</script>
+</body>
+</html>

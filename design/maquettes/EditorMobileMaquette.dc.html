@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Nouveau document, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-step{flex:1;height:36px;display:flex;align-items:center;justify-content:center;gap:6px;border:0;margin:0;padding:0 8px;border-radius:6px;background:transparent;font-family:var(--font-sans);font-size:13px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer;white-space:nowrap}
+.dg-step span{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:9999px;font-size:11px;line-height:1;background-color:var(--muted);color:var(--muted-foreground)}
+.dg-step[aria-current="step"]{background-color:var(--card);color:var(--foreground);box-shadow:0 1px 2px rgb(15 40 60 / 0.1)}
+.dg-step[aria-current="step"] span{background-color:var(--primary);color:var(--primary-foreground)}
+.dg-step:focus-visible{outline:none;box-shadow:0 0 0 2px var(--ring)}
+</style>
+</helmet>
+<div class="dg-root" style="position: relative; width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<dc-import name="NavMobileInvite" hint-size="390px,60px"></dc-import>
+<dc-import name="EditorDocBarMobile" kind="{{kind}}" hint-size="390px,52px"></dc-import>
+<nav aria-label="Étapes" style="flex-shrink: 0; box-sizing: border-box; padding: 6px 12px; background-color: var(--background); border-bottom: 1px solid var(--border);">
+<div style="display: flex; gap: 2px; padding: 2px; border-radius: var(--radius-lg); background-color: var(--muted);">
+<button type="button" class="dg-step" aria-current="{{c1}}" onClick="{{go1}}"><span>1</span>Parties</button>
+<button type="button" class="dg-step" aria-current="{{c2}}" onClick="{{go2}}"><span>2</span>Lignes</button>
+<button type="button" class="dg-step" aria-current="{{c3}}" onClick="{{go3}}"><span>3</span>Aperçu</button>
+</div>
+</nav>
+<main id="contenu" style="flex: 1 1 0; min-height: 0; display: flex; flex-direction: column;">
+<sc-if value="{{s1}}" hint-placeholder-val="{{true}}">
+<div style="flex: 1 1 0; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px;">
+<dc-import name="EditorInfos" kind="{{kind}}" compact="{{yes}}" hint-size="100%,260px"></dc-import>
+<dc-import name="EditorParties" compact="{{yes}}" on-new-client="{{openClient}}" on-edit-issuer="{{openIssuer}}" hint-size="100%,380px"></dc-import>
+</div>
+</sc-if>
+<sc-if value="{{s2}}" hint-placeholder-val="{{false}}">
+<div style="flex: 1 1 0; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px;">
+<dc-import name="EditorLignes" kind="{{kind}}" compact="{{yes}}" hint-size="100%,560px"></dc-import>
+<dc-import name="EditorConditions" kind="{{kind}}" compact="{{yes}}" hint-size="100%,420px"></dc-import>
+</div>
+</sc-if>
+<sc-if value="{{s3}}" hint-placeholder-val="{{false}}">
+<dc-import name="EditorApercu" kind="{{kind}}" compact="{{yes}}" h="608px" hint-size="100%,608px"></dc-import>
+</sc-if>
+</main>
+<dc-import name="EditorBarreMobile" kind="{{kind}}" step="{{step}}" on-prev="{{prev}}" on-next="{{next}}" hint-size="390px,76px"></dc-import>
+<sc-if value="{{modalClient}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; box-sizing: border-box; padding: 24px 8px 8px; display: flex; align-items: flex-end;">
+<button type="button" aria-label="Fermer la fenêtre" onClick="{{closeModal}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 0; margin: 0; padding: 0; cursor: default; background-color: color-mix(in oklab, var(--foreground) 35%, transparent);"></button>
+<div style="position: relative; width: 100%;">
+<dc-import name="EditorModalClient" on-close="{{closeModal}}" hint-size="100%,780px"></dc-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{modalIssuer}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; box-sizing: border-box; padding: 24px 8px 8px; display: flex; align-items: flex-end;">
+<button type="button" aria-label="Fermer la fenêtre" onClick="{{closeModal}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 0; margin: 0; padding: 0; cursor: default; background-color: color-mix(in oklab, var(--foreground) 35%, transparent);"></button>
+<div style="position: relative; width: 100%;">
+<dc-import name="EditorModalEmetteur" on-close="{{closeModal}}" hint-size="100%,780px"></dc-import>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { step: 1, modal: null };
+}
+renderVals() {
+var self = this;
+var s = this.state.step;
+function go(n) { return function () { self.setState({ step: n }); }; }
+return {
+kind: this.props.kind || 'devis',
+modalClient: this.state.modal === 'client',
+modalIssuer: this.state.modal === 'emetteur',
+openClient: function () { self.setState({ modal: 'client' }); },
+openIssuer: function () { self.setState({ modal: 'emetteur' }); },
+closeModal: function () { self.setState({ modal: null }); },
+yes: true,
+step: s,
+s1: s === 1, s2: s === 2, s3: s === 3,
+c1: s === 1 ? 'step' : null,
+c2: s === 2 ? 'step' : null,
+c3: s === 3 ? 'step' : null,
+go1: go(1), go2: go(2), go3: go(3),
+prev: function () { self.setState({ step: Math.max(1, self.state.step - 1) }); },
+next: function () { self.setState({ step: Math.min(3, self.state.step + 1) }); }
+};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Entreprise</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-h1{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:30px;line-height:36px;font-weight:600;letter-spacing:-0.025em}
+.dg-h2{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:18px;line-height:26px;font-weight:600;letter-spacing:-0.025em}
+.dg-sec{box-sizing:border-box;padding:20px;display:flex;flex-direction:column;gap:14px;border-radius:var(--radius-xl);scroll-margin-top:24px}
+.z-id{background-color:oklch(0.965 0.03 155);border:1px solid oklch(0.85 0.06 155)}
+.z-co{background-color:oklch(0.965 0.022 240);border:1px solid oklch(0.86 0.05 240)}
+.z-ba{background-color:oklch(0.965 0.025 200);border:1px solid oklch(0.85 0.05 200)}
+.z-de{background-color:oklch(0.97 0.035 80);border:1px solid oklch(0.85 0.07 80)}
+.z-ap{background-color:oklch(0.97 0.012 220);border:1px solid var(--border)}
+.dg-g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.dg-cap{margin:0;font-size:12px;line-height:16px;color:var(--muted-foreground)}
+.dg-toc{display:flex;gap:4px}
+.dg-toc a{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-md);font-size:14px;line-height:20px;font-weight:500;color:var(--muted-foreground);text-decoration:none;white-space:nowrap}
+.dg-toc a:hover{color:var(--foreground);background-color:var(--muted)}
+.dg-toc a[aria-current="true"]{color:var(--foreground);background-color:var(--secondary)}
+.dg-toc i{width:8px;height:8px;border-radius:9999px;flex-shrink:0}
+.dg-root a:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-check{display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;font-weight:500;cursor:pointer}
+.dg-check input{width:16px;height:16px;margin:0;accent-color:var(--primary)}
+.dg-sw{display:flex;gap:10px;flex-wrap:wrap}
+.dg-sw label{position:relative;width:32px;height:32px;border-radius:9999px;cursor:pointer}
+.dg-sw input{position:absolute;inset:0;margin:0;opacity:0;cursor:pointer}
+.dg-sw label:has(input:checked){box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--foreground)}
+.dg-sw label:has(input:focus-visible){box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-root .dg-tall{height:44px;padding:0 16px;font-size:14px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="aucun" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="flex: 1; width: 100%; max-width: 1088px; margin: 0 auto; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px;">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<h1 class="dg-h1">Entreprise</h1>
+<p style="margin: 0; max-width: 36rem; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Ces informations figurent sur tous vos devis et factures. Les documents déjà émis ne changent pas.</p>
+</div>
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><x-import component-from-global-scope="DevisUI.Button" variant="default">Enregistrer les modifications</x-import></sc-if>
+</div>
+<div style="display: flex; flex-direction: {{dir}}; gap: {{bodyGap}}; align-items: flex-start;">
+<nav aria-label="Sections de la page" class="dg-toc" style="flex-direction: {{tocDir}}; flex-shrink: 0; width: {{tocW}}; position: sticky; top: {{tocTop}}; z-index: 2; overflow-x: auto; box-sizing: border-box; padding: {{tocPad}}; background-color: var(--background);">
+<a href="#identite" aria-current="true"><i style="background-color: oklch(0.5 0.1 155);"></i>Identité légale</a>
+<a href="#coordonnees"><i style="background-color: oklch(0.5 0.1 240);"></i>Coordonnées</a>
+<a href="#banque"><i style="background-color: oklch(0.5 0.09 200);"></i>Banque</a>
+<a href="#defauts"><i style="background-color: oklch(0.52 0.1 70);"></i>Valeurs par défaut</a>
+<a href="#apparence"><i style="background-color: oklch(0.5 0.03 240);"></i>Apparence du PDF</a>
+</nav>
+<div style="flex: 1; min-width: 0; width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 16px;">
+<section id="identite" class="dg-sec z-id" aria-labelledby="t-id">
+<h2 id="t-id" class="dg-h2">Identité légale</h2>
+<x-import component-from-global-scope="DevisUI.Label"><span>Raison sociale ou nom de l’entrepreneur</span><x-import component-from-global-scope="DevisUI.Input" default-value="[Votre raison sociale]"></x-import></x-import>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>Nom commercial <span style="font-weight: 400; color: var(--muted-foreground);">(facultatif)</span></span><x-import component-from-global-scope="DevisUI.Input"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Forme juridique</span><select class="dg-input" style="cursor: pointer;"><option>Entrepreneur individuel (micro)</option><option>EURL</option><option>SASU</option><option>SARL</option><option>SAS</option></select></x-import>
+</div>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>SIRET</span><x-import component-from-global-scope="DevisUI.Input" default-value="[numéro]"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Code APE</span><x-import component-from-global-scope="DevisUI.Input" placeholder="0000A"></x-import></x-import>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: -4px;"><x-import component-from-global-scope="DevisUI.Badge" variant="success">Entreprise vérifiée</x-import><p class="dg-cap">Données reprises de l’annuaire Recherche d’entreprises.</p></div>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>RCS ou RM</span><x-import component-from-global-scope="DevisUI.Input" placeholder="Dispensé d’immatriculation"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>N° de TVA intracommunautaire</span><x-import component-from-global-scope="DevisUI.Input" placeholder="Non applicable en franchise"></x-import></x-import>
+</div>
+</section>
+<section id="coordonnees" class="dg-sec z-co" aria-labelledby="t-co">
+<h2 id="t-co" class="dg-h2">Coordonnées</h2>
+<x-import component-from-global-scope="DevisUI.Label"><span>Adresse</span><x-import component-from-global-scope="DevisUI.Input" default-value="[Adresse]"></x-import></x-import>
+<div style="display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label"><span>Code postal</span><x-import component-from-global-scope="DevisUI.Input" placeholder="75000"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Ville</span><x-import component-from-global-scope="DevisUI.Input" placeholder="[Ville]"></x-import></x-import>
+</div>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>E-mail</span><x-import component-from-global-scope="DevisUI.Input" type="email" placeholder="nom@exemple.fr"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Téléphone</span><x-import component-from-global-scope="DevisUI.Input" type="tel" placeholder="06 00 00 00 00"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Label"><span>Site web <span style="font-weight: 400; color: var(--muted-foreground);">(facultatif)</span></span><x-import component-from-global-scope="DevisUI.Input" type="url" placeholder="https://"></x-import></x-import>
+</section>
+<section id="banque" class="dg-sec z-ba" aria-labelledby="t-ba">
+<h2 id="t-ba" class="dg-h2">Banque</h2>
+<x-import component-from-global-scope="DevisUI.Label"><span>Titulaire du compte</span><x-import component-from-global-scope="DevisUI.Input" default-value="[Votre raison sociale]"></x-import></x-import>
+<div style="display: grid; grid-template-columns: {{ibanCols}}; gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label"><span>IBAN</span><x-import component-from-global-scope="DevisUI.Input" placeholder="FR76 0000 0000 0000 0000 0000 000"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>BIC</span><x-import component-from-global-scope="DevisUI.Input" placeholder="XXXXFRPP"></x-import></x-import>
+</div>
+<label class="dg-check"><input type="checkbox" checked="checked" />Afficher l’IBAN sur les factures</label>
+<p class="dg-cap">L’IBAN est chiffré sur nos serveurs et n’apparaît jamais sur les devis.</p>
+</section>
+<section id="defauts" class="dg-sec z-de" aria-labelledby="t-de">
+<h2 id="t-de" class="dg-h2">Valeurs par défaut des documents</h2>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>Régime de TVA</span><select class="dg-input" style="cursor: pointer;"><option>Franchise en base (art. 293 B)</option><option>TVA par ligne</option></select></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Conditions de paiement</span><select class="dg-input" style="cursor: pointer;"><option>À 30 jours</option><option>À réception</option><option>À 45 jours fin de mois</option></select></x-import>
+</div>
+<div class="dg-g2">
+<x-import component-from-global-scope="DevisUI.Label"><span>Validité des devis</span><select class="dg-input" style="cursor: pointer;"><option>30 jours</option><option>15 jours</option><option>60 jours</option><option>90 jours</option></select></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Pénalités de retard</span><x-import component-from-global-scope="DevisUI.Input" default-value="Trois fois le taux d’intérêt légal"></x-import></x-import>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 14px; line-height: 20px; font-weight: 500;">Numérotation</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{numbering}}" as="n" hint-placeholder-count="3">
+<span style="display: inline-flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: var(--radius-lg); background-color: var(--card); border: 1px solid var(--border);"><span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{n.label}}</span><span style="font-size: 14px; line-height: 20px; font-weight: 600; font-variant-numeric: tabular-nums;">{{n.next}}</span></span>
+</sc-for>
+</div>
+<p class="dg-cap">Numérotation continue par type et par année. Elle ne peut pas être réinitialisée ni modifiée à la main.</p>
+</div>
+</section>
+<section id="apparence" class="dg-sec z-ap" aria-labelledby="t-ap">
+<h2 id="t-ap" class="dg-h2">Apparence du PDF</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<div style="flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 14px; line-height: 20px; font-weight: 500;">Logo</span>
+<button type="button" style="box-sizing: border-box; width: 100%; height: 104px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 1.5px dashed var(--border); border-radius: var(--radius-lg); background-color: var(--card); cursor: pointer; font-family: var(--font-sans); color: var(--foreground);">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+<span style="font-size: 14px; line-height: 20px; font-weight: 500;">Ajouter un logo</span>
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">PNG ou SVG, 1 Mo maximum</span>
+</button>
+</div>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px;">
+<legend style="padding: 0; margin-bottom: 8px; font-size: 14px; line-height: 20px; font-weight: 500;">Couleur d’accent</legend>
+<div class="dg-sw">
+<label style="background-color: #2f9e94;"><input type="radio" name="accent" checked="checked" aria-label="Bleu-vert" /></label>
+<label style="background-color: #1b3a4b;"><input type="radio" name="accent" aria-label="Ardoise" /></label>
+<label style="background-color: #4f7f3a;"><input type="radio" name="accent" aria-label="Vert" /></label>
+<label style="background-color: #a5742a;"><input type="radio" name="accent" aria-label="Ocre" /></label>
+<label style="background-color: #3f5fa8;"><input type="radio" name="accent" aria-label="Bleu" /></label>
+</div>
+</fieldset>
+</div>
+<div aria-hidden="true" style="width: 150px; flex-shrink: 0; aspect-ratio: 210 / 297; box-sizing: border-box; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; background-color: #ffffff; border-radius: 2px; box-shadow: 0 1px 3px rgb(15 40 60 / 0.12), 0 8px 20px -10px rgb(15 40 60 / 0.3);">
+<div style="display: flex; justify-content: space-between;"><div style="width: 40px; height: 6px; border-radius: 2px; background-color: #1b3a4b;"></div><div style="width: 28px; height: 8px; border-radius: 2px; background-color: #1b3a4b;"></div></div>
+<div style="width: 18px; height: 2px; background-color: #2f9e94; margin: 4px 0;"></div>
+<div style="height: 4px; border-radius: 2px; background-color: #e3e9ed;"></div><div style="height: 4px; width: 80%; border-radius: 2px; background-color: #e3e9ed;"></div>
+<div style="height: 10px; margin-top: 6px; border-radius: 2px; background-color: #eef3f5;"></div>
+<div style="height: 4px; border-radius: 2px; background-color: #e3e9ed;"></div><div style="height: 4px; border-radius: 2px; background-color: #e3e9ed;"></div><div style="height: 4px; border-radius: 2px; background-color: #e3e9ed;"></div>
+<div style="align-self: flex-end; width: 50px; height: 6px; margin-top: 6px; border-radius: 2px; background-color: #1b3a4b;"></div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="position: sticky; bottom: 0; z-index: 5; box-sizing: border-box; height: 76px; padding: 0 16px; display: flex; align-items: center; background-color: var(--card); border-top: 1px solid var(--border); box-shadow: 0 -8px 16px -12px rgb(15 40 60 / 0.25);">
+<x-import component-from-global-scope="DevisUI.Button" variant="default" class="dg-tall" style="flex: 1;">Enregistrer les modifications</x-import>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1560}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440 };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var m = !!this.props.mobile || this.state.w < 700;
+return {
+desk: !m, mob: m,
+pad: m ? '20px 16px 24px' : '32px 24px 48px',
+dir: m ? 'column' : 'row',
+bodyGap: m ? '8px' : '32px',
+tocDir: m ? 'row' : 'column',
+tocW: m ? '100%' : '220px',
+tocTop: m ? '0' : '24px',
+tocPad: m ? '8px 0' : '0',
+ibanCols: m ? 'minmax(0, 1fr)' : 'minmax(0, 2fr) minmax(0, 1fr)',
+numbering: [
+{ label: 'Prochain devis', next: 'D-2026-020' },
+{ label: 'Prochaine facture', next: 'F-2026-043' },
+{ label: 'Prochain avoir', next: 'A-2026-004' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
