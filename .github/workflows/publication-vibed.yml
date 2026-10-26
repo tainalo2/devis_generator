@@ -1,0 +1,252 @@
+name: Publication vibed
+
+# Publie une version de Devis Generator : VIBED : l'image Docker
+# multi-architecture sur ghcr.io, puis une release GitHub qui la décrit.
+#
+#   - lancer « Publication vibed » depuis l'onglet Actions avec la version voulue :
+#     le code de la branche indiquée (vibed par défaut) est publié et le tag
+#     vibed-vX.Y.Z est posé sur son dernier commit ;
+#   - ou pousser un tag : git tag vibed-v0.3.0 && git push origin vibed-v0.3.0
+#
+# Une version avec un suffixe (0.3.0-rc.1) est publiée en préversion et ne
+# déplace pas l'étiquette latest de l'image.
+
+on:
+  push:
+    tags:
+      - "vibed-v[0-9]+.[0-9]+.[0-9]+"
+      - "vibed-v[0-9]+.[0-9]+.[0-9]+-*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version à publier, par exemple 0.3.0 ou 0.3.0-rc.1"
+        required: true
+        type: string
+      branche:
+        description: "Branche à publier"
+        required: true
+        default: vibed
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: publication-vibed-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/tainalo2/devisgenerator-vibed
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ref.outputs.tag }}
+      version: ${{ steps.ref.outputs.version }}
+      sha: ${{ steps.ref.outputs.sha }}
+      image: ${{ steps.ref.outputs.image }}
+      prerelease: ${{ steps.ref.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # Lancée à la main, la publication porte sur la branche choisie,
+          # quelle que soit la branche d'où le workflow est lancé.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.branche || github.ref }}
+      - id: ref
+        env:
+          INPUT: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            ver="${INPUT#vibed-v}"
+            ver="${ver#v}"
+          else
+            ver="${GITHUB_REF_NAME#vibed-v}"
+          fi
+          if ! printf '%s' "$ver" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Version invalide : « $ver ». Attendu : 1.2.3 ou 1.2.3-rc.1."
+            exit 1
+          fi
+          test -f Dockerfile.vibed || { echo "::error::Dockerfile.vibed absent : la branche choisie n'est pas celle de VIBED."; exit 1; }
+          sha=$(git rev-parse HEAD)
+          tag="vibed-v$ver"
+          # Un tag déjà posé sur un autre commit n'est pas déplacé.
+          existing=$(git ls-remote --tags origin "refs/tags/$tag^{}" "refs/tags/$tag" | awk 'END { print $1 }')
+          if [ -n "$existing" ] && [ "$existing" != "$sha" ]; then
+            echo "::error::Le tag $tag existe déjà sur le commit $existing. Choisissez une autre version."
+            exit 1
+          fi
+          prerelease=false
+          case "$ver" in *-*) prerelease=true ;; esac
+          {
+            echo "tag=$tag"
+            echo "version=$ver"
+            echo "sha=$sha"
+            echo "image=$IMAGE_NAME:$ver"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
+          echo "Publication de $tag depuis ${sha:0:7} (préversion : $prerelease)" >> "$GITHUB_STEP_SUMMARY"
+
+  # Rien n'est publié si le code ne passe pas les vérifications.
+  check:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Backend
+        working-directory: backend
+        run: |
+          go vet ./...
+          go test ./...
+      - name: Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+  image:
+    needs: [version, check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.version }},enable=${{ needs.version.outputs.prerelease == 'false' }}
+            type=raw,value=latest,enable=${{ needs.version.outputs.prerelease == 'false' }}
+          labels: |
+            org.opencontainers.image.title=Devis Generator : VIBED
+            org.opencontainers.image.description=Devis Generator : VIBED (Go + React)
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.revision=${{ needs.version.outputs.sha }}
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.vibed
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ needs.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # L'image publiée démarre en production avec une vraie base et répond
+      # avec la bonne version.
+      - name: Contrôle
+        env:
+          IMAGE: ${{ needs.version.outputs.image }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          docker network create controle
+          docker run -d --name db --network controle \
+            -e POSTGRES_USER=devis -e POSTGRES_PASSWORD=controle -e POSTGRES_DB=devis postgres:16-alpine
+          for i in $(seq 1 30); do docker exec db pg_isready -U devis -d devis >/dev/null 2>&1 && break; sleep 1; done
+          docker pull "$IMAGE"
+          docker run -d --name app --network controle -p 127.0.0.1:8080:8080 \
+            -e DATABASE_URL="postgres://devis:controle@db:5432/devis?sslmode=disable" \
+            -e ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+            -e SESSION_SECRET="$(openssl rand -base64 48)" \
+            "$IMAGE"
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8080/api/v1/readyz > /dev/null; then
+              got=$(curl -sf http://127.0.0.1:8080/api/v1/healthz | jq -r .version)
+              test "$got" = "$VERSION" || { echo "::error::Version de l'image : « $got », attendu « $VERSION »."; exit 1; }
+              curl -sf http://127.0.0.1:8080/ | grep -q '<div id="root">' || { echo "::error::Le front n'est pas servi."; exit 1; }
+              echo "Image $IMAGE démarrée en ${i}s, version $got."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs app
+          echo "::error::L'image ne démarre pas."
+          exit 1
+
+  release:
+    needs: [version, image]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ needs.version.outputs.tag }}
+      VERSION: ${{ needs.version.outputs.version }}
+      SHA: ${{ needs.version.outputs.sha }}
+      IMAGE: ${{ needs.version.outputs.image }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+      - name: Fichiers
+        run: |
+          mkdir dist
+          # Le compose publié démarre l'image de cette version, sauf si VIBED_IMAGE en désigne une autre.
+          sed "s|\${VIBED_IMAGE:-[^}]*}|\${VIBED_IMAGE:-$IMAGE}|" deploy/compose.vibed.yaml > dist/compose.yaml
+          grep -qF "$IMAGE" dist/compose.yaml
+          cp .env.example dist/env.example
+          cd dist && sha256sum compose.yaml env.example > SHA256SUMS && cat SHA256SUMS
+      - name: Notes
+        run: |
+          cat > notes.md <<EOF
+          ## Image Docker
+
+          \`${IMAGE}\` pour \`linux/amd64\` et \`linux/arm64\`.
+
+          ## Déploiement
+
+          1. Téléchargez \`compose.yaml\` et créez à côté un fichier \`.env\` :
+             \`\`\`env
+             POSTGRES_PASSWORD=...
+             ENCRYPTION_KEY=...   # openssl rand -base64 32 — à conserver précieusement
+             SESSION_SECRET=...   # openssl rand -base64 48
+             TRUSTED_PROXIES=...  # réseau du reverse proxy, par exemple 172.16.0.0/12
+             \`\`\`
+          2. \`docker compose up -d\` : l'application écoute sur \`127.0.0.1:8080\`, à placer derrière un reverse proxy HTTPS.
+
+          \`env.example\` liste toutes les variables (mentions légales, lien de don, sources légales).
+          EOF
+      - name: Release
+        run: |
+          flags=""
+          if [ "${{ needs.version.outputs.prerelease }}" = "true" ]; then
+            flags="--prerelease"
+          else
+            flags="--latest"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Une relance remplace les fichiers de la release déjà créée, sans toucher à ses notes.
+            gh release upload "$TAG" dist/* --clobber
+          else
+            # Lancée à la main, la release pose le tag sur le commit publié.
+            # shellcheck disable=SC2086
+            gh release create "$TAG" dist/* \
+              --target "$SHA" \
+              --title "Devis Generator : VIBED $VERSION" \
+              --notes-file notes.md \
+              --generate-notes \
+              $flags
+          fi
+          echo "Release : https://github.com/${GITHUB_REPOSITORY}/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
