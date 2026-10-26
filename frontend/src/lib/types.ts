@@ -16,6 +16,7 @@ export type Client = {
   vat_number: string
   iban?: string
   notes: string
+  created_at?: string
 }
 
 export type DocLine = {
@@ -47,6 +48,15 @@ export type Document = {
   subtotal_cents: number
   tax_cents: number
   total_cents: number
+  issued_at?: string | null
+  sent_at?: string | null
+  accepted_at?: string | null
+  paid_at?: string | null
+  created_at?: string
+  updated_at?: string
+  legal_mentions?: string
+  /** Émetteur figé à l'émission. */
+  issuer_snapshot?: IssuerProfile | null
   lines: DocLine[]
 }
 
@@ -84,7 +94,7 @@ export const VAT_RATES = [
 export const DOC_KINDS = [
   { value: "quote", label: "Devis" },
   { value: "invoice", label: "Facture" },
-  { value: "deposit_invoice", label: "Facture d'acompte" },
+  { value: "deposit_invoice", label: "Facture d’acompte" },
   { value: "credit_note", label: "Avoir" },
 ] as const
 
@@ -103,8 +113,10 @@ export function emptyLine(): DocLine {
   }
 }
 
+const eur = new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" })
+
+/** Montant en euros, séparateur de milliers et vrai signe moins (−). */
 export function formatEUR(cents: number): string {
-  const sign = cents < 0 ? "-" : ""
-  const v = Math.abs(cents)
-  return `${sign}${(v / 100).toFixed(2).replace(".", ",")} €`
+  const s = eur.format(Math.abs(cents) / 100)
+  return cents < 0 ? `\u2212${s}` : s
 }

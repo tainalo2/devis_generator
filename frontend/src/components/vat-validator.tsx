@@ -1,14 +1,18 @@
 import { useState } from "react"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { validateVAT, type VATValidation } from "@/lib/api"
 
 type Props = {
   value: string
   onChange: (vat: string) => void
+  label?: string
+  placeholder?: string
 }
 
-export function VATValidator({ value, onChange }: Props) {
+export function VATValidator({ value, onChange, label = "N° de TVA intracommunautaire", placeholder = "FR 00 000000000" }: Props) {
   const [result, setResult] = useState<VATValidation | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -18,8 +22,7 @@ export function VATValidator({ value, onChange }: Props) {
     setError(null)
     setResult(null)
     try {
-      const res = await validateVAT(value)
-      setResult(res)
+      setResult(await validateVAT(value))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Validation impossible")
     } finally {
@@ -28,33 +31,39 @@ export function VATValidator({ value, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium">N° TVA intracommunautaire</span>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-            placeholder="FR…"
+    <div className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        <span>{label}</span>
+        <span className="flex gap-2">
+          <Input
+            placeholder={placeholder}
             value={value}
             onChange={(e) => {
               onChange(e.target.value)
               setResult(null)
             }}
           />
-          <Button type="button" variant="outline" disabled={pending || value.trim().length < 4} onClick={() => void check()}>
-            Vérifier (VIES)
+          <Button variant="outline" size="lg" disabled={pending || value.trim().length < 4} onClick={() => void check()}>
+            Vérifier
           </Button>
-        </div>
+        </span>
       </label>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {result && (
-        <p className={`text-xs ${result.valid ? "text-foreground" : "text-destructive"}`}>
-          {result.valid ? "Numéro valide selon VIES" : "Numéro invalide selon VIES"}
-          {result.name && result.name !== "---" ? ` — ${result.name}` : ""}
-          {result.cached ? " (cache local)" : ""}
-          {" · "}
-          {new Date(result.checked_at).toLocaleString("fr-FR")}
+      {result ? (
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <Badge variant={result.valid ? "success" : "warning"}>{result.valid ? "Numéro valide (VIES)" : "Numéro invalide (VIES)"}</Badge>
+          {result.name && result.name !== "---" ? result.name : null}
+          <span>
+            {new Date(result.checked_at).toLocaleString("fr-FR")}
+            {result.cached ? " · cache local" : ""}
+          </span>
         </p>
+      ) : (
+        !error && (
+          <span>
+            <Badge variant="muted">Vérification VIES sur demande</Badge>
+          </span>
+        )
       )}
     </div>
   )

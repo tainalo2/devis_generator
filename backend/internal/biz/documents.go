@@ -34,7 +34,7 @@ func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, created_at, updated_at
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, created_at, updated_at
 		FROM documents WHERE user_id = $1 ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
@@ -63,7 +63,7 @@ func scanDocHeader(row scannable) (Document, error) {
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.CreatedAt, &d.UpdatedAt,
 	)
 	if err != nil {
 		return Document{}, err
@@ -79,7 +79,7 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, issuer_snapshot, legal_snapshot,
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, issuer_snapshot, legal_snapshot,
 		       created_at, updated_at
 		FROM documents WHERE id = $1 AND user_id = $2
 	`, id, userID)
@@ -89,7 +89,7 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.IssuerSnapshot, &d.LegalSnapshot,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.IssuerSnapshot, &d.LegalSnapshot,
 		&d.CreatedAt, &d.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -435,7 +435,7 @@ func validateDocInput(in DocumentInput, requireLines bool) error {
 }
 
 func isImmutable(status string) bool {
-	return status == "issued" || status == "sent" || status == "paid" || status == "accepted"
+	return status == "issued" || status == "sent" || status == "paid" || status == "accepted" || status == "rejected"
 }
 
 func defaultCurrency(c string) string {
@@ -459,4 +459,44 @@ func abs64(v int64) int64 {
 		return -v
 	}
 	return v
+}
+
+// StatusTransitionAllowed indique si un document émis peut passer au statut demandé.
+// Le contenu reste figé : seul le suivi (envoi, acceptation, paiement) évolue.
+func StatusTransitionAllowed(kind, from, to string) bool {
+	if from == "draft" || from == to {
+		return false
+	}
+	switch to {
+	case "sent":
+		return from == "issued"
+	case "accepted", "rejected":
+		return kind == "quote" && (from == "issued" || from == "sent")
+	case "paid":
+		return (kind == "invoice" || kind == "deposit_invoice") && (from == "issued" || from == "sent")
+	}
+	return false
+}
+
+func (s *Store) UpdateDocumentStatus(ctx context.Context, userID, id uuid.UUID, to string) (Document, error) {
+	cur, err := s.GetDocument(ctx, userID, id)
+	if err != nil {
+		return Document{}, err
+	}
+	if !StatusTransitionAllowed(cur.Kind, cur.Status, to) {
+		return Document{}, fmt.Errorf("%w: transition de statut impossible", ErrInvalidInput)
+	}
+	col := map[string]string{"sent": "sent_at", "accepted": "accepted_at", "rejected": "accepted_at", "paid": "paid_at"}[to]
+	// col provient d'une table fixe ci-dessus : pas d'injection possible.
+	tag, err := s.pool.Exec(ctx, `
+		UPDATE documents SET status=$1::document_status, `+col+`=NOW(), updated_at=NOW()
+		WHERE id=$2 AND user_id=$3 AND status::text=$4
+	`, to, id, userID, cur.Status)
+	if err != nil {
+		return Document{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return Document{}, fmt.Errorf("%w: statut modifié entre-temps", ErrInvalidInput)
+	}
+	return s.GetDocument(ctx, userID, id)
 }

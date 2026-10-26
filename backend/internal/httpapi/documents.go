@@ -159,6 +159,40 @@ func (s *Server) handleIssueDocument(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"document": d})
 }
 
+func (s *Server) handleDocumentStatus(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	id, err := parseID(r)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Identifiant invalide.")
+		return
+	}
+	var body struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Corps JSON invalide.")
+		return
+	}
+	d, err := s.biz.UpdateDocumentStatus(r.Context(), u.ID, id, body.Status)
+	if errors.Is(err, biz.ErrNotFound) {
+		writeAPIError(w, http.StatusNotFound, "Document introuvable.")
+		return
+	}
+	if errors.Is(err, biz.ErrInvalidInput) {
+		writeAPIError(w, http.StatusConflict, "Ce changement de statut n’est pas possible pour ce document.")
+		return
+	}
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Mise à jour du statut impossible.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"document": d})
+}
+
 func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 	u, ok := UserFromContext(r.Context())
 	if !ok {
@@ -241,6 +275,13 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
+	}
+	// Un document émis garde l'émetteur figé à l'émission.
+	if len(d.IssuerSnapshot) > 0 {
+		var snap biz.IssuerProfile
+		if err := json.Unmarshal(d.IssuerSnapshot, &snap); err == nil {
+			issuer = snap
+		}
 	}
 	client := biz.Client{Name: "Client"}
 	if d.ClientID != nil {

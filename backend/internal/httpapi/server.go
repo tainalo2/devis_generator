@@ -125,6 +125,7 @@ func New(opts Options) *Server {
 			r.Put("/documents/{id}", s.requireAuth(s.handleUpdateDocument))
 			r.Delete("/documents/{id}", s.requireAuth(s.handleDeleteDocument))
 			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))
+			r.Post("/documents/{id}/status", s.requireAuth(s.handleDocumentStatus))
 			r.Post("/documents/{id}/convert-to-invoice", s.requireAuth(s.handleConvertQuote))
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))

@@ -1,0 +1,3 @@
+ALTER TABLE documents DROP COLUMN IF EXISTS paid_at;
+ALTER TABLE documents DROP COLUMN IF EXISTS accepted_at;
+ALTER TABLE documents DROP COLUMN IF EXISTS sent_at;

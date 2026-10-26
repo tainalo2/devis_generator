@@ -78,6 +78,9 @@ type Document struct {
 	TaxCents          int64           `json:"tax_cents"`
 	TotalCents        int64           `json:"total_cents"`
 	IssuedAt          *time.Time      `json:"issued_at"`
+	SentAt            *time.Time      `json:"sent_at"`
+	AcceptedAt        *time.Time      `json:"accepted_at"`
+	PaidAt            *time.Time      `json:"paid_at"`
 	IssuerSnapshot    json.RawMessage `json:"issuer_snapshot,omitempty"`
 	LegalSnapshot     json.RawMessage `json:"legal_snapshot,omitempty"`
 	Lines             []DocLine       `json:"lines"`
