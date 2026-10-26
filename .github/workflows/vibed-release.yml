@@ -1,4 +1,4 @@
-name: VIBED release
+name: VIBED release (image Go + React)
 
 # Tags vibed-v* must point at a commit on branch vibed that contains this workflow.
 # Does not replace docker-release.yml (legacy tags v* / Dockerfile nginx).

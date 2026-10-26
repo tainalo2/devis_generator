@@ -1,5 +1,5 @@
 .PHONY: help dev-deps frontend-install frontend-dev frontend-build frontend-lint \
-	backend-run backend-test backend-build test build compose-up compose-down compose-build lint
+	backend-run backend-test backend-build test build compose-up compose-down compose-build image lint
 
 help:
 	@echo "Cibles Vibed :"
@@ -13,6 +13,7 @@ help:
 	@echo "  make build             — build front + backend"
 	@echo "  make compose-up        — docker compose up --build"
 	@echo "  make compose-down      — docker compose down"
+	@echo "  make image             — image VIBED (Dockerfile.vibed ; « docker build . » construit l'ancien site)"
 
 frontend-install:
 	cd frontend && npm ci
@@ -48,6 +49,9 @@ compose-up:
 
 compose-build:
 	docker compose build
+
+image:
+	docker build -f Dockerfile.vibed -t devisgenerator-vibed:local .
 
 compose-down:
 	docker compose down

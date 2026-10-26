@@ -1,4 +1,4 @@
-name: Docker release
+name: Docker release (site historique nginx)
 
 # Trigger only on version tags (not also on release:published) so creating a
 # GitHub Release for the same tag does not start a second identical build.
@@ -22,6 +22,13 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      # Ce workflow construit le Dockerfile historique (site statique nginx).
+      # L'application VIBED (Go + React) se publie avec « VIBED release ».
+      - name: Refuser la branche vibed
+        if: github.ref_name == 'vibed' || startsWith(github.ref_name, 'feature/')
+        run: |
+          echo "::error::Ce workflow publie l'ancien site statique (Dockerfile nginx). Pour l'image VIBED, lancez « VIBED release (image Go + React) » ou poussez un tag vibed-vX.Y.Z."
+          exit 1
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Set up QEMU
