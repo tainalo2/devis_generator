@@ -166,117 +166,19 @@ func (s *Store) DeleteUserHard(ctx context.Context, userID uuid.UUID) error {
 	return tx.Commit(ctx)
 }
 
-// ExportUserData returns a JSON-serializable snapshot for GDPR export.
+// ExportUserData returns the account part of the GDPR export. Business data
+// (issuer, clients, documents) is added by the biz layer, which decrypts it.
 func (s *Store) ExportUserData(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
 	u, err := s.GetUserByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-
-	clients := []map[string]any{}
-	rows, err := s.pool.Query(ctx, `
-		SELECT id, name, email, address_line1, address_line2, postal_code, city, country, siren, siret, vat_number, notes, created_at, updated_at
-		FROM clients WHERE user_id = $1 ORDER BY created_at
-	`, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			id                                                             uuid.UUID
-			name                                                           string
-			email, a1, a2, postal, city, country, siren, siret, vat, notes *string
-			created, updated                                               time.Time
-		)
-		if err := rows.Scan(&id, &name, &email, &a1, &a2, &postal, &city, &country, &siren, &siret, &vat, &notes, &created, &updated); err != nil {
-			return nil, err
-		}
-		clients = append(clients, map[string]any{
-			"id": id, "name": name, "email": email,
-			"address_line1": a1, "address_line2": a2, "postal_code": postal, "city": city, "country": country,
-			"siren": siren, "siret": siret, "vat_number": vat, "notes": notes,
-			"created_at": created, "updated_at": updated,
-		})
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	documents := []map[string]any{}
-	drows, err := s.pool.Query(ctx, `
-		SELECT id, client_id, kind::text, status::text, number, issue_date, due_date, currency,
-		       vat_regime::text, notes, legal_mentions, related_document_id,
-		       subtotal_cents, tax_cents, total_cents, created_at, updated_at
-		FROM documents WHERE user_id = $1 ORDER BY created_at
-	`, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer drows.Close()
-	for drows.Next() {
-		var (
-			id                                uuid.UUID
-			clientID, related                 *uuid.UUID
-			kind, status, currency, vatRegime string
-			number, notes, legal              *string
-			issue, due                        *time.Time
-			sub, tax, total                   int64
-			created, updated                  time.Time
-		)
-		if err := drows.Scan(&id, &clientID, &kind, &status, &number, &issue, &due, &currency, &vatRegime, &notes, &legal, &related, &sub, &tax, &total, &created, &updated); err != nil {
-			return nil, err
-		}
-		lineRows, err := s.pool.Query(ctx, `
-			SELECT id, position, description, quantity, unit_price_cents, tax_rate_bps, tax_cents, total_cents
-			FROM document_lines WHERE document_id = $1 ORDER BY position, created_at
-		`, id)
-		if err != nil {
-			return nil, err
-		}
-		lines := []map[string]any{}
-		for lineRows.Next() {
-			var (
-				lid                      uuid.UUID
-				pos                      int
-				desc                     string
-				qty                      string
-				unit, taxRate, taxC, tot int64
-			)
-			if err := lineRows.Scan(&lid, &pos, &desc, &qty, &unit, &taxRate, &taxC, &tot); err != nil {
-				lineRows.Close()
-				return nil, err
-			}
-			lines = append(lines, map[string]any{
-				"id": lid, "position": pos, "description": desc, "quantity": qty,
-				"unit_price_cents": unit, "tax_rate_bps": taxRate, "tax_cents": taxC, "total_cents": tot,
-			})
-		}
-		lineRows.Close()
-		if err := lineRows.Err(); err != nil {
-			return nil, err
-		}
-		documents = append(documents, map[string]any{
-			"id": id, "client_id": clientID, "kind": kind, "status": status, "number": number,
-			"issue_date": issue, "due_date": due, "currency": currency, "vat_regime": vatRegime,
-			"notes": notes, "legal_mentions": legal, "related_document_id": related,
-			"subtotal_cents": sub, "tax_cents": tax, "total_cents": total,
-			"created_at": created, "updated_at": updated, "lines": lines,
-		})
-	}
-	if err := drows.Err(); err != nil {
-		return nil, err
-	}
-
 	return map[string]any{
 		"exported_at": time.Now().UTC(),
 		"user": map[string]any{
 			"id": u.ID, "email": u.Email, "display_name": u.DisplayName,
 			"created_at": u.CreatedAt, "updated_at": u.UpdatedAt,
 		},
-		"clients":   clients,
-		"documents": documents,
-		"note":      "Les champs chiffrés (IBAN/adresse) sont exportés déchiffrés uniquement via l'API applicative quand le chiffrement est branché sur le CRUD.",
 	}, nil
 }
 

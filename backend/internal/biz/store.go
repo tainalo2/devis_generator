@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
@@ -88,4 +89,30 @@ func (s *Store) decryptIBAN(blob []byte) string {
 		return ""
 	}
 	return v
+}
+
+// ExportBusinessData rassemble, déchiffrées, les données métier d'un compte
+// pour l'export RGPD : fiche Entreprise, clients et documents complets.
+func (s *Store) ExportBusinessData(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
+	issuer, err := s.GetIssuer(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	clients, err := s.ListClients(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	headers, err := s.ListDocuments(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	docs := make([]Document, 0, len(headers))
+	for _, h := range headers {
+		d, err := s.GetDocument(ctx, userID, h.ID)
+		if err != nil {
+			return nil, err
+		}
+		docs = append(docs, d)
+	}
+	return map[string]any{"issuer": issuer, "clients": clients, "documents": docs}, nil
 }

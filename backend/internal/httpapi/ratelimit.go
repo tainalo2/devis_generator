@@ -62,17 +62,43 @@ func (rl *RateLimiter) cleanupLoop() {
 	}
 }
 
-func clientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.Split(xff, ",")
-		return strings.TrimSpace(parts[0])
-	}
-	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return strings.TrimSpace(xri)
-	}
+// clientIP renvoie l'adresse du client pour la limitation de débit et les
+// sessions. X-Forwarded-For n'est lu que si la connexion vient d'un proxy de
+// confiance ; on prend alors l'adresse la plus à droite qui n'en est pas un
+// (les valeurs de gauche sont fournies par le client et falsifiables).
+func (s *Server) clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
-		return r.RemoteAddr
+		host = r.RemoteAddr
+	}
+	if !s.isTrustedProxy(host) {
+		return host
+	}
+	hops := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
+	for i := len(hops) - 1; i >= 0; i-- {
+		hop := strings.TrimSpace(hops[i])
+		if hop == "" {
+			continue
+		}
+		if net.ParseIP(hop) == nil {
+			return host
+		}
+		if !s.isTrustedProxy(hop) {
+			return hop
+		}
 	}
 	return host
+}
+
+func (s *Server) isTrustedProxy(addr string) bool {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return false
+	}
+	for _, n := range s.trustedProxies {
+		if n.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }

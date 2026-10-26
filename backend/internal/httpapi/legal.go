@@ -35,7 +35,7 @@ func (s *Server) handleLegalStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCompanySearch(w http.ResponseWriter, r *http.Request) {
-	if !s.legalGuestLimiter.Allow("search:" + clientIP(r)) {
+	if !s.legalGuestLimiter.Allow("search:" + s.clientIP(r)) {
 		writeAPIError(w, http.StatusTooManyRequests, "Trop de recherches. Réessayez plus tard.")
 		return
 	}
@@ -66,7 +66,7 @@ func (s *Server) handleCompanySearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleVATValidate(w http.ResponseWriter, r *http.Request) {
-	if !s.legalGuestLimiter.Allow("vat:" + clientIP(r)) {
+	if !s.legalGuestLimiter.Allow("vat:" + s.clientIP(r)) {
 		writeAPIError(w, http.StatusTooManyRequests, "Trop de vérifications TVA. Réessayez plus tard.")
 		return
 	}

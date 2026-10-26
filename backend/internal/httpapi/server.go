@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -32,7 +33,10 @@ type Server struct {
 	sessionTTL        time.Duration
 	argon2            auth.Argon2Params
 	authLimiter       *RateLimiter
+	accountLimiter    *RateLimiter
 	legalGuestLimiter *RateLimiter
+	guestLimiter      *RateLimiter
+	trustedProxies    []*net.IPNet
 }
 
 // Options configures the HTTP server.
@@ -48,6 +52,8 @@ type Options struct {
 	CookieSecure bool
 	SessionTTL   time.Duration
 	Argon2       auth.Argon2Params
+	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
+	TrustedProxies []*net.IPNet
 }
 
 // New builds the chi router with health, auth, business API and SPA.
@@ -65,7 +71,10 @@ func New(opts Options) *Server {
 		sessionTTL:        opts.SessionTTL,
 		argon2:            opts.Argon2,
 		authLimiter:       NewRateLimiter(20, time.Minute),
+		accountLimiter:    NewRateLimiter(10, 15*time.Minute),
 		legalGuestLimiter: NewRateLimiter(30, time.Minute),
+		guestLimiter:      NewRateLimiter(60, time.Minute),
+		trustedProxies:    opts.TrustedProxies,
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -79,7 +88,6 @@ func New(opts Options) *Server {
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
