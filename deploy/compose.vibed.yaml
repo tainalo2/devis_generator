@@ -1,0 +1,51 @@
+# Devis Generator : VIBED — déploiement avec PostgreSQL.
+#
+# Variables à fournir (fichier .env à côté de ce compose.yaml) :
+#   POSTGRES_PASSWORD   mot de passe de la base
+#   ENCRYPTION_KEY      openssl rand -base64 32  (à conserver : sans elle, IBAN et adresses sont illisibles)
+#   SESSION_SECRET      openssl rand -base64 48
+# Recommandées : TRUSTED_PROXIES (réseau du reverse proxy), LEGAL_PUBLISHER_*,
+# LEGAL_HOST_*, DONATE_URL. Liste complète : .env.example du dépôt.
+#
+# L'application écoute sur 127.0.0.1:8080 : placez un reverse proxy HTTPS devant.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant}
+      POSTGRES_DB: devis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devis -d devis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    image: ${VIBED_IMAGE:-ghcr.io/tainalo2/devisgenerator-vibed:latest}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://devis:${POSTGRES_PASSWORD}@db:5432/devis?sslmode=disable
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY manquante (openssl rand -base64 32)}
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET manquant (openssl rand -base64 48)}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      DONATE_URL: ${DONATE_URL:-}
+      LEGAL_PUBLISHER_NAME: ${LEGAL_PUBLISHER_NAME:-}
+      LEGAL_PUBLISHER_ADDRESS: ${LEGAL_PUBLISHER_ADDRESS:-}
+      LEGAL_PUBLISHER_EMAIL: ${LEGAL_PUBLISHER_EMAIL:-}
+      LEGAL_PUBLISHER_SIRET: ${LEGAL_PUBLISHER_SIRET:-}
+      LEGAL_HOST_NAME: ${LEGAL_HOST_NAME:-}
+      LEGAL_HOST_ADDRESS: ${LEGAL_HOST_ADDRESS:-}
+      LEGAL_HOST_URL: ${LEGAL_HOST_URL:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

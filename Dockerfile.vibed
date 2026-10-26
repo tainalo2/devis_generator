@@ -17,20 +17,23 @@ RUN npm run build
 FROM --platform=$BUILDPLATFORM golang:1.27-bookworm AS backend
 ARG TARGETOS=linux
 ARG TARGETARCH
+# Version gravée dans le binaire (renvoyée par /api/v1/healthz).
+ARG VERSION=dev
 WORKDIR /src
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 COPY backend/ ./
-RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w -X main.Version=vibed" -o /out/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w -X main.Version=${VERSION}" -o /out/server ./cmd/server
 
 # --- Runtime ---
 FROM gcr.io/distroless/static-debian12:nonroot
+ARG VERSION=dev
 
 LABEL org.opencontainers.image.title="Devis Generator : VIBED" \
       org.opencontainers.image.description="Générateur de devis/factures pour micro-entrepreneurs, indépendants et petites sociétés (stack Go + React)" \
       org.opencontainers.image.source="https://github.com/tainalo2/devis_generator" \
       org.opencontainers.image.licenses="Apache-2.0" \
-      org.opencontainers.image.version="vibed"
+      org.opencontainers.image.version="${VERSION}"
 
 WORKDIR /app
 COPY --from=backend /out/server /app/server
