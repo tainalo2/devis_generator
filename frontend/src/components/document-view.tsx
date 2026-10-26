@@ -94,6 +94,9 @@ export function DocumentView({ doc, onChange }: { doc: Document; onChange: (d: D
     void listDocuments().then(setDocs).catch(() => undefined)
   }, [doc.client_id])
 
+  // Le client figé à l'émission fait foi ; la fiche actuelle sert seulement au lien.
+  const shown = doc.client_snapshot ?? client
+
   const origin = doc.related_document_id ? docs.find((d) => d.id === doc.related_document_id) : undefined
   const children = useMemo(() => docs.filter((d) => d.related_document_id === doc.id), [docs, doc.id])
   const st = documentStatus(doc)
@@ -136,7 +139,7 @@ export function DocumentView({ doc, onChange }: { doc: Document; onChange: (d: D
   const mailto = (() => {
     const subject = `${name}${doc.title ? ` · ${doc.title}` : ""}`
     const body = `Bonjour,\n\nVeuillez trouver ci-joint ${isQuote ? "le devis" : doc.kind === "credit_note" ? "l’avoir" : "la facture"} ${doc.number ?? ""} d’un montant de ${formatEUR(doc.total_cents)}.\n\nCordialement,`
-    return `mailto:${client?.email ?? ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    return `mailto:${shown?.email ?? ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   })()
 
   const duplicate = () =>
@@ -292,15 +295,16 @@ export function DocumentView({ doc, onChange }: { doc: Document; onChange: (d: D
             </Link>
           )}
         </div>
-        {client ? (
+        {shown ? (
           <>
-            <span className="text-sm font-semibold">{client.name}</span>
+            <span className="text-sm font-semibold">{shown.name}</span>
             <span className="text-[13px] text-muted-foreground">
-              {[client.address?.line1, [client.address?.postal_code, client.address?.city].filter(Boolean).join(" "), client.siren && `SIREN ${client.siren}`]
+              {[shown.address?.line1, [shown.address?.postal_code, shown.address?.city].filter(Boolean).join(" "), shown.siren && `SIREN ${shown.siren}`]
                 .filter(Boolean)
                 .join(" · ")}
             </span>
-            {client.email && <span className="text-[13px] text-muted-foreground">{client.email}</span>}
+            {shown.email && <span className="text-[13px] text-muted-foreground">{shown.email}</span>}
+            {doc.client_snapshot && <span className="text-xs text-muted-foreground">Coordonnées figées à l’émission</span>}
           </>
         ) : (
           <span className="text-sm text-muted-foreground">Aucun client rattaché.</span>
@@ -369,7 +373,7 @@ export function DocumentView({ doc, onChange }: { doc: Document; onChange: (d: D
     notes: doc.notes,
     lines: doc.lines ?? [],
     issuer: { ...emptyIssuer(), ...(doc.issuer_snapshot ?? {}) },
-    client,
+    client: shown,
     totals: totalsOf(doc),
     deposit:
       doc.kind === "deposit_invoice" && origin

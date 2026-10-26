@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { formatDate } from "@/lib/documents"
-import { formatEUR, type Client, type DocLine, type IssuerProfile, type TotalsPreview } from "@/lib/types"
+import { formatEUR, type ClientSnapshot, type DocLine, type IssuerProfile, type TotalsPreview } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 import { addressLines, lineHT, type EditorKind } from "./model"
@@ -20,7 +20,7 @@ export type PreviewData = {
   notes: string
   lines: DocLine[]
   issuer: IssuerProfile
-  client: Client | null
+  client: ClientSnapshot | null
   totals: TotalsPreview | null
   /** Facture d'acompte : devis d'origine et reste à facturer. */
   deposit?: { quoteNumber: string | null; quoteDate: string | null; quoteHT: number; percent: number; remaining: number }

@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { getIssuer, listClients, listDocuments } from "@/lib/api"
 import {
   daysOverdue,
+  documentClientName,
   documentStatus,
   formatDate,
   isInvoiceKind,
@@ -323,7 +324,7 @@ export function DashboardPage() {
                 return (
                   <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted/70 p-3">
                     <Link to={`/documents/${d.id}`} className="flex min-w-0 flex-col gap-0.5 rounded-sm">
-                      <span className="truncate text-sm font-medium">{client?.name ?? "Sans client"}</span>
+                      <span className="truncate text-sm font-medium">{documentClientName(d, client?.name)}</span>
                       <span className="text-xs text-muted-foreground">
                         {d.number} · {n} jour{n > 1 ? "s" : ""} de retard
                       </span>
@@ -384,7 +385,7 @@ export function DashboardPage() {
                                 </Link>
                               </td>
                               <td className={cn(table.td, "max-w-44 truncate")}>
-                                {d.client_id ? (clientById.get(d.client_id)?.name ?? "—") : "—"}
+                                {documentClientName(d, d.client_id ? clientById.get(d.client_id)?.name : undefined)}
                               </td>
                               <td className={cn(table.td, "hidden text-muted-foreground tabular-nums xl:table-cell")}>
                                 {formatDate(d.issue_date)}
@@ -412,7 +413,7 @@ export function DashboardPage() {
                         >
                           <span className="flex min-w-0 flex-col gap-0.5">
                             <span className="truncate text-sm font-medium">
-                              {d.client_id ? (clientById.get(d.client_id)?.name ?? "—") : "Sans client"}
+                              {documentClientName(d, d.client_id ? clientById.get(d.client_id)?.name : undefined)}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {kindLabel(d.kind)} {d.number ?? "brouillon"} · {formatDate(d.issue_date)}

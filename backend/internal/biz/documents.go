@@ -34,7 +34,8 @@ func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, created_at, updated_at
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, created_at, updated_at,
+		       COALESCE(client_snapshot->>'name', '')
 		FROM documents WHERE user_id = $1 ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
@@ -64,6 +65,7 @@ func scanDocHeader(row scannable) (Document, error) {
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
 		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.ClientName,
 	)
 	if err != nil {
 		return Document{}, err
@@ -80,17 +82,18 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
 		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, issuer_snapshot, legal_snapshot,
-		       created_at, updated_at
+		       created_at, updated_at, client_snapshot
 		FROM documents WHERE id = $1 AND user_id = $2
 	`, id, userID)
 	var d Document
 	var issue, due *string
+	var clientSnap []byte
 	err := row.Scan(
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
 		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.IssuerSnapshot, &d.LegalSnapshot,
-		&d.CreatedAt, &d.UpdatedAt,
+		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Document{}, ErrNotFound
@@ -109,6 +112,14 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		if d.IssuerSnapshot, err = json.Marshal(snap); err != nil {
 			return Document{}, err
 		}
+	}
+	if len(clientSnap) > 0 {
+		c, err := s.openClientSnapshot(clientSnap)
+		if err != nil {
+			return Document{}, err
+		}
+		d.ClientSnapshot = &c
+		d.ClientName = c.Name
 	}
 	lines, err := s.loadLines(ctx, d.ID)
 	if err != nil {
@@ -258,6 +269,19 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 	if err != nil {
 		return Document{}, err
 	}
+	// Le client est figé avec le document : la fiche peut ensuite changer ou disparaître.
+	var clientJSON []byte
+	if cur.ClientID != nil {
+		c, err := s.GetClient(ctx, userID, *cur.ClientID)
+		if err != nil && !errors.Is(err, ErrNotFound) {
+			return Document{}, err
+		}
+		if err == nil {
+			if clientJSON, err = s.sealClientSnapshot(snapshotOf(c)); err != nil {
+				return Document{}, err
+			}
+		}
+	}
 	legalJSON, _ := json.Marshal(mentions)
 
 	issueDate := time.Now()
@@ -291,9 +315,9 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 
 	_, err = tx.Exec(ctx, `
 		UPDATE documents SET status='issued', number=$1, issue_date=$2::date, issued_at=NOW(),
-		                     issuer_snapshot=$3, legal_snapshot=$4, legal_mentions=$5, updated_at=NOW()
-		WHERE id=$6 AND user_id=$7
-	`, number, issueDate.Format("2006-01-02"), issuerJSON, legalJSON, legalMentions, id, userID)
+		                     issuer_snapshot=$3, legal_snapshot=$4, legal_mentions=$5, client_snapshot=$6, updated_at=NOW()
+		WHERE id=$7 AND user_id=$8
+	`, number, issueDate.Format("2006-01-02"), issuerJSON, legalJSON, legalMentions, clientJSON, id, userID)
 	if err != nil {
 		return Document{}, err
 	}

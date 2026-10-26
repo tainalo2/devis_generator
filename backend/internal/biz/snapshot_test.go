@@ -68,3 +68,30 @@ func TestIssuerSnapshotLegacyPlaintext(t *testing.T) {
 		t.Fatalf("lecture d'un ancien instantané incorrecte : %+v", got)
 	}
 }
+
+func TestClientSnapshotSealedAtRest(t *testing.T) {
+	s := testStore(t)
+	in := ClientSnapshot{
+		Name:    "Studio Lumen",
+		Email:   "compta@lumen.example",
+		SIREN:   "123456789",
+		Address: Address{Line1: "2 rue des Ateliers", PostalCode: "69001", City: "Lyon", Country: "FR"},
+	}
+	raw, err := s.sealClientSnapshot(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(raw, []byte("2 rue des Ateliers")) || bytes.Contains(raw, []byte("Lyon")) {
+		t.Fatalf("adresse du client en clair : %s", raw)
+	}
+	if !bytes.Contains(raw, []byte("Studio Lumen")) {
+		t.Fatalf("le nom doit rester lisible (liste des documents) : %s", raw)
+	}
+	got, err := s.openClientSnapshot(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != in {
+		t.Fatalf("aller-retour incorrect : %+v", got)
+	}
+}

@@ -17,6 +17,7 @@ import { downloadBlob, downloadDocumentPDF, listClients, listDocuments } from "@
 import {
   PERIODS,
   documentDate,
+  documentClientName,
   documentStatus,
   dueLabel,
   formatDate,
@@ -69,13 +70,13 @@ function csvCell(v: string) {
   return /[";\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
-function exportCSV(rows: Document[], clientName: (id: string | null) => string) {
+function exportCSV(rows: Document[], clientName: (d: Document) => string) {
   const head = ["Numéro", "Type", "Client", "Date", "Échéance", "Total HT", "TVA", "Total TTC", "Statut"]
   const lines = rows.map((d) =>
     [
       d.number ?? "Brouillon",
       kindLabel(d.kind),
-      clientName(d.client_id),
+      clientName(d),
       d.issue_date ?? "",
       d.due_date ?? "",
       (d.subtotal_cents / 100).toFixed(2).replace(".", ","),
@@ -115,7 +116,7 @@ export function DocumentsPage() {
       .catch(() => undefined)
   }, [user])
 
-  const clientName = (id: string | null) => (id ? (clients.get(id) ?? "Client supprimé") : "Sans client")
+  const clientName = (d: Document) => documentClientName(d, d.client_id ? clients.get(d.client_id) : undefined)
 
   const byId = useMemo(() => new Map((docs ?? []).map((d) => [d.id, d])), [docs])
 
@@ -130,7 +131,7 @@ export function DocumentsPage() {
         if (!date || date < since) return false
       }
       if (!q) return true
-      const name = d.client_id ? (clients.get(d.client_id) ?? "") : ""
+      const name = documentClientName(d, d.client_id ? clients.get(d.client_id) : undefined)
       return [d.number ?? "", d.title, name].some((s) => s.toLowerCase().includes(q))
     })
   }, [docs, query, kind, period, clients])
@@ -288,7 +289,7 @@ export function DocumentsPage() {
                         </Link>
                       </td>
                       <td className={table.td}>{kindLabel(d.kind)}</td>
-                      <td className={cn(table.td, "max-w-56 truncate")}>{clientName(d.client_id)}</td>
+                      <td className={cn(table.td, "max-w-56 truncate")}>{clientName(d)}</td>
                       <td className={cn(table.td, "text-muted-foreground tabular-nums")}>{formatDate(d.issue_date)}</td>
                       <td
                         className={cn(
@@ -325,7 +326,7 @@ export function DocumentsPage() {
                   className="flex justify-between gap-3 rounded-xl border border-border bg-card px-3.5 py-3"
                 >
                   <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium">{clientName(d.client_id)}</span>
+                    <span className="truncate text-sm font-medium">{clientName(d)}</span>
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {kindLabel(d.kind)} {d.number ?? "brouillon"} · {formatDate(d.issue_date)}
                     </span>

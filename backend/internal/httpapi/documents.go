@@ -284,7 +284,10 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	client := biz.Client{Name: "Client"}
-	if d.ClientID != nil {
+	if d.ClientSnapshot != nil {
+		// Document émis : le client figé à l'émission fait foi.
+		client = d.ClientSnapshot.AsClient()
+	} else if d.ClientID != nil {
 		if c, err := s.biz.GetClient(r.Context(), u.ID, *d.ClientID); err == nil {
 			client = c
 		}

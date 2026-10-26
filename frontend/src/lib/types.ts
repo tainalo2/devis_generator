@@ -19,6 +19,8 @@ export type Client = {
   created_at?: string
 }
 
+export type ClientSnapshot = Pick<Client, "name" | "email" | "address" | "siren" | "siret" | "vat_number">
+
 export type DocLine = {
   id?: string
   position: number
@@ -57,6 +59,10 @@ export type Document = {
   legal_mentions?: string
   /** Émetteur figé à l'émission. */
   issuer_snapshot?: IssuerProfile | null
+  /** Client figé à l'émission (fait foi même si la fiche change ou disparaît). */
+  client_snapshot?: ClientSnapshot | null
+  /** Nom du client figé, fourni par la liste des documents. */
+  client_name?: string
   lines: DocLine[]
 }
 

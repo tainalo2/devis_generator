@@ -108,6 +108,11 @@ func main() {
 	} else if n > 0 {
 		slog.Info("instantanés émetteur chiffrés", "documents", n)
 	}
+	if n, err := bizStore.SnapshotClientsOfIssuedDocuments(startupCtx); err != nil {
+		slog.Error("instantanés client des documents émis", "error", err)
+	} else if n > 0 {
+		slog.Info("clients figés sur les documents émis", "documents", n)
+	}
 
 	api := httpapi.New(httpapi.Options{
 		DB:    pool,

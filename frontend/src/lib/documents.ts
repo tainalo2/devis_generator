@@ -73,6 +73,13 @@ export function dueLabel(doc: Document, related?: Document | null): string {
   return doc.due_date ? `Échéance ${formatDate(doc.due_date)}` : "Sans échéance"
 }
 
+/** Nom du client d'un document : figé à l'émission, sinon celui de la fiche actuelle. */
+export function documentClientName(doc: Document, liveName?: string) {
+  if (doc.client_name) return doc.client_name
+  if (!doc.client_id) return "Sans client"
+  return liveName ?? "Client supprimé"
+}
+
 /** Libellé court « Facture F-2026-041 » ou « Facture (brouillon) ». */
 export function documentName(doc: Document) {
   return `${kindLabel(doc.kind)} ${doc.number ?? "(brouillon)"}`

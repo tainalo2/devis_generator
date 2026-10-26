@@ -325,7 +325,7 @@ export function ClientEditPage() {
         open={confirmDelete}
         onOpenChange={setConfirmDelete}
         title="Supprimer ce client ?"
-        description="Les documents déjà émis restent intacts ; ils ne seront simplement plus rattachés à une fiche."
+        description="Les documents déjà émis gardent les coordonnées du client figées à leur émission. Les brouillons ne seront plus rattachés à un client."
       >
         <div className="flex justify-end gap-2">
           <Button variant="ghost" size="lg" onClick={() => setConfirmDelete(false)}>
