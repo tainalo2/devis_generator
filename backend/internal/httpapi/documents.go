@@ -314,6 +314,10 @@ func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGuestPDF(w http.ResponseWriter, r *http.Request) {
+	if !s.guestLimiter.Allow("pdf:" + s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de PDF générés. Réessayez dans une minute.")
+		return
+	}
 	var req biz.GuestPDFRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "Requête invalide.")
@@ -423,6 +427,11 @@ func (s *Server) handlePutIssuer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handlePreviewTotals(w http.ResponseWriter, r *http.Request) {
+	// Appelé pendant la saisie : seuls les visiteurs sans compte sont limités.
+	if _, authed := UserFromContext(r.Context()); !authed && !s.previewLimiter.Allow("preview:"+s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de calculs. Réessayez dans une minute.")
+		return
+	}
 	var body struct {
 		VATRegime string        `json:"vat_regime"`
 		Lines     []biz.DocLine `json:"lines"`

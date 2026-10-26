@@ -36,6 +36,7 @@ type Server struct {
 	accountLimiter    *RateLimiter
 	legalGuestLimiter *RateLimiter
 	guestLimiter      *RateLimiter
+	previewLimiter    *RateLimiter
 	trustedProxies    []*net.IPNet
 }
 
@@ -73,7 +74,8 @@ func New(opts Options) *Server {
 		authLimiter:       NewRateLimiter(20, time.Minute),
 		accountLimiter:    NewRateLimiter(10, 15*time.Minute),
 		legalGuestLimiter: NewRateLimiter(30, time.Minute),
-		guestLimiter:      NewRateLimiter(60, time.Minute),
+		guestLimiter:      NewRateLimiter(20, time.Minute),
+		previewLimiter:    NewRateLimiter(120, time.Minute),
 		trustedProxies:    opts.TrustedProxies,
 	}
 	if s.version == "" {
@@ -90,11 +92,13 @@ func New(opts Options) *Server {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(s.securityHeaders)
 
 	r.Get("/healthz", s.handleHealthz)
 	r.Get("/readyz", s.handleReadyz)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(s.apiRequestGuard)
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)

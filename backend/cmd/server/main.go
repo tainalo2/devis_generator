@@ -147,6 +147,10 @@ func main() {
 		Addr:              cfg.Addr,
 		Handler:           api.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    64 << 10,
 	}
 
 	runCtx, runCancel := context.WithCancel(context.Background())
