@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Landing, atouts</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+</style>
+</helmet>
+<section class="dg-root" aria-label="Atouts" style="width: 100%; min-height: {{minH}}; box-sizing: border-box; display: flex; align-items: center; font-family: var(--font-sans); color: var(--foreground); background-color: color-mix(in oklab, var(--card) 30%, var(--background)); border-top: 1px solid color-mix(in oklab, var(--border) 70%, transparent);">
+<div style="width: 100%; max-width: 1152px; margin: 0 auto; padding: {{padY}} clamp(16px, 4vw, 32px); box-sizing: border-box; display: flex; flex-wrap: wrap; gap: {{gap}};">
+<div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<div style="width: 36px; height: 36px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--brand); background-color: color-mix(in oklab, var(--brand) 15%, transparent);">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg>
+</div>
+<h2 style="margin: 4px 0 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.025em;">Invité ou compte</h2>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Générez un PDF immédiatement. Avec un compte, brouillons, clients et historique restent disponibles jusqu’à suppression.</p>
+</div>
+<div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<div style="width: 36px; height: 36px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--brand); background-color: color-mix(in oklab, var(--brand) 15%, transparent);">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" x2="5" y1="5" y2="19"></line><circle cx="6.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="17.5" r="2.5"></circle></svg>
+</div>
+<h2 style="margin: 4px 0 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.025em;">TVA maîtrisée</h2>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Franchise art. 293 B ou taux par ligne (0 / 2,1 / 5,5 / 10 / 20 %). Mentions figées à l’émission.</p>
+</div>
+<div style="flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+<div style="width: 36px; height: 36px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; color: var(--brand); background-color: color-mix(in oklab, var(--brand) 15%, transparent);">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg>
+</div>
+<h2 style="margin: 4px 0 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 20px; line-height: 28px; font-weight: 600; letter-spacing: -0.025em;">Sources officielles</h2>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Recherche d’entreprises, VIES, TEDB et BCE derrière le cache légal, avec repli si une source est indisponible.</p>
+</div>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":320}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+return { minH: c ? '0px' : '320px', padY: c ? '48px' : '64px', gap: c ? '32px' : '40px' };
+}
+}
+</script>
+</body>
+</html>

@@ -687,6 +687,18 @@ function cleanPDFGeneration() {
     if (paiementButton) paiementButton.style.display = "none";
 }
 
+// Recopie le texte d'un champ contenteditable en conservant les retours à la
+// ligne, sans jamais interpréter de HTML (DOMParser : ni script ni image chargés).
+function copyMultilineText(source, target) {
+    const html = source.innerHTML.replace(/<br\s*\/?>/gi, "\n").replace(/<\/(div|p)>/gi, "\n");
+    const text = new DOMParser().parseFromString(html, "text/html").body.textContent.replace(/\n+$/, "");
+    target.textContent = "";
+    text.split("\n").forEach((part, i) => {
+        if (i > 0) target.appendChild(document.createElement("br"));
+        target.appendChild(document.createTextNode(part));
+    });
+}
+
 function generatePDF() {
     alertDisplay("waiting", "Génération en cours...");
     
@@ -699,7 +711,7 @@ function generatePDF() {
     // Modify all PDF values with inputs
 
     //global infos
-    document.getElementById("header_to_generate_subtitle").innerHTML = document.getElementById("input_devis_title").value.trim();
+    document.getElementById("header_to_generate_subtitle").textContent = document.getElementById("input_devis_title").value.trim();
     var inputDate = new Date(document.getElementById("date_emission").value);
     var inputDateFrenchFormat = inputDate.toLocaleDateString('en-GB');
     document.getElementById("header_to_generate_date_value").innerHTML = inputDateFrenchFormat;
@@ -708,9 +720,9 @@ function generatePDF() {
     document.getElementById("header_to_generate_number").innerHTML = "N°" + inputDate.getFullYear() + (month.length == 1 ? "0" : "") + month + (inputDate.getDate().toString().length == 1 ? "0" : "") + inputDate.getDate() + billNumber;
 
     //worker infos
-    document.getElementById("section_to_generate_id_worker_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
-    document.getElementById("section_to_generate_id_worker_address").innerHTML = document.getElementById("input_address_worker").innerHTML;
-    document.getElementById("section_to_generate_id_worker_siren").innerHTML = document.getElementById("input_siren_worker").value;
+    document.getElementById("section_to_generate_id_worker_name").textContent = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
+    copyMultilineText(document.getElementById("input_address_worker"), document.getElementById("section_to_generate_id_worker_address"));
+    document.getElementById("section_to_generate_id_worker_siren").textContent = document.getElementById("input_siren_worker").value;
     if (document.getElementById("toggle_commercant_label").checked) {
         document.getElementById("section_to_generate_id_worker_rcs").style.display = "block";
         document.getElementById("section_to_generate_id_worker_rcs_value") = document.getElementById("input_rcs").value;
@@ -721,9 +733,9 @@ function generatePDF() {
     }
 
     //customer infos
-    document.getElementById("section_to_generate_id_customer_name").innerHTML = document.getElementById("input_name_customer").value;
-    document.getElementById("section_to_generate_id_customer_address").innerHTML = document.getElementById("input_address_customer").innerHTML;
-    document.getElementById("section_to_generate_id_customer_siren").innerHTML = document.getElementById("input_siren_customer").value;
+    document.getElementById("section_to_generate_id_customer_name").textContent = document.getElementById("input_name_customer").value;
+    copyMultilineText(document.getElementById("input_address_customer"), document.getElementById("section_to_generate_id_customer_address"));
+    document.getElementById("section_to_generate_id_customer_siren").textContent = document.getElementById("input_siren_customer").value;
 
     //devis elements
     var totalDevis = 0;
@@ -737,8 +749,8 @@ function generatePDF() {
             cloneLine_node.removeAttribute('id');
             cloneLine_node.style.display = "flex";
 
-            cloneLine_node.querySelector(".section_devis_to_generate_line_description").innerHTML = line.querySelector(".devis_description").innerHTML;
-            cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").innerHTML = line.querySelector(".devis_quantity").value;
+            copyMultilineText(line.querySelector(".devis_description"), cloneLine_node.querySelector(".section_devis_to_generate_line_description"));
+            cloneLine_node.querySelector(".section_devis_to_generate_line_quantity").textContent = line.querySelector(".devis_quantity").value;
             cloneLine_node.querySelector(".section_devis_to_generate_line_unit_price").innerHTML = parseFloat(line.querySelector(".devis_price").value).toFixed(2) + "€";
             cloneLine_node.querySelector(".section_devis_to_generate_line_total_price").innerHTML = (parseFloat(line.querySelector(".devis_price").value) * parseFloat(line.querySelector(".devis_quantity").value)).toFixed(2) + "€";
         }
@@ -755,7 +767,7 @@ function generatePDF() {
     });
 
     //date infos
-    document.getElementById("section_to_generate_id_taux_interet").innerHTML = document.getElementById("input_indemnite").value;
+    document.getElementById("section_to_generate_id_taux_interet").textContent = document.getElementById("input_indemnite").value;
     inputDate = new Date(document.getElementById("date_paiement").value);
     inputDate = inputDate.toLocaleDateString('en-GB');
     document.getElementById("section_to_generate_id_date_limit").innerHTML = inputDate;
@@ -766,8 +778,8 @@ function generatePDF() {
     }
     if (document.getElementById("input_iban").value.trim() != "") {
         document.getElementById("section_to_generate_info_paiement_iban_container").style.display = "flex";
-        document.getElementById("section_to_generate_label_iban_name").innerHTML = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
-        document.getElementById("section_to_generate_label_iban").innerHTML = document.getElementById("input_iban").value;
+        document.getElementById("section_to_generate_label_iban_name").textContent = document.getElementById("input_firstName_worker").value + " " + document.getElementById("input_lastName_worker").value;
+        document.getElementById("section_to_generate_label_iban").textContent = document.getElementById("input_iban").value;
     }
     if (document.getElementById("input_payement_link").value.trim() != "") {
         document.getElementById("section_to_generate_internet_paiement_button").style.display = "block";
@@ -1116,7 +1128,7 @@ function updateOnLogin(type) {
         document.querySelectorAll('.withLoginElement').forEach(element => {
             element.style.display = "flex";
         });
-        document.getElementById("display_pseudo").innerHTML = pseudo;
+        document.getElementById("display_pseudo").textContent = pseudo;
         alertDisplay("success", "Connecté");
         document.getElementById("input_login").value = "";
         document.getElementById("input_password").value = "";

@@ -1,0 +1,99 @@
+/* Devis Generator : VIBED — the Tailwind classes of frontend/src/components/ui/*.tsx, written out as plain CSS.
+   Values: Tailwind v4 defaults + the tokens. Dark: [data-theme="dark"] (this page) or .dark (the app). */
+
+.dg-button, .dg-badge, .dg-input, .dg-label, .dg-spinner { font-family: var(--font-sans); box-sizing: border-box; }
+
+/* ---------- Button ---------- */
+.dg-button {
+  display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center;
+  border-radius: var(--radius-lg); border: 1px solid transparent; background-clip: padding-box;
+  font-size: 14px; line-height: 20px; font-weight: 500; white-space: nowrap;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); outline: none; user-select: none; cursor: pointer;
+  color: inherit; background-color: transparent; text-decoration: none; margin: 0;
+}
+.dg-button:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent); }
+.dg-button:active:not([aria-haspopup]) { transform: translateY(1px); }
+.dg-button:disabled { pointer-events: none; opacity: 0.5; }
+.dg-button[aria-invalid="true"] { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); }
+.dg-button svg { pointer-events: none; flex-shrink: 0; width: 16px; height: 16px; }
+
+.dg-button--default { background-color: var(--primary); color: var(--primary-foreground); }
+.dg-button--default:hover { background-color: color-mix(in oklab, var(--primary) 80%, transparent); }
+
+.dg-button--outline { border-color: var(--border); background-color: var(--background); }
+.dg-button--outline:hover, .dg-button--outline[aria-expanded="true"] { background-color: var(--muted); color: var(--foreground); }
+
+.dg-button--secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+.dg-button--secondary:hover { background-color: color-mix(in oklch, var(--secondary), var(--foreground) 5%); }
+
+.dg-button--ghost:hover, .dg-button--ghost[aria-expanded="true"] { background-color: var(--muted); color: var(--foreground); }
+
+.dg-button--destructive { background-color: color-mix(in oklab, var(--destructive) 10%, transparent); color: var(--destructive); }
+.dg-button--destructive:hover { background-color: color-mix(in oklab, var(--destructive) 20%, transparent); }
+.dg-button--destructive:focus-visible { border-color: color-mix(in oklab, var(--destructive) 40%, transparent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 20%, transparent); }
+
+.dg-button--link { color: var(--primary); text-underline-offset: 4px; }
+.dg-button--link:hover { text-decoration: underline; }
+
+[data-theme="dark"] .dg-button--outline, .dark .dg-button--outline { border-color: var(--input); background-color: color-mix(in oklab, var(--input) 30%, transparent); }
+[data-theme="dark"] .dg-button--outline:hover, .dark .dg-button--outline:hover { background-color: color-mix(in oklab, var(--input) 50%, transparent); }
+[data-theme="dark"] .dg-button--ghost:hover, .dark .dg-button--ghost:hover { background-color: color-mix(in oklab, var(--muted) 50%, transparent); }
+[data-theme="dark"] .dg-button--destructive, .dark .dg-button--destructive { background-color: color-mix(in oklab, var(--destructive) 20%, transparent); }
+[data-theme="dark"] .dg-button--destructive:hover, .dark .dg-button--destructive:hover { background-color: color-mix(in oklab, var(--destructive) 30%, transparent); }
+[data-theme="dark"] .dg-button--destructive:focus-visible, .dark .dg-button--destructive:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 40%, transparent); }
+
+.dg-button--size-default { height: 32px; gap: 6px; padding: 0 10px; }
+.dg-button--size-xs { height: 24px; gap: 4px; padding: 0 8px; border-radius: min(var(--radius-md), 10px); font-size: 12px; line-height: 16px; }
+.dg-button--size-xs svg { width: 12px; height: 12px; }
+.dg-button--size-sm { height: 28px; gap: 4px; padding: 0 10px; border-radius: min(var(--radius-md), 12px); font-size: 0.8rem; }
+.dg-button--size-sm svg { width: 14px; height: 14px; }
+.dg-button--size-lg { height: 36px; gap: 6px; padding: 0 10px; }
+.dg-button--size-icon { width: 32px; height: 32px; padding: 0; }
+.dg-button--size-icon-xs { width: 24px; height: 24px; padding: 0; border-radius: min(var(--radius-md), 10px); }
+.dg-button--size-icon-xs svg { width: 12px; height: 12px; }
+.dg-button--size-icon-sm { width: 28px; height: 28px; padding: 0; border-radius: min(var(--radius-md), 12px); }
+.dg-button--size-icon-lg { width: 36px; height: 36px; padding: 0; }
+
+/* ---------- Badge ---------- */
+.dg-badge {
+  display: inline-flex; align-items: center; border-radius: var(--radius-md); border: 1px solid transparent;
+  padding: 2px 8px; font-size: 12px; line-height: 16px; font-weight: 500;
+}
+.dg-badge--default { background-color: var(--primary); color: var(--primary-foreground); }
+.dg-badge--secondary { background-color: var(--secondary); color: var(--secondary-foreground); }
+.dg-badge--outline { border-color: var(--border); color: var(--foreground); }
+.dg-badge--success { background-color: color-mix(in oklab, var(--brand) 15%, transparent); color: var(--brand); }
+/* Tailwind amber-500 / amber-800 / amber-200, as in the source (not tokens). */
+.dg-badge--warning { background-color: color-mix(in oklab, oklch(76.9% 0.188 70.08) 15%, transparent); color: oklch(47.3% 0.137 46.201); }
+[data-theme="dark"] .dg-badge--warning, .dark .dg-badge--warning { color: oklch(92.4% 0.12 95.746); }
+.dg-badge--muted { background-color: var(--muted); color: var(--muted-foreground); }
+
+/* ---------- Input ---------- */
+.dg-input {
+  display: flex; height: 36px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--input);
+  background-color: var(--background); color: var(--foreground); padding: 0 12px; font-size: 14px; line-height: 20px;
+  box-shadow: none; transition: color 150ms, background-color 150ms, border-color 150ms; margin: 0;
+}
+.dg-input::placeholder { color: var(--muted-foreground); }
+.dg-input:disabled { cursor: not-allowed; opacity: 0.5; }
+/* index.css base: ring-2 ring-ring ring-offset-2 ring-offset-background on :focus-visible */
+.dg-input:focus-visible { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring); }
+
+/* ---------- Label ---------- */
+.dg-label { display: block; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--foreground); }
+.dg-label > * + * { margin-top: 6px; }
+
+/* ---------- Separator ---------- */
+.dg-separator { flex-shrink: 0; background-color: var(--border); }
+.dg-separator[data-orientation="horizontal"] { height: 1px; width: 100%; }
+.dg-separator[data-orientation="vertical"] { width: 1px; align-self: stretch; }
+
+/* ---------- Spinner ---------- */
+.dg-spinner { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; color: var(--muted-foreground); }
+.dg-spinner__ring {
+  width: 16px; height: 16px; border-radius: 9999px; box-sizing: border-box;
+  border: 2px solid color-mix(in oklab, var(--muted-foreground) 30%, transparent); border-top-color: var(--brand);
+  animation: dg-spin 1s linear infinite;
+}
+@keyframes dg-spin { to { transform: rotate(360deg); } }
+.dg-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }

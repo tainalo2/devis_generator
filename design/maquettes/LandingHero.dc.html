@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Landing, héros</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-root .dg-full{width:100%;height:44px}
+@keyframes dg-soft-pulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.03)}}
+@keyframes dg-fade-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.dg-pulse{animation:dg-soft-pulse 3.5s ease-in-out infinite}
+.dg-fade-up{animation:dg-fade-up .55s ease-out both}
+</style>
+</helmet>
+<section class="dg-root" style="position: relative; overflow: hidden; width: 100%; min-height: {{minH}}; box-sizing: border-box; display: flex; align-items: center; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background); background-image: linear-gradient(145deg, color-mix(in oklch, var(--brand) 18%, transparent), transparent 45%), radial-gradient(900px 500px at 100% 0%, color-mix(in oklch, var(--accent) 55%, transparent), transparent 55%);">
+<div class="dg-pulse" aria-hidden="true" style="position: absolute; right: -96px; top: 40px; width: 288px; height: 288px; border-radius: 9999px; background-color: color-mix(in oklab, var(--brand) 20%, transparent); filter: blur(64px); pointer-events: none;"></div>
+<div style="position: relative; width: 100%; max-width: 1152px; margin: 0 auto; padding: {{pad}}; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 48px;">
+<div class="dg-fade-up" style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<x-import component-from-global-scope="DevisUI.Badge" variant="success">Gratuit</x-import>
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">Sans compte</x-import>
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">PDF immédiat</x-import>
+</div>
+<p style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: clamp(36px, 4.4vw, 56px); line-height: 1.05; font-weight: 600; letter-spacing: -0.025em;">Devis Generator : VIBED</p>
+<h1 style="margin: 0; max-width: 36rem; font-family: var(--font-sans); font-size: clamp(20px, 2vw, 24px); line-height: 1.33; font-weight: 500; letter-spacing: -0.01em; color: color-mix(in oklab, var(--foreground) 90%, transparent); text-wrap: balance;">Des devis et factures clairs, conformes, sans friction.</h1>
+<p style="margin: 0; max-width: 32rem; font-size: 16px; line-height: 24px; color: var(--muted-foreground);">Pour micro-entrepreneurs, indépendants et petites sociétés. Créez un document en mode invité, ou ouvrez un compte pour les conserver.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; padding-top: 4px;">
+<x-import component-from-global-scope="DevisUI.Button" variant="default" size="lg" class="{{btnClass}}">Créer un devis sans compte</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" size="lg" class="{{btnClass}}">Créer un compte</x-import>
+</div>
+</div>
+<sc-if value="{{showCard}}" hint-placeholder-val="{{true}}">
+<div aria-hidden="true" style="flex: 1 1 380px; min-width: 0; position: relative; height: 400px;">
+<div style="position: absolute; left: -8px; bottom: 16px; right: 64px; top: 72px; border-radius: var(--radius-2xl); border: 1px solid color-mix(in oklab, var(--border) 40%, transparent); background-color: color-mix(in oklab, var(--brand) 10%, transparent);"></div>
+<div style="position: absolute; top: 24px; right: 24px; bottom: 40px; left: 24px; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 12px; border-radius: var(--radius-2xl); border: 1px solid color-mix(in oklab, var(--border) 70%, transparent); background-color: color-mix(in oklab, var(--card) 70%, transparent); backdrop-filter: blur(8px); box-shadow: 0 30px 80px -40px rgba(15, 40, 60, 0.45);">
+<div style="display: flex; align-items: center; justify-content: space-between;">
+<div style="height: 12px; width: 112px; border-radius: 4px; background-color: color-mix(in oklab, var(--brand) 40%, transparent);"></div>
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">Brouillon</x-import>
+</div>
+<div style="height: 8px; width: 192px; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 20%, transparent);"></div>
+<div style="margin-top: 24px; display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; justify-content: space-between; gap: 24px;"><div style="height: 8px; width: 58%; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);"></div><div style="height: 8px; width: 56px; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 25%, transparent);"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 24px;"><div style="height: 8px; width: 48%; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);"></div><div style="height: 8px; width: 44px; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 25%, transparent);"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 24px;"><div style="height: 8px; width: 38%; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 15%, transparent);"></div><div style="height: 8px; width: 52px; border-radius: 4px; background-color: color-mix(in oklab, var(--muted-foreground) 25%, transparent);"></div></div>
+</div>
+<x-import component-from-global-scope="DevisUI.Separator" style="margin-top: 12px;"></x-import>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="height: 10px; width: 80px; border-radius: 4px; background-color: color-mix(in oklab, var(--foreground) 20%, transparent);"></div>
+<div style="height: 12px; width: 96px; border-radius: 4px; background-color: color-mix(in oklab, var(--brand) 40%, transparent);"></div>
+</div>
+<div style="flex-grow: 1;"></div>
+<div style="display: flex; justify-content: flex-end;">
+<div style="height: 32px; width: 112px; border-radius: var(--radius-md); background-color: color-mix(in oklab, var(--primary) 90%, transparent);"></div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"compact":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":640}}'>
+class Component extends DCLogic {
+renderVals() {
+var c = !!this.props.compact;
+return {
+minH: c ? '0px' : '640px',
+pad: c ? '40px clamp(16px, 4vw, 32px) 48px' : '80px clamp(16px, 4vw, 32px)',
+showCard: !c,
+btnClass: c ? 'dg-full' : ''
+};
+}
+}
+</script>
+</body>
+</html>

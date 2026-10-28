@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Page introuvable</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-root .dg-tall{height:44px;padding:0 18px;font-size:14px}
+@keyframes dg-soft-pulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:.9;transform:scale(1.03)}}
+.dg-pulse{animation:dg-soft-pulse 3.5s ease-in-out infinite}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background); background-image: radial-gradient(1200px 600px at 10% -10%, color-mix(in oklch, var(--brand) 12%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 0%, color-mix(in oklch, var(--accent) 55%, transparent), transparent 55%);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Invite" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="position: relative; flex: 1; overflow: hidden; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center;">
+<div class="dg-pulse" aria-hidden="true" style="position: absolute; left: 50%; top: 40%; width: 320px; height: 320px; margin: -160px 0 0 -160px; border-radius: 9999px; background-color: color-mix(in oklab, var(--brand) 18%, transparent); filter: blur(64px); pointer-events: none;"></div>
+<p aria-hidden="true" style="position: relative; margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: {{bigSize}}; line-height: 1; font-weight: 600; letter-spacing: -0.04em; color: color-mix(in oklab, var(--foreground) 85%, transparent);">404</p>
+<h1 style="position: relative; margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 24px; line-height: 30px; font-weight: 600; letter-spacing: -0.025em;">Page introuvable</h1>
+<p style="position: relative; margin: 0; max-width: 28rem; font-size: 15px; line-height: 22px; color: var(--muted-foreground);">Cette page n’existe pas ou a été déplacée. Vos documents, eux, sont toujours là.</p>
+<div style="position: relative; display: flex; flex-direction: {{btnDir}}; gap: 10px; margin-top: 8px; width: {{btnW}};">
+<x-import component-from-global-scope="DevisUI.Button" variant="default" class="dg-tall">Retour à l’accueil</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" class="dg-tall">Créer un devis</x-import>
+</div>
+</main>
+<dc-import name="SiteFooter" compact="{{mob}}" hint-size="100%,280px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":860}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440 };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var m = !!this.props.mobile || this.state.w < 700;
+return {
+desk: !m, mob: m,
+pad: m ? '48px 16px' : '80px 24px',
+bigSize: m ? '96px' : '140px',
+btnDir: m ? 'column' : 'row',
+btnW: m ? '100%' : 'auto'
+};
+}
+}
+</script>
+</body>
+</html>

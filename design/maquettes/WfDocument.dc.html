@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Détail d’un document, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:1440px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:12px 16px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:14px;line-height:20px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:64px;justify-content:center;padding:0 24px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.row{display:flex;gap:16px}
+</style>
+</helmet>
+<div class="wf" style="height: 900px;">
+<div class="z n"><b>Barre de navigation · connecté</b><span>lien actif « Documents »</span></div>
+<div class="z c1" style="flex-shrink: 0; height: 64px; border-radius: 0; border-width: 0 0 1.5px 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 24px;"><div style="display: flex; flex-direction: column; gap: 2px;"><b>Barre du document émis</b><span>retour, « Facture n° [numéro] », badge de statut, mention « Émis : non modifiable »</span></div><span>Télécharger le PDF · Envoyer · Marquer comme payée · Créer un avoir · Dupliquer · ⋯</span></div>
+<div class="row" style="flex: 1; min-height: 0; padding: 20px 24px 24px;">
+<div style="width: 400px; flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
+<div class="z c2" style="height: 170px;"><b>Statut et paiement</b><span>frise : émis → envoyé → payé ; montant dû, échéance, retard éventuel ; enregistrer un paiement (date, moyen)</span></div>
+<div class="z c3" style="height: 120px;"><b>Client</b><span>nom, SIREN, adresse ; lien vers la fiche client</span></div>
+<div class="z c4" style="height: 150px;"><b>Documents liés</b><span>devis d’origine, factures d’acompte, avoirs, facture de solde ; action « Facturer ce devis » sur un devis</span></div>
+<div class="z c7" style="flex: 1;"><b>Historique</b><span>création, émission, envois, paiements, avec date et heure</span></div>
+</div>
+<div class="z c6" style="flex: 1; min-width: 0;"><b>Aperçu PDF</b><span>le document tel qu’émis, même lecteur que l’éditeur (zoom, plein écran)</span>
+<div style="flex: 1; display: flex; justify-content: center; align-items: flex-start; padding-top: 8px;"><div style="height: 100%; aspect-ratio: 210 / 297; border-radius: 4px; background-color: #ffffff; border: 1px solid #c3d0db;"></div></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

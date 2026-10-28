@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Atelier Nord, fiche client</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-card{box-sizing:border-box;background-color:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl)}
+.dg-zone{box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:14px;border-radius:var(--radius-xl);background-color:oklch(0.965 0.03 155);border:1px solid oklch(0.85 0.06 155)}
+.dg-h2{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:16px;line-height:24px;font-weight:600;letter-spacing:-0.025em}
+.dg-num{font-variant-numeric:tabular-nums}
+.dg-over{font-size:11px;line-height:16px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted-foreground)}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-root textarea.dg-input{height:96px;padding:8px 12px;resize:vertical;font-family:var(--font-sans)}
+.dg-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border)}
+.dg-tab{flex:1;height:44px;border:0;margin:0 0 -1px;border-bottom:2px solid transparent;background:transparent;font-family:var(--font-sans);font-size:14px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer}
+.dg-tab[aria-selected="true"]{color:var(--foreground);border-bottom-color:var(--primary)}
+.dg-tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--ring)}
+.dg-av{flex-shrink:0;width:40px;height:40px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--secondary-foreground);background-color:var(--secondary)}
+.dg-root .dg-tall{height:44px;padding:0 16px;font-size:14px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="clients" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="flex: 1; width: 100%; max-width: 1088px; margin: 0 auto; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon-sm" aria-label="Retour aux clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></x-import>
+<span class="dg-av" aria-hidden="true">AN</span>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<h1 style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: {{titleSize}}; line-height: 1.2; font-weight: 600; letter-spacing: -0.025em;">Atelier Nord</h1>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 18px; color: var(--muted-foreground);"><x-import component-from-global-scope="DevisUI.Badge" variant="outline">Professionnel</x-import>Client depuis mars 2026</span>
+</div>
+</div>
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; gap: 8px; align-items: center;">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Nouveau document</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default">Enregistrer</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" aria-label="Autres actions : supprimer le client" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></x-import>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<div class="dg-card" style="padding: 14px; display: flex; flex-direction: column; gap: 4px;"><span class="dg-over">CA facturé</span><span class="dg-num" style="font-family: var(--font-heading); font-size: 20px; line-height: 26px; font-weight: 600;">8 940,00 €</span></div>
+<div class="dg-card" style="padding: 14px; display: flex; flex-direction: column; gap: 4px;"><span class="dg-over">À encaisser</span><span class="dg-num" style="font-family: var(--font-heading); font-size: 20px; line-height: 26px; font-weight: 600;">1 200,00 €</span></div>
+</div>
+<div class="dg-tabs" role="tablist" aria-label="Fiche client">
+<button type="button" class="dg-tab" role="tab" aria-selected="{{tInfo}}" onClick="{{goInfo}}">Informations</button>
+<button type="button" class="dg-tab" role="tab" aria-selected="{{tDocs}}" onClick="{{goDocs}}">Documents (7)</button>
+</div>
+</sc-if>
+<div style="display: grid; grid-template-columns: {{cols}}; gap: 20px; align-items: start;">
+<sc-if value="{{showInfo}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+<section class="dg-zone" aria-labelledby="id-titre">
+<h2 id="id-titre" class="dg-h2">Identité</h2>
+<x-import component-from-global-scope="DevisUI.Label"><span>Raison sociale</span><x-import component-from-global-scope="DevisUI.Input" default-value="Atelier Nord"></x-import></x-import>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label"><span>SIREN</span><x-import component-from-global-scope="DevisUI.Input" default-value="[SIREN]"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>SIRET du siège</span><x-import component-from-global-scope="DevisUI.Input" default-value="[SIRET]"></x-import></x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Label"><span>N° de TVA intracommunautaire</span><x-import component-from-global-scope="DevisUI.Input" default-value="[FR 00 SIREN]"></x-import></x-import>
+<div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: -4px;"><x-import component-from-global-scope="DevisUI.Badge" variant="success">Entreprise vérifiée</x-import><x-import component-from-global-scope="DevisUI.Badge" variant="success">TVA valide (VIES)</x-import></div>
+</section>
+<section class="dg-zone" aria-labelledby="coord-titre">
+<h2 id="coord-titre" class="dg-h2">Coordonnées</h2>
+<x-import component-from-global-scope="DevisUI.Label"><span>Adresse</span><x-import component-from-global-scope="DevisUI.Input" default-value="[Adresse]"></x-import></x-import>
+<div style="display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label"><span>Code postal</span><x-import component-from-global-scope="DevisUI.Input" default-value="69000"></x-import></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>Ville</span><x-import component-from-global-scope="DevisUI.Input" default-value="Lyon"></x-import></x-import>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label"><span>Pays</span><select class="dg-input" style="cursor: pointer;"><option>France</option></select></x-import>
+<x-import component-from-global-scope="DevisUI.Label"><span>E-mail de facturation</span><x-import component-from-global-scope="DevisUI.Input" type="email" default-value="factures@atelier-nord.example"></x-import></x-import>
+</div>
+</section>
+<section style="box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 10px; border-radius: var(--radius-xl); background-color: oklch(0.97 0.015 80); border: 1px solid oklch(0.87 0.03 80);" aria-labelledby="notes-titre">
+<h2 id="notes-titre" class="dg-h2">Notes internes</h2>
+<textarea class="dg-input" aria-label="Notes internes" placeholder="Visibles par vous seul, jamais sur les documents"></textarea>
+</section>
+</div>
+</sc-if>
+<sc-if value="{{showDocs}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<div class="dg-card" style="padding: 14px; display: flex; flex-direction: column; gap: 4px;"><span class="dg-over">CA facturé</span><span class="dg-num" style="font-family: var(--font-heading); font-size: 22px; line-height: 28px; font-weight: 600;">8 940,00 €</span></div>
+<div class="dg-card" style="padding: 14px; display: flex; flex-direction: column; gap: 4px;"><span class="dg-over">À encaisser</span><span class="dg-num" style="font-family: var(--font-heading); font-size: 22px; line-height: 28px; font-weight: 600;">1 200,00 €</span></div>
+</div>
+</sc-if>
+<section class="dg-card" aria-labelledby="cdocs-titre" style="overflow: hidden;">
+<div style="padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--border);"><h2 id="cdocs-titre" class="dg-h2">Documents</h2><select class="dg-input" aria-label="Filtrer par type" style="width: 130px; height: 32px; cursor: pointer;"><option>Tous</option><option>Devis</option><option>Factures</option></select></div>
+<sc-for list="{{docs}}" as="d" hint-placeholder-count="5">
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); text-decoration: none; color: inherit;">
+<span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">{{d.type}} {{d.num}}</span><span class="dg-num" style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{d.date}}</span></span>
+<span style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><span class="dg-num" style="font-size: 14px; line-height: 20px; font-weight: 600;">{{d.amount}}</span><x-import component-from-global-scope="DevisUI.Badge" variant="{{d.variant}}">{{d.status}}</x-import></span>
+</a>
+</sc-for>
+<a href="#" style="display: block; padding: 12px 16px; font-size: 13px; line-height: 18px; font-weight: 500; color: var(--brand); text-decoration: none;">Voir les 7 documents</a>
+</section>
+</div>
+</sc-if>
+</div>
+</main>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="position: sticky; bottom: 0; z-index: 5; box-sizing: border-box; height: 76px; padding: 0 16px; display: flex; align-items: center; gap: 8px; background-color: var(--card); border-top: 1px solid var(--border); box-shadow: 0 -8px 16px -12px rgb(15 40 60 / 0.25);">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" class="dg-tall" style="flex: 1;">Nouveau document</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="default" class="dg-tall" style="flex: 1;">Enregistrer</x-import>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440, tab: 'info' };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var self = this;
+var m = !!this.props.mobile || this.state.w < 700;
+var t = this.state.tab;
+return {
+desk: !m, mob: m,
+pad: m ? '20px 16px 24px' : '32px 24px 48px',
+titleSize: m ? '22px' : '28px',
+cols: m ? 'minmax(0, 1fr)' : 'minmax(0, 3fr) minmax(0, 2fr)',
+showInfo: !m || t === 'info',
+showDocs: !m || t === 'docs',
+tInfo: t === 'info' ? 'true' : 'false',
+tDocs: t === 'docs' ? 'true' : 'false',
+goInfo: function () { self.setState({ tab: 'info' }); },
+goDocs: function () { self.setState({ tab: 'docs' }); },
+docs: [
+{ type: 'Facture', num: 'F-2026-041', date: '21/10/2026', amount: '1 200,00 €', status: 'À encaisser', variant: 'secondary' },
+{ type: 'Facture', num: '(brouillon)', date: 'Modifiée le 25/10/2026', amount: '380,00 €', status: 'Brouillon', variant: 'muted' },
+{ type: 'Facture', num: 'F-2026-037', date: '18/09/2026', amount: '2 100,00 €', status: 'Payée', variant: 'success' },
+{ type: 'Devis', num: 'D-2026-015', date: '02/09/2026', amount: '2 100,00 €', status: 'Accepté', variant: 'success' },
+{ type: 'Facture', num: 'F-2026-029', date: '10/07/2026', amount: '1 540,00 €', status: 'Payée', variant: 'success' }
+]
+};
+}
+}
+</script>
+</body>
+</html>

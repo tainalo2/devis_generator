@@ -1,58 +1,107 @@
-> Je cherche du travail ! Freelance ou CDI en dev front/back -> www.alexandre-rongier.fr
+# Devis Generator : VIBED
 
+Branche de développement de **Devis Generator : VIBED** — backend Go + PostgreSQL + front React, dans le même dépôt que le site vanilla historique (conservé à la racine, non déplacé).
 
-> [Devis generator le site officiel ici](https://www.devisgenerator.fr/)
-# Devis Generator ![Static Badge](https://img.shields.io/badge/Licencse-GPL_V3-red) ![Static Badge](https://img.shields.io/badge/__-vanilla-yellow?style=flat&logo=javascript) ![Static Badge](https://img.shields.io/badge/__-Node--Red-red?style=flat&logo=nodered&logoColor=%23ff0505)
+Site officiel actuel : [devisgenerator.fr](https://www.devisgenerator.fr/)
 
-Devis Generator est un générateur de facture/devis pour les micros-entrepreneurs français, en format web.
+## Objectif
 
+Une plateforme gratuite pour signer les factures en France. L’application produit déjà des devis et des factures PDF. La signature électronique et la Factur-X téléchargeable viennent ensuite.
 
-<p align="center">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_1.png">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_2.png">
-  <img width="350" height="335" src="https://raw.githubusercontent.com/tainalo2/devis_generator/main/src/image/image_for_readme_3.png">
-</p>
+| Public | Document |
+|--------|----------|
+| Humain | [docs/humain.md](docs/humain.md) |
+| Technique | [docs/technique.md](docs/technique.md) |
+| Agent / IA | [docs/ia.md](docs/ia.md) |
 
-## Problématique
-Il n'existe pas d'outils simple et concis permettant d'éditer une facture ou un devis en PDF sans oublier toutes les obligations légales. Le statut de micro-entrepreneur permettant notamment d'encadré des activités additionnelles au salariat, censé être administrativement simplifié pour ne pas être un frein à son encadrement légale, je trouvais ça lourd d'éditer ma facture à chaque fois dans un vieux modèle google sheet.
+Présentation : [docs/index.html](docs/index.html), publiée sur GitHub Pages depuis la branche `vibed`.
 
-Au Pays-bas il est courant de monétiser son hobby et d'en faire un complément de revenu. En France le statut de micro-entrepreneur le permet également mais ne donne pas les outils nécessaires.
+## Licence
 
-## Solution
-Une plateforme gratuite, accessible à tous, et qui va droit au but pour économiser le temps de l'utilisateur.
+- **VIBED** (code sous `backend/`, `frontend/`, `docs/`, `Dockerfile.vibed`, etc.) : [Apache-2.0](LICENSE.APACHE-2.0) (aussi `LICENSE.vibed`)
+- **Site vanilla historique** (racine : `index.html`, `main.js`, …) : [GPL-3.0](LICENSE) — inchangée
 
-Un développement open-source pour assurer la gratuité, un format web pour être compatible à tous les supports, une UI/UX minimaliste pour ne pas décourager l'utilisateur.
+Détail : [docs/LICENSING.md](docs/LICENSING.md).
 
-La solution est donc un site web, l'officiel est hébergé ici : https://www.devisgenerator.fr/
+## Prérequis
 
-Le code est en HTML/CSS/JS vanilla pour simplifier le déploiement et l'auto-hébergement.
+- Go 1.22+
+- Node.js 22+
+- Docker / Docker Compose (pour lancer l'ensemble)
 
-## Fonctionalités
+## Démarrage rapide (Docker)
 
-Devis generator permet de :
-* Générer un PDF de facture/devis
-* Respecter les lois en vigueurs pour les micro-entrepreneurs
-* Enregistrer des templates de prestataire/client/devis (bientôt) (seulement avec une base SQL)
-* Ajouter une signature "manuscrite"
-* Pré-calculer la TVA
-* Ajout d'un bouton cliquable pour le paiement en ligne
+```bash
+cp .env.example .env   # optionnel pour Compose (les valeurs sont déjà dans compose.yaml)
+docker compose up --build
+```
 
-## Roadmap
-* Ajout de l'hébergement des templates
-* Système de double chiffrement de la base SQL
-* Support des ventes commerciale (TVA et déclarations différentes)
+Puis ouvrir [http://localhost:8080](http://localhost:8080).
 
-## Dépendances
-Devis generator base certaines fonctionalités sur des librairies JS :
-* Système de signature manuscrite : [Signature Pad](https://github.com/szimek/signature_pad?tab=readme-ov-file)
-* Génération du PDF : [jsPDF](https://github.com/parallax/jsPDF)
-* Transformation d'éléments en image pour le PDF + jsPDF : [html2canvas](https://github.com/niklasvh/html2canvas)
+- Liveness : [http://localhost:8080/healthz](http://localhost:8080/healthz)
+- Readiness : [http://localhost:8080/readyz](http://localhost:8080/readyz)
 
-## Participer au projet
+Image d’essai GHCR : `ghcr.io/tainalo2/devisgenerator-vibed` (tags `vibed-v*` via `.github/workflows/vibed-release.yml`).
 
-Les contributions sont les bienvenues, de même pour les feature requests et issues.
+## Variables d’environnement
 
-Ce projet n'est pas financé, je ne m'engage pas sur la rapidité des réponses.
+| Variable | Rôle | Défaut |
+|----------|------|--------|
+| `DATABASE_URL` | Connexion PostgreSQL (obligatoire) | — |
+| `APP_ENV` | Environnement (`development` / `production`) | `development` |
+| `ADDR` | Adresse d’écoute HTTP | `0.0.0.0:8080` |
+| `SHUTDOWN_TIMEOUT` | Arrêt gracieux | `10s` |
+| `SESSION_SECRET` | Sessions / CSRF (≥ 32 car. en prod) | défaut dev |
+| `ENCRYPTION_KEY` | AES-256-GCM, 32 octets **base64** | défaut dev |
 
-## License
-Ce projet est sous license [GNU-GPL-V3](https://www.gnu.org/licenses/gpl-3.0), son exploitation est autorisé uniquement dans un cadre non-commercial !
+En **production**, l’appli refuse de démarrer si `SESSION_SECRET` / `ENCRYPTION_KEY` sont absents ou faibles.
+
+Optionnelles : `STATIC_DIR`, `STARTUP_TIMEOUT`, `SESSION_TTL`, `COOKIE_SECURE`, `ARGON2_*`, `LEGAL_*`, et site public :
+
+| Variable | Rôle |
+|----------|------|
+| `DONATE_URL` | Lien discret d’appel aux dons (aucun prestataire intégré) |
+| `LEGAL_PUBLISHER_*` | Éditeur (mentions) — vide = « à compléter » |
+| `LEGAL_HOST_*` | Hébergeur (mentions / confidentialité) |
+
+Voir `.env.example`.
+
+## Développement local (sans image app)
+
+1. Postgres : `docker compose up -d db`
+2. Backend : `cd backend && go run ./cmd/server`
+3. Frontend : `cd frontend && npm ci && npm run dev`
+
+Vite : [http://localhost:5173](http://localhost:5173) (proxy `/api`, `/healthz`, `/readyz`).
+
+## Commandes utiles (`make`)
+
+| Cible | Action |
+|-------|--------|
+| `make frontend-install` | `npm ci` |
+| `make frontend-dev` | Vite |
+| `make frontend-build` | Build front |
+| `make backend-run` | Serveur Go |
+| `make backend-test` | `go test ./...` |
+| `make build` | Build front + binaire Go |
+| `make compose-up` | `docker compose up --build` |
+| `make test` | Tests backend + lint front |
+
+```bash
+cd backend && go build ./... && go test ./...
+cd frontend && npm run build
+```
+
+## Structure
+
+Voir [docs/architecture.md](docs/architecture.md) et [docs/DECISIONS.md](docs/DECISIONS.md).
+
+## Fonctionnalités VIBED (branche)
+
+- Landing publique + mentions légales / confidentialité (champs éditeur à compléter)
+- Compte optionnel + mode invité (PDF sans conservation)
+- Tableau de bord, clients, documents (brouillon → émission), aperçu PDF
+- TVA franchise 293 B ou multi-taux ; sources légales officielles
+- Thème clair/sombre, shell sidebar desktop / navigation mobile
+
+Suite : SMTP reset MDP, Factur-X téléchargeable, signature électronique des factures, identité éditeur/hébergeur et `DONATE_URL`.

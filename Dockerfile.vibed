@@ -1,0 +1,48 @@
+# Devis Generator : VIBED — image multi-stage : front Vite + backend Go.
+# Le Dockerfile historique (nginx site vanilla) reste inchangé pour les tags v*.
+
+# Les étapes de build tournent sur la plateforme du runner ($BUILDPLATFORM) :
+# le front est indépendant de l'architecture et Go compile en croisé vers
+# $TARGETARCH. Pas d'émulation QEMU, donc un build multi-arch rapide et fiable.
+
+# --- Frontend ---
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# --- Backend ---
+FROM --platform=$BUILDPLATFORM golang:1.27-bookworm AS backend
+ARG TARGETOS=linux
+ARG TARGETARCH
+# Version gravée dans le binaire (renvoyée par /api/v1/healthz).
+ARG VERSION=dev
+WORKDIR /src
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ ./
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w -X main.Version=${VERSION}" -o /out/server ./cmd/server
+
+# --- Runtime ---
+FROM gcr.io/distroless/static-debian12:nonroot
+ARG VERSION=dev
+
+LABEL org.opencontainers.image.title="Devis Generator : VIBED" \
+      org.opencontainers.image.description="Générateur de devis/factures pour micro-entrepreneurs, indépendants et petites sociétés (stack Go + React)" \
+      org.opencontainers.image.source="https://github.com/tainalo2/devis_generator" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="${VERSION}"
+
+WORKDIR /app
+COPY --from=backend /out/server /app/server
+COPY --from=frontend /frontend/dist /app/frontend/dist
+ENV ADDR=0.0.0.0:8080 \
+    STATIC_DIR=/app/frontend/dist \
+    APP_ENV=production \
+    SHUTDOWN_TIMEOUT=10s
+EXPOSE 8080
+USER nonroot:nonroot
+ENTRYPOINT ["/app/server"]
+

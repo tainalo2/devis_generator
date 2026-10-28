@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Documents</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-button{white-space:nowrap}
+.dg-card{box-sizing:border-box;background-color:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl)}
+.dg-h1{margin:0;font-family:var(--font-heading);font-optical-sizing:auto;font-size:30px;line-height:36px;font-weight:600;letter-spacing:-0.025em}
+.dg-num{font-variant-numeric:tabular-nums}
+.dg-root a:focus-visible{outline:none;border-radius:4px;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-tbl{width:100%;border-collapse:collapse;font-size:14px;line-height:20px}
+.dg-tbl th{padding:10px 16px;text-align:left;font-size:12px;line-height:16px;font-weight:500;color:var(--muted-foreground);border-bottom:1px solid var(--border);white-space:nowrap}
+.dg-tbl td{padding:12px 16px;border-bottom:1px solid var(--border);white-space:nowrap}
+.dg-tbl tr:last-child td{border-bottom:0}
+.dg-tbl .r{text-align:right}
+.dg-tbl tbody tr:hover{background-color:color-mix(in oklab,var(--muted) 60%,transparent);cursor:pointer}
+.dg-tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--border)}
+.dg-tab{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border:0;margin:0 0 -1px;border-bottom:2px solid transparent;background:transparent;font-family:var(--font-sans);font-size:14px;line-height:20px;font-weight:500;color:var(--muted-foreground);cursor:pointer;white-space:nowrap}
+.dg-tab:hover{color:var(--foreground)}
+.dg-tab[aria-selected="true"]{color:var(--foreground);border-bottom-color:var(--primary)}
+.dg-tab span{min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;background-color:var(--muted);color:var(--muted-foreground)}
+.dg-tab:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--ring)}
+.dg-root .dg-search{padding-left:36px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; min-height: 100vh; display: flex; flex-direction: column; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}"><dc-import name="Main" active="documents" hint-size="100%,64px"></dc-import></sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}"><dc-import name="NavMobileInvite" hint-size="100%,60px"></dc-import></sc-if>
+<main id="contenu" style="width: 100%; max-width: 1088px; margin: 0 auto; box-sizing: border-box; padding: {{pad}}; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px;">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<h1 class="dg-h1">Documents</h1>
+<p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">42 documents · devis, factures, acomptes et avoirs</p>
+</div>
+<x-import component-from-global-scope="DevisUI.Button" variant="default">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+Nouveau document
+</x-import>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+<div style="position: relative; flex: 1 1 260px; min-width: 0;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted-foreground)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: absolute; left: 12px; top: 10px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+<x-import component-from-global-scope="DevisUI.Input" class="dg-search" placeholder="Numéro, client ou objet" aria-label="Rechercher un document"></x-import>
+</div>
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<select class="dg-input" aria-label="Type de document" style="width: 160px; cursor: pointer;"><option>Tous les types</option><option>Devis</option><option>Factures</option><option>Factures d’acompte</option><option>Avoirs</option></select>
+<select class="dg-input" aria-label="Période" style="width: 160px; cursor: pointer;"><option>Toutes les dates</option><option>Ce mois-ci</option><option>Ce trimestre</option><option>Cette année</option></select>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" size="lg">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+Exporter en CSV
+</x-import>
+</sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" size="lg" aria-haspopup="dialog">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path></svg>
+Filtres
+</x-import>
+</sc-if>
+</div>
+<div class="dg-tabs" role="tablist" aria-label="Statut">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+<button type="button" class="dg-tab" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}<span>{{t.count}}</span></button>
+</sc-for>
+</div>
+<sc-if value="{{desk}}" hint-placeholder-val="{{true}}">
+<div class="dg-card" style="overflow: hidden;">
+<table class="dg-tbl">
+<thead><tr><th>Numéro</th><th>Type</th><th>Client</th><th>Date</th><th>Échéance</th><th class="r">Montant TTC</th><th>Statut</th><th><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0);">Actions</span></th></tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="d" hint-placeholder-count="8">
+<tr>
+<td class="dg-num" style="font-weight: 500;">{{d.num}}</td>
+<td>{{d.type}}</td>
+<td>{{d.client}}</td>
+<td class="dg-num" style="color: var(--muted-foreground);">{{d.date}}</td>
+<td class="dg-num" style="color: {{d.dueColor}};">{{d.due}}</td>
+<td class="r dg-num" style="font-weight: 500;">{{d.amount}}</td>
+<td><x-import component-from-global-scope="DevisUI.Badge" variant="{{d.variant}}">{{d.status}}</x-import></td>
+<td class="r" style="width: 40px; padding: 6px 12px;"><x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon-sm" aria-label="Actions sur {{d.num}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></x-import></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+<sc-if value="{{mob}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{rows}}" as="d" hint-placeholder-count="8">
+<a href="#" class="dg-card" style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 14px; text-decoration: none; color: inherit;">
+<span style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; line-height: 20px; font-weight: 500;">{{d.client}}</span><span class="dg-num" style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{d.type}} {{d.num}} · {{d.date}}</span><span class="dg-num" style="font-size: 12px; line-height: 16px; color: {{d.dueColor}};">{{d.dueLabel}}</span></span>
+<span style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;"><span class="dg-num" style="font-size: 14px; line-height: 20px; font-weight: 600;">{{d.amount}}</span><x-import component-from-global-scope="DevisUI.Badge" variant="{{d.variant}}">{{d.status}}</x-import></span>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{empty}}" hint-placeholder-val="{{false}}">
+<div style="padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; border: 1.5px dashed var(--border); border-radius: var(--radius-xl);">
+<span style="font-family: var(--font-heading); font-size: 18px; line-height: 26px; font-weight: 600;">Aucun document dans cet onglet</span>
+<span style="max-width: 28rem; font-size: 14px; line-height: 20px; color: var(--muted-foreground);">Changez de filtre ou créez un nouveau document.</span>
+</div>
+</sc-if>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+<span class="dg-num" style="font-size: 13px; line-height: 20px; color: var(--muted-foreground);">{{range}}</span>
+<div style="display: flex; gap: 8px;">
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" disabled="{{yes}}">Précédent</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline">Suivant</x-import>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mobile":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { w: (typeof window !== 'undefined' && window.innerWidth) || 1440, tab: 'tous' };
+}
+componentDidMount() {
+var self = this;
+this._onResize = function () { self.setState({ w: window.innerWidth }); };
+window.addEventListener('resize', this._onResize);
+this._onResize();
+}
+componentWillUnmount() { window.removeEventListener('resize', this._onResize); }
+renderVals() {
+var self = this;
+var m = !!this.props.mobile || this.state.w < 700;
+var late = 'var(--destructive)', soft = 'var(--muted-foreground)';
+var all = [
+{ num: 'F-2026-041', type: 'Facture', client: 'Atelier Nord', date: '21/10/2026', due: '20/11/2026', dueLabel: 'Échéance 20/11/2026', dueColor: soft, amount: '1 200,00 €', status: 'À encaisser', variant: 'secondary', tabs: ['emis', 'encaisser'] },
+{ num: 'D-2026-019', type: 'Devis', client: 'Studio Lumen', date: '20/10/2026', due: '19/11/2026', dueLabel: 'Valable jusqu’au 19/11/2026', dueColor: soft, amount: '2 450,00 €', status: 'Envoyé', variant: 'outline', tabs: ['emis'] },
+{ num: 'D-2026-018', type: 'Devis', client: 'Bureau Ouest', date: '15/10/2026', due: '14/11/2026', dueLabel: 'Valable jusqu’au 14/11/2026', dueColor: soft, amount: '3 200,00 €', status: 'Envoyé', variant: 'outline', tabs: ['emis'] },
+{ num: 'F-2026-040', type: 'Facture', client: 'Café des Arts', date: '12/10/2026', due: '12/10/2026', dueLabel: 'Payée le 14/10/2026', dueColor: soft, amount: '640,00 €', status: 'Payée', variant: 'success', tabs: ['emis', 'payes'] },
+{ num: 'F-2026-036', type: 'Facture', client: 'Maison Ravel', date: '14/09/2026', due: '14/10/2026', dueLabel: 'En retard de 12 jours', dueColor: late, amount: '980,00 €', status: 'En retard', variant: 'warning', tabs: ['emis', 'encaisser'] },
+{ num: 'F-2026-034', type: 'Facture', client: 'Bureau Ouest', date: '20/09/2026', due: '20/10/2026', dueLabel: 'En retard de 6 jours', dueColor: late, amount: '840,00 €', status: 'En retard', variant: 'warning', tabs: ['emis', 'encaisser'] },
+{ num: 'A-2026-003', type: 'Avoir', client: 'Café des Arts', date: '05/10/2026', due: '—', dueLabel: 'Sur F-2026-031', dueColor: soft, amount: '−120,00 €', status: 'Émis', variant: 'outline', tabs: ['emis', 'avoirs'] },
+{ num: 'Brouillon', type: 'Facture', client: 'Atelier Nord', date: '—', due: '—', dueLabel: 'Non émis', dueColor: soft, amount: '380,00 €', status: 'Brouillon', variant: 'muted', tabs: ['brouillons'] }
+];
+var defs = [['tous', 'Tous', 42], ['brouillons', 'Brouillons', 2], ['emis', 'Émis', 38], ['encaisser', 'À encaisser', 3], ['payes', 'Payés', 29], ['avoirs', 'Avoirs', 2]];
+var t = this.state.tab;
+var rows = t === 'tous' ? all : all.filter(function (r) { return r.tabs.indexOf(t) > -1; });
+return {
+desk: !m, mob: m, yes: true,
+pad: m ? '20px 16px 32px' : '32px 24px 48px',
+tabs: defs.map(function (d) { return { label: d[1], count: d[2], sel: t === d[0] ? 'true' : 'false', pick: function () { self.setState({ tab: d[0] }); } }; }),
+rows: rows,
+empty: rows.length === 0,
+range: rows.length ? ('1–' + rows.length + ' sur ' + (defs.filter(function (d) { return d[0] === t; })[0][2])) : '0 résultat'
+};
+}
+}
+</script>
+</body>
+</html>

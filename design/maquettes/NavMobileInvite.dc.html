@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Barre de navigation mobile, invité</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root a:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--ring)}
+.dg-root .dg-touch{width:44px;height:44px}
+.dg-brand{color:var(--foreground);text-decoration:none}
+</style>
+</helmet>
+<header class="dg-root" style="width: 100%; height: 60px; box-sizing: border-box; padding: 0 8px 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--font-sans); color: var(--foreground); border-bottom: 1px solid var(--border); background-color: color-mix(in oklab, var(--background) 85%, transparent); backdrop-filter: blur(8px);">
+<a href="#" class="dg-brand" style="display: flex; align-items: center; gap: 8px; min-width: 0; border-radius: 6px;">
+<svg width="28" height="28" viewBox="0 0 64 64" fill="none" aria-hidden="true" style="flex-shrink: 0;"><rect width="64" height="64" rx="14" fill="#1b3a4b"></rect><path d="M18 16h22c2.2 0 4 1.8 4 4v28c0 1.1-.9 2-2 2H20c-2.2 0-4-1.8-4-4V20c0-2.2 1.8-4 4-4z" fill="#e8f4f2"></path><path d="M40 16v8c0 1.1.9 2 2 2h8" stroke="#2f6f6a" stroke-width="2"></path><path d="M22 28h16M22 34h14M22 40h10" stroke="#1b3a4b" stroke-width="2" stroke-linecap="round"></path><circle cx="46" cy="46" r="10" fill="#2f9e94"></circle><path d="M42.5 46.2l2.6 2.6 4.8-5.2" stroke="#e8f4f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.025em; white-space: nowrap;">Devis Generator : VIBED</span>
+</a>
+<div style="display: flex; align-items: center; gap: 2px; flex-shrink: 0;">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" class="dg-touch" aria-label="Passer en thème sombre">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Button" variant="outline" size="icon" class="dg-touch" aria-label="Ouvrir le menu" aria-expanded="false">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="18" y2="18"></line></svg>
+</x-import>
+</div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":60}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

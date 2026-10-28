@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Nouveau devis</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-resize{position:relative;flex:0 0 9px;margin:0 -4px;z-index:2;border:0;padding:0;background:transparent;cursor:col-resize;touch-action:none}
+.dg-resize::before{content:"";position:absolute;top:0;bottom:0;left:4px;width:1px;background-color:var(--border);transition:background-color 150ms,width 150ms,left 150ms}
+.dg-resize::after{content:"";position:absolute;top:50%;left:1px;width:7px;height:32px;margin-top:-16px;box-sizing:border-box;border-radius:4px;background-color:var(--card);border:1px solid var(--border);transition:border-color 150ms}
+.dg-resize:hover::before,.dg-resize:focus-visible::before,.dg-resize[data-dragging="true"]::before{left:3px;width:3px;background-color:var(--ring)}
+.dg-resize:hover::after,.dg-resize:focus-visible::after,.dg-resize[data-dragging="true"]::after{border-color:var(--ring)}
+.dg-resize:focus-visible{outline:none}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; height: 100vh; min-height: 640px; display: flex; flex-direction: column; overflow: hidden; user-select: {{userSelect}}; cursor: {{cursor}}; font-family: var(--font-sans); color: var(--foreground); background-color: var(--background);">
+<dc-import name="Main" active="documents" hint-size="100%,64px"></dc-import>
+<dc-import name="EditorDocBar" kind="{{kind}}" on-pick="{{pickKind}}" hint-size="100%,56px"></dc-import>
+<main id="contenu" style="flex: 1 1 0; min-height: 0; display: flex;">
+<sc-if value="{{formOpen}}" hint-placeholder-val="{{true}}">
+<div style="flex: 0 0 {{formWpx}}; min-width: 0; display: flex; flex-direction: column; background-color: var(--background);">
+<div style="flex: 1 1 0; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+<dc-import name="EditorInfos" kind="{{kind}}" hint-size="100%,220px"></dc-import>
+<dc-import name="EditorParties" on-new-client="{{openClient}}" on-edit-issuer="{{openIssuer}}" hint-size="100%,230px"></dc-import>
+<dc-import name="EditorLignes" kind="{{kind}}" hint-size="100%,460px"></dc-import>
+<dc-import name="EditorConditions" kind="{{kind}}" hint-size="100%,320px"></dc-import>
+</div>
+<dc-import name="EditorTotaux" kind="{{kind}}" hint-size="100%,72px"></dc-import>
+</div>
+<button type="button" class="dg-resize" aria-label="Redimensionner le formulaire (flèches gauche et droite, double-clic pour réinitialiser)" title="Glisser pour redimensionner, double-cliquer pour réinitialiser" data-dragging="{{dragging}}" onPointerDown="{{startDrag}}" onKeyDown="{{onResizeKey}}" onDoubleClick="{{resetWidth}}"></button>
+</sc-if>
+<div style="flex: 1 1 0; min-width: 0; min-height: 0;">
+<dc-import name="EditorApercu" kind="{{kind}}" h="{{previewH}}" form-open="{{formOpen}}" on-toggle-form="{{toggleForm}}" hint-size="100%,100%"></dc-import>
+</div>
+</main>
+<sc-if value="{{modalClient}}" hint-placeholder-val="{{false}}">
+<div style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; box-sizing: border-box; padding: 24px; display: flex; align-items: center; justify-content: center;">
+<button type="button" aria-label="Fermer la fenêtre" onClick="{{closeModal}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 0; margin: 0; padding: 0; cursor: default; background-color: color-mix(in oklab, var(--foreground) 35%, transparent);"></button>
+<div style="position: relative; width: 100%; max-width: 560px;">
+<dc-import name="EditorModalClient" on-close="{{closeModal}}" hint-size="100%,760px"></dc-import>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{modalIssuer}}" hint-placeholder-val="{{false}}">
+<div style="position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; box-sizing: border-box; padding: 24px; display: flex; align-items: center; justify-content: center;">
+<button type="button" aria-label="Fermer la fenêtre" onClick="{{closeModal}}" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; border: 0; margin: 0; padding: 0; cursor: default; background-color: color-mix(in oklab, var(--foreground) 35%, transparent);"></button>
+<div style="position: relative; width: 100%; max-width: 560px;">
+<dc-import name="EditorModalEmetteur" on-close="{{closeModal}}" hint-size="100%,800px"></dc-import>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { formOpen: true, formW: 600, dragging: false, kind: props.kind || 'devis', modal: props.modal || null };
+}
+componentDidUpdate(prev) {
+if (prev.kind !== this.props.kind && this.props.kind) this.setState({ kind: this.props.kind });
+}
+clampW(w) {
+var vw = (typeof window !== 'undefined' && window.innerWidth) || 1440;
+var max = Math.max(420, vw - 480);
+return Math.min(max, Math.max(420, Math.round(w)));
+}
+renderVals() {
+var self = this;
+return {
+kind: this.state.kind,
+modalClient: this.state.modal === 'client',
+modalIssuer: this.state.modal === 'emetteur',
+openClient: function () { self.setState({ modal: 'client' }); },
+openIssuer: function () { self.setState({ modal: 'emetteur' }); },
+closeModal: function () { self.setState({ modal: null }); },
+pickKind: function (k) { self.setState({ kind: k }); },
+formOpen: this.state.formOpen,
+formWpx: this.state.formW + 'px',
+dragging: this.state.dragging ? 'true' : 'false',
+userSelect: this.state.dragging ? 'none' : 'auto',
+cursor: this.state.dragging ? 'col-resize' : 'auto',
+startDrag: function (e) {
+if (e.button !== undefined && e.button !== 0) return;
+e.preventDefault();
+var startX = e.clientX;
+var startW = self.state.formW;
+function move(ev) { self.setState({ formW: self.clampW(startW + ev.clientX - startX) }); }
+function up() {
+window.removeEventListener('pointermove', move);
+window.removeEventListener('pointerup', up);
+window.removeEventListener('pointercancel', up);
+self.setState({ dragging: false });
+}
+window.addEventListener('pointermove', move);
+window.addEventListener('pointerup', up);
+window.addEventListener('pointercancel', up);
+self.setState({ dragging: true });
+},
+onResizeKey: function (e) {
+var step = e.shiftKey ? 64 : 16;
+var w = self.state.formW;
+if (e.key === 'ArrowLeft') w -= step;
+else if (e.key === 'ArrowRight') w += step;
+else if (e.key === 'Home') w = 420;
+else if (e.key === 'End') w = 99999;
+else return;
+e.preventDefault();
+self.setState({ formW: self.clampW(w) });
+},
+resetWidth: function () { self.setState({ formW: 600 }); },
+previewH: 'calc(max(100vh, 640px) - 120px)',
+toggleForm: function () { self.setState({ formOpen: !self.state.formOpen }); }
+};
+}
+}
+</script>
+</body>
+</html>

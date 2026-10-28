@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Informations du document</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-num{text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<section class="dg-root" aria-labelledby="infos-titre" style="width: 100%; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 14px; font-family: var(--font-sans); color: var(--foreground); background-color: oklch(0.965 0.022 240); border: 1px solid oklch(0.86 0.05 240); border-radius: var(--radius-xl);">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+<h2 id="infos-titre" style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em;"><span aria-hidden="true" style="display: inline-flex; vertical-align: middle; margin: -2px 8px 0 0; width: 24px; height: 24px; border-radius: 6px; align-items: center; justify-content: center; color: #ffffff; background-color: oklch(0.5 0.1 240);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg></span>Informations</h2>
+<span style="font-size: 12px; line-height: 16px; color: var(--muted-foreground);">Numéro attribué à l’émission</span>
+</div>
+<sc-if value="{{isAcompte}}" hint-placeholder-val="{{false}}">
+<div style="display: grid; grid-template-columns: {{acompteCols}}; gap: 12px; align-items: end;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Devis d’origine</span>
+<select class="dg-input" style="cursor: pointer;">
+<option>Devis du 26/10/2026 · Refonte du site vitrine</option>
+</select>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Acompte</span>
+<div style="display: flex; align-items: center; gap: 8px;">
+<x-import component-from-global-scope="DevisUI.Input" default-value="30 %" aria-label="Pourcentage d’acompte" class="dg-num" style="width: 80px;"></x-import>
+<span style="font-size: 13px; line-height: 18px; font-weight: 400; color: var(--muted-foreground); white-space: nowrap;">soit 735,00 €</span>
+</div>
+</x-import>
+</div>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Objet</span>
+<x-import component-from-global-scope="DevisUI.Input" default-value="{{objet}}"></x-import>
+</x-import>
+<div style="display: grid; grid-template-columns: {{dateCols}}; gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Date d’émission</span>
+<x-import component-from-global-scope="DevisUI.Input" type="date" default-value="2026-10-26"></x-import>
+</x-import>
+<sc-if value="{{isFacture}}" hint-placeholder-val="{{false}}">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Date de la prestation</span>
+<x-import component-from-global-scope="DevisUI.Input" type="date" default-value="2026-10-23"></x-import>
+</x-import>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>{{secondDate}}</span>
+<x-import component-from-global-scope="DevisUI.Input" type="date" default-value="{{secondValue}}"></x-import>
+</x-import>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"compact":{"editor":"boolean","default":false},"$preview":{"width":600,"height":220}}'>
+class Component extends DCLogic {
+renderVals() {
+var k = this.props.kind || 'devis';
+var c = !!this.props.compact;
+return {
+isFacture: k === 'facture',
+isAcompte: k === 'acompte',
+objet: k === 'acompte' ? 'Acompte : refonte du site vitrine' : 'Refonte du site vitrine',
+secondDate: k === 'devis' ? 'Valable jusqu’au' : 'Date d’échéance',
+secondValue: k === 'devis' ? '2026-11-25' : '2026-11-25',
+dateCols: (k === 'facture' && !c) ? 'repeat(3, minmax(0, 1fr))' : 'repeat(2, minmax(0, 1fr))',
+acompteCols: c ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) auto'
+};
+}
+}
+</script>
+</body>
+</html>

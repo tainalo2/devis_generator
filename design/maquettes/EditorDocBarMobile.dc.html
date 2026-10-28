@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Barre du document, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root .dg-touch{width:44px;height:44px}
+</style>
+</helmet>
+<div class="dg-root" style="width: 100%; height: 52px; box-sizing: border-box; padding: 0 4px; display: flex; align-items: center; gap: 4px; font-family: var(--font-sans); color: var(--foreground); background-color: var(--card); border-bottom: 1px solid var(--border);">
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" class="dg-touch" aria-label="Retour aux documents">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+</x-import>
+<div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;">
+<h1 style="margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 22px; font-weight: 600; letter-spacing: -0.025em;">{{title}}</h1>
+<x-import component-from-global-scope="DevisUI.Badge" variant="muted">Brouillon</x-import>
+</div>
+<x-import component-from-global-scope="DevisUI.Button" variant="ghost" size="icon" class="dg-touch" aria-label="Actions du document : type, enregistrer, émettre" aria-haspopup="menu">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+</x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"$preview":{"width":390,"height":52}}'>
+class Component extends DCLogic {
+renderVals() {
+var k = this.props.kind || 'devis';
+var titles = { devis: 'Nouveau devis', facture: 'Nouvelle facture', acompte: 'Nouvelle facture d’acompte' };
+return { title: titles[k] };
+}
+}
+</script>
+</body>
+</html>

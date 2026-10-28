@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Confidentialité, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:1440px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:12px 16px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:14px;line-height:20px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:64px;justify-content:center;padding:0 24px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.m{flex:1;width:100%;max-width:1088px;margin:0 auto;box-sizing:border-box;padding:40px 32px;display:flex;flex-direction:column;gap:20px}
+.row{display:flex;gap:32px}
+.p{height:12px;border-radius:4px;background-color:rgb(255 255 255 / 0.7)}
+</style>
+</helmet>
+<div class="wf" style="height: 1200px;">
+<div class="z n"><b>Barre de navigation · invité</b><span>ou connectée selon l’état</span></div>
+<div class="m">
+<div class="z c1" style="height: 96px; justify-content: center;"><b>En-tête de page</b><span>titre « Politique de confidentialité », date de dernière mise à jour</span></div>
+<div class="z c2" style="height: 110px;"><b>L’essentiel en bref</b><span>3 points : mode invité sans conservation, données chiffrées (IBAN, adresses), export et suppression à tout moment</span></div>
+<div class="row" style="flex: 1;">
+<div class="z c7" style="width: 240px; flex-shrink: 0; align-self: flex-start; height: 300px;"><b>Sommaire</b><span>Responsable · Données collectées · Finalités · Durée de conservation · Sécurité · Vos droits · Contact</span></div>
+<div class="z c3" style="flex: 1; max-width: 680px; gap: 10px;">
+<b>Texte (style prose-sm, largeur de lecture)</b>
+<span>Données collectées : compte, émetteur, clients, documents</span>
+<div class="p"></div><div class="p" style="width: 85%;"></div><div class="p" style="width: 65%;"></div>
+<span style="margin-top: 12px;">Durée de conservation : tant que le compte existe ; obligations comptables</span>
+<div class="p"></div><div class="p" style="width: 75%;"></div>
+<span style="margin-top: 12px;">Vos droits : accès, rectification, export, suppression ; lien vers « Mon compte »</span>
+<div class="p"></div><div class="p" style="width: 90%;"></div><div class="p" style="width: 55%;"></div>
+</div>
+</div>
+</div>
+<div class="z" style="flex-shrink: 0; height: 200px; border-radius: 0; border-width: 1.5px 0 0 0; background-color: #e3e7ec; border-color: #8a96a3; padding: 16px 24px;"><b>Pied de page</b><span>le même que sur la landing</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

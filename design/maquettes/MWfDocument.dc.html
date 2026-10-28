@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Détail d’un document mobile, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:390px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:10px 12px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:13px;line-height:18px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:60px;justify-content:center;padding:0 16px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.m{flex:1;box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:12px}
+</style>
+</helmet>
+<div class="wf" style="height: 1200px;">
+<div class="z n"><b>Barre de navigation mobile</b><span>logo, thème, menu</span></div>
+<div class="z c1" style="flex-shrink: 0; height: 56px; border-radius: 0; border-width: 0 0 1.5px 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 12px;"><div style="display: flex; flex-direction: column; gap: 2px;"><b>Barre du document émis</b><span>retour, n°, badge de statut</span></div><span>menu ⋯ : avoir, dupliquer, envoyer</span></div>
+<div class="m">
+<div class="z c2" style="height: 150px;"><b>Statut et paiement</b><span>frise émis → envoyé → payé, montant dû, échéance</span></div>
+<div class="z c6" style="height: 320px;"><b>Aperçu PDF (miniature)</b><span>page entière réduite ; toucher pour ouvrir en plein écran</span>
+<div style="flex: 1; display: flex; justify-content: center; padding-top: 6px;"><div style="height: 100%; aspect-ratio: 210 / 297; border-radius: 4px; background-color: #ffffff; border: 1px solid #c3d0db;"></div></div>
+</div>
+<div class="z c3" style="height: 100px;"><b>Client</b><span>nom, SIREN, lien vers la fiche</span></div>
+<div class="z c4" style="height: 130px;"><b>Documents liés</b><span>devis d’origine, acomptes, avoirs</span></div>
+<div class="z c7" style="flex: 1;"><b>Historique</b><span>dépliable, du plus récent au plus ancien</span></div>
+</div>
+<div class="z c1" style="flex-shrink: 0; height: 76px; border-radius: 0; border-width: 1.5px 0 0 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 0 16px;"><div style="display: flex; flex-direction: column; gap: 2px;"><b>Barre fixe d’action</b><span>montant dû</span></div><span>Télécharger · « Marquer comme payée »</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1200}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

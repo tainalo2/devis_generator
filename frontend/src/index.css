@@ -1,0 +1,215 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/fraunces";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: "Fraunces Variable", "Fraunces", Georgia, serif;
+    --font-sans: "Geist Variable", "Geist", ui-sans-serif, sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --color-brand: var(--brand);
+    --color-brand-foreground: var(--brand-foreground);
+    --color-zone-infos: var(--zone-infos);
+    --color-zone-infos-border: var(--zone-infos-border);
+    --color-zone-infos-icon: var(--zone-infos-icon);
+    --color-zone-parties: var(--zone-parties);
+    --color-zone-parties-border: var(--zone-parties-border);
+    --color-zone-parties-icon: var(--zone-parties-icon);
+    --color-zone-lines: var(--zone-lines);
+    --color-zone-lines-border: var(--zone-lines-border);
+    --color-zone-lines-item: var(--zone-lines-item);
+    --color-zone-lines-icon: var(--zone-lines-icon);
+    --color-zone-terms: var(--zone-terms);
+    --color-zone-terms-border: var(--zone-terms-border);
+    --color-zone-terms-icon: var(--zone-terms-icon);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* Identité : encre ardoise + accent bleu-vert (pas violet, pas crème/terracotta). */
+:root {
+    --background: oklch(0.985 0.008 220);
+    --foreground: oklch(0.22 0.03 240);
+    --card: oklch(0.995 0.004 220);
+    --card-foreground: oklch(0.22 0.03 240);
+    --popover: oklch(0.995 0.004 220);
+    --popover-foreground: oklch(0.22 0.03 240);
+    --primary: oklch(0.32 0.05 240);
+    --primary-foreground: oklch(0.98 0.01 220);
+    --secondary: oklch(0.94 0.015 200);
+    --secondary-foreground: oklch(0.28 0.04 240);
+    --muted: oklch(0.945 0.012 210);
+    --muted-foreground: oklch(0.48 0.025 240);
+    --accent: oklch(0.93 0.03 195);
+    --accent-foreground: oklch(0.28 0.05 220);
+    --destructive: oklch(0.55 0.2 25);
+    --border: oklch(0.88 0.015 220);
+    --input: oklch(0.9 0.015 220);
+    --ring: oklch(0.55 0.08 200);
+    --brand: oklch(0.48 0.1 195);
+    --brand-foreground: oklch(0.98 0.01 195);
+    --chart-1: oklch(0.55 0.1 195);
+    --chart-2: oklch(0.45 0.06 240);
+    --chart-3: oklch(0.65 0.08 160);
+    --chart-4: oklch(0.4 0.04 240);
+    --chart-5: oklch(0.7 0.05 80);
+    --radius: 0.5rem;
+    --sidebar: oklch(0.97 0.012 220);
+    --sidebar-foreground: oklch(0.25 0.03 240);
+    --sidebar-primary: oklch(0.42 0.09 195);
+    --sidebar-primary-foreground: oklch(0.98 0.01 195);
+    --sidebar-accent: oklch(0.93 0.025 200);
+    --sidebar-accent-foreground: oklch(0.28 0.04 240);
+    --sidebar-border: oklch(0.88 0.015 220);
+    --sidebar-ring: oklch(0.55 0.08 200);
+    /* Zones de l'éditeur : une teinte par bloc (infos, parties, lignes, conditions). */
+    --zone-infos: oklch(0.965 0.022 240);
+    --zone-infos-border: oklch(0.86 0.05 240);
+    --zone-infos-icon: oklch(0.5 0.1 240);
+    --zone-parties: oklch(0.965 0.03 155);
+    --zone-parties-border: oklch(0.85 0.06 155);
+    --zone-parties-icon: oklch(0.5 0.1 155);
+    --zone-lines: oklch(0.97 0.035 80);
+    --zone-lines-border: oklch(0.85 0.07 80);
+    --zone-lines-item: oklch(0.88 0.05 80);
+    --zone-lines-icon: oklch(0.52 0.1 70);
+    --zone-terms: oklch(0.965 0.025 200);
+    --zone-terms-border: oklch(0.85 0.05 200);
+    --zone-terms-icon: oklch(0.5 0.09 200);
+}
+
+.dark {
+    --background: oklch(0.18 0.025 240);
+    --foreground: oklch(0.95 0.01 220);
+    --card: oklch(0.22 0.03 240);
+    --card-foreground: oklch(0.95 0.01 220);
+    --popover: oklch(0.22 0.03 240);
+    --popover-foreground: oklch(0.95 0.01 220);
+    --primary: oklch(0.82 0.05 195);
+    --primary-foreground: oklch(0.2 0.03 240);
+    --secondary: oklch(0.28 0.03 240);
+    --secondary-foreground: oklch(0.95 0.01 220);
+    --muted: oklch(0.26 0.025 240);
+    --muted-foreground: oklch(0.72 0.02 220);
+    --accent: oklch(0.3 0.04 200);
+    --accent-foreground: oklch(0.95 0.01 195);
+    --destructive: oklch(0.68 0.18 25);
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 14%);
+    --ring: oklch(0.65 0.08 195);
+    --brand: oklch(0.7 0.1 195);
+    --brand-foreground: oklch(0.18 0.03 240);
+    --chart-1: oklch(0.7 0.1 195);
+    --chart-2: oklch(0.65 0.06 240);
+    --chart-3: oklch(0.7 0.08 160);
+    --chart-4: oklch(0.55 0.04 240);
+    --chart-5: oklch(0.75 0.05 80);
+    --sidebar: oklch(0.2 0.03 240);
+    --sidebar-foreground: oklch(0.95 0.01 220);
+    --sidebar-primary: oklch(0.7 0.1 195);
+    --sidebar-primary-foreground: oklch(0.18 0.03 240);
+    --sidebar-accent: oklch(0.28 0.035 220);
+    --sidebar-accent-foreground: oklch(0.95 0.01 220);
+    --sidebar-border: oklch(1 0 0 / 12%);
+    --sidebar-ring: oklch(0.65 0.08 195);
+    --zone-infos: oklch(0.235 0.03 240);
+    --zone-infos-border: oklch(0.36 0.05 240);
+    --zone-infos-icon: oklch(0.55 0.1 240);
+    --zone-parties: oklch(0.235 0.03 175);
+    --zone-parties-border: oklch(0.36 0.05 160);
+    --zone-parties-icon: oklch(0.52 0.09 155);
+    --zone-lines: oklch(0.24 0.025 80);
+    --zone-lines-border: oklch(0.38 0.05 80);
+    --zone-lines-item: oklch(0.34 0.04 80);
+    --zone-lines-icon: oklch(0.55 0.1 70);
+    --zone-terms: oklch(0.235 0.03 200);
+    --zone-terms-border: oklch(0.36 0.05 200);
+    --zone-terms-icon: oklch(0.52 0.08 200);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(1200px 600px at 10% -10%, color-mix(in oklch, var(--brand) 12%, transparent), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, color-mix(in oklch, var(--accent) 55%, transparent), transparent 55%);
+    background-attachment: fixed;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, .font-heading {
+    font-family: var(--font-heading);
+    font-optical-sizing: auto;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .animate-fade-up {
+    animation: fade-up 0.55s ease-out both;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.45s ease-out both;
+  }
+  .animate-soft-pulse {
+    animation: soft-pulse 3.5s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.03); }
+}

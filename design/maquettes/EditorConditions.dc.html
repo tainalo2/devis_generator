@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Conditions et notes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/devisui/components/bundle.css">
+<script src="ds/devisui/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Fraunces Variable";src:url("ds/devisui/fonts/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.dg-root{--font-heading:"Fraunces Variable","Fraunces",Georgia,serif;--font-sans:"Geist Variable","Geist",ui-sans-serif,sans-serif;--radius:0.5rem;--radius-md:calc(var(--radius)*0.8);--radius-lg:var(--radius);--radius-xl:calc(var(--radius)*1.4);--radius-2xl:calc(var(--radius)*1.8);
+--background:oklch(0.985 0.008 220);--foreground:oklch(0.22 0.03 240);--card:oklch(0.995 0.004 220);--popover:oklch(0.995 0.004 220);--primary:oklch(0.32 0.05 240);--primary-foreground:oklch(0.98 0.01 220);--secondary:oklch(0.94 0.015 200);--secondary-foreground:oklch(0.28 0.04 240);--muted:oklch(0.945 0.012 210);--muted-foreground:oklch(0.48 0.025 240);--accent:oklch(0.93 0.03 195);--destructive:oklch(0.55 0.2 25);--border:oklch(0.88 0.015 220);--input:oklch(0.9 0.015 220);--ring:oklch(0.55 0.08 200);--brand:oklch(0.48 0.1 195);--brand-foreground:oklch(0.98 0.01 195)}
+.dg-root textarea.dg-input{height:76px;padding:8px 12px;resize:vertical;font-family:var(--font-sans)}
+.dg-check{display:flex;align-items:center;gap:8px;font-size:14px;line-height:20px;font-weight:500;cursor:pointer}
+.dg-check input{width:16px;height:16px;margin:0;accent-color:var(--primary)}
+</style>
+</helmet>
+<section class="dg-root" aria-labelledby="conditions-titre" style="width: 100%; box-sizing: border-box; padding: 16px; display: flex; flex-direction: column; gap: 14px; font-family: var(--font-sans); color: var(--foreground); background-color: oklch(0.965 0.025 200); border: 1px solid oklch(0.85 0.05 200); border-radius: var(--radius-xl);">
+<h2 id="conditions-titre" style="margin: 0; font-family: var(--font-heading); font-optical-sizing: auto; font-size: 16px; line-height: 24px; font-weight: 600; letter-spacing: -0.025em;"><span aria-hidden="true" style="display: inline-flex; vertical-align: middle; margin: -2px 8px 0 0; width: 24px; height: 24px; border-radius: 6px; align-items: center; justify-content: center; color: #ffffff; background-color: oklch(0.5 0.09 200);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"></path><path d="M7 21h10"></path><path d="M12 3v18"></path><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"></path></svg></span>Conditions et notes</h2>
+<div style="display: grid; grid-template-columns: {{cols}}; gap: 12px;">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Régime de TVA</span>
+<select class="dg-input" style="cursor: pointer;">
+<option>Franchise en base (art. 293 B)</option>
+<option>TVA par ligne</option>
+</select>
+</x-import>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Conditions de paiement</span>
+<x-import component-from-global-scope="DevisUI.Input" default-value="{{terms}}"></x-import>
+</x-import>
+</div>
+<sc-if value="{{isInvoice}}" hint-placeholder-val="{{false}}">
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Pénalités de retard</span>
+<x-import component-from-global-scope="DevisUI.Input" default-value="Trois fois le taux d’intérêt légal"></x-import>
+</x-import>
+<label class="dg-check"><input type="checkbox" checked="checked" />Afficher l’IBAN sur la facture</label>
+</sc-if>
+<x-import component-from-global-scope="DevisUI.Label">
+<span>Notes</span>
+<textarea class="dg-input" placeholder="Visibles sur le document, sous les lignes"></textarea>
+</x-import>
+<p style="margin: 0; font-size: 12px; line-height: 16px; color: var(--muted-foreground);">{{legal}}</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["devis","facture","acompte"],"default":"devis"},"compact":{"editor":"boolean","default":false},"$preview":{"width":600,"height":320}}'>
+class Component extends DCLogic {
+renderVals() {
+var k = this.props.kind || 'devis';
+var c = !!this.props.compact;
+var inv = k !== 'devis';
+return {
+cols: c ? 'minmax(0, 1fr)' : 'repeat(2, minmax(0, 1fr))',
+isInvoice: inv,
+terms: inv ? 'Paiement à 30 jours' : 'Paiement à réception',
+legal: inv
+? 'Ajoutées au document : « TVA non applicable, art. 293 B du CGI », l’indemnité forfaitaire de 40 € pour frais de recouvrement et l’absence d’escompte pour paiement anticipé.'
+: 'La mention « TVA non applicable, art. 293 B du CGI » est ajoutée au document.'
+};
+}
+}
+</script>
+</body>
+</html>

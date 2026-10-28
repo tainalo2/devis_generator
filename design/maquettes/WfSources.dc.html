@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Sources légales, zonage</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+@font-face{font-family:"Geist Variable";src:url("ds/devisui/fonts/geist-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap}
+.wf{width:1440px;box-sizing:border-box;display:flex;flex-direction:column;font-family:"Geist Variable",ui-sans-serif,sans-serif;color:#1f2d3a;background-color:#f7f9fa}
+.z{box-sizing:border-box;padding:12px 16px;display:flex;flex-direction:column;gap:4px;border-radius:10px;border:1.5px dashed}
+.z b{font-size:14px;line-height:20px}
+.z span{font-size:12px;line-height:16px;color:#5b6b78}
+.n{flex-shrink:0;height:64px;justify-content:center;padding:0 24px;border-radius:0;border-width:0 0 1.5px 0;background-color:#e3e7ec;border-color:#8a96a3}
+.c1{background-color:#dfe3f3;border-color:#6b76b8}
+.c2{background-color:#d8eeec;border-color:#3f8f88}
+.c3{background-color:#dcefe0;border-color:#4f9a62}
+.c4{background-color:#f4ead6;border-color:#b38a3d}
+.c5{background-color:#dde8f3;border-color:#5d7f9c}
+.c6{background-color:#d3ecef;border-color:#2f8c97}
+.c7{background-color:#efe9e1;border-color:#9a8a75}
+.c8{background-color:#f6e1df;border-color:#b5544a}
+.m{flex:1;width:100%;max-width:1088px;margin:0 auto;box-sizing:border-box;padding:32px;display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:16px}
+</style>
+</helmet>
+<div class="wf" style="height: 1100px;">
+<div class="z n"><b>Barre de navigation · connecté ou invité</b><span>page accessible sans compte ; lien dans le menu du compte et le pied de page</span></div>
+<div class="m">
+<div class="z c1" style="height: 96px; justify-content: center;"><b>En-tête de page</b><span>titre « Sources légales », phrase : d’où viennent les taux, contrôles et mentions utilisés par l’outil</span></div>
+<div class="row" style="height: 140px;">
+<div class="z c6" style="flex: 1;"><b>Recherche d’entreprises</b><span>statut (badge), dernière mise à jour</span></div>
+<div class="z c6" style="flex: 1;"><b>VIES</b><span>contrôle des n° de TVA, statut</span></div>
+<div class="z c6" style="flex: 1;"><b>TEDB</b><span>taux de TVA de l’UE, statut</span></div>
+<div class="z c6" style="flex: 1;"><b>BCE</b><span>taux d’intérêt (pénalités), statut</span></div>
+</div>
+<div class="z c4" style="height: 220px;"><b>Taux de TVA en vigueur</b><span>tableau : taux, usage courant, source et date ; mention de la franchise en base (art. 293 B)</span></div>
+<div class="z c5" style="height: 200px;"><b>Calendrier de la facturation électronique</b><span>frise : obligations de réception puis d’émission, dont l’étape micro-entrepreneurs (1er sept. 2027) ; état Factur-X dans l’outil</span></div>
+<div class="z c3" style="flex: 1;"><b>Mentions obligatoires par type de document</b><span>devis, facture, facture d’acompte, avoir : liste des mentions et la façon dont l’outil les ajoute</span></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

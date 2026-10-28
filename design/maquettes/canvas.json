@@ -1,0 +1,516 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "AltCourt.dc.html": {
+      "h": 64,
+      "title": "A · Libellés courts",
+      "w": 1280,
+      "x": 0,
+      "y": 852
+    },
+    "AltDeuxNiveaux.dc.html": {
+      "h": 108,
+      "title": "C · Deux niveaux",
+      "w": 1280,
+      "x": 0,
+      "y": 1476
+    },
+    "AltMenu.dc.html": {
+      "h": 320,
+      "title": "B · Liens secondaires dans le menu du compte",
+      "w": 1280,
+      "x": 0,
+      "y": 1036
+    },
+    "Artboard-buj2.dc.html": {
+      "h": 600,
+      "page": "page-6d4njy",
+      "title": "Artboard 1",
+      "w": 800,
+      "x": -837,
+      "y": 109
+    },
+    "Artboard-frvg.dc.html": {
+      "h": 900,
+      "page": "page-adcj62",
+      "title": "Éditeur · bureau",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Artboard-h81v.dc.html": {"h": 900, "page": "page-aveq9p", "title": "Tableau de bord · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfDocuments.dc.html": {"h": 900, "page": "page-wfdocs", "title": "Documents · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfDocument.dc.html": {"h": 900, "page": "page-wfdoc", "title": "Détail d’un document · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfClients.dc.html": {"h": 900, "page": "page-wfclients", "title": "Clients · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfClient.dc.html": {"h": 900, "page": "page-wfclient", "title": "Fiche client · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfEntreprise.dc.html": {"h": 1100, "page": "page-wfentreprise", "title": "Entreprise · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfConnexion.dc.html": {"h": 900, "page": "page-wfauth", "title": "Connexion · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfInscription.dc.html": {"h": 900, "page": "page-wfauth", "title": "Inscription · zonage", "w": 1440, "x": 1560, "y": 0},
+    "WfCompte.dc.html": {"h": 900, "page": "page-wfcompte", "title": "Mon compte · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfSources.dc.html": {"h": 1100, "page": "page-wfsources", "title": "Sources légales · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfMentions.dc.html": {"h": 1200, "page": "page-wflegal", "title": "Mentions légales · zonage", "w": 1440, "x": 0, "y": 0},
+    "WfConfidentialite.dc.html": {"h": 1200, "page": "page-wflegal", "title": "Confidentialité · zonage", "w": 1440, "x": 1560, "y": 0},
+    "Wf404.dc.html": {"h": 900, "page": "page-wf404", "title": "Page 404 · zonage", "w": 1440, "x": 0, "y": 0},
+    "MWfDashboard.dc.html": {"h": 1320, "page": "page-aveq9p", "title": "Tableau de bord · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfDocuments.dc.html": {"h": 920, "page": "page-wfdocs", "title": "Documents · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfDocument.dc.html": {"h": 1200, "page": "page-wfdoc", "title": "Détail d’un document · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfClients.dc.html": {"h": 880, "page": "page-wfclients", "title": "Clients · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfClient.dc.html": {"h": 960, "page": "page-wfclient", "title": "Fiche client · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfEntreprise.dc.html": {"h": 1280, "page": "page-wfentreprise", "title": "Entreprise · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfConnexion.dc.html": {"h": 844, "page": "page-wfauth", "title": "Connexion · mobile", "w": 390, "x": 3080, "y": 0},
+    "MWfInscription.dc.html": {"h": 980, "page": "page-wfauth", "title": "Inscription · mobile", "w": 390, "x": 3550, "y": 0},
+    "MWfCompte.dc.html": {"h": 860, "page": "page-wfcompte", "title": "Mon compte · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfSources.dc.html": {"h": 1240, "page": "page-wfsources", "title": "Sources légales · mobile", "w": 390, "x": 1520, "y": 0},
+    "MWfMentions.dc.html": {"h": 1280, "page": "page-wflegal", "title": "Mentions légales · mobile", "w": 390, "x": 3080, "y": 0},
+    "MWfConfidentialite.dc.html": {"h": 1420, "page": "page-wflegal", "title": "Confidentialité · mobile", "w": 390, "x": 3550, "y": 0},
+    "MWf404.dc.html": {"h": 844, "page": "page-wf404", "title": "Page 404 · mobile", "w": 390, "x": 1520, "y": 0},
+    "ScrDashboard.dc.html": {"h": 1000, "page": "page-aveq9p", "title": "Tableau de bord · maquette", "w": 1440, "x": 0, "y": 1700, "expand": "fill"},
+    "ScrDashboardM.dc.html": {"h": 1800, "page": "page-aveq9p", "title": "Tableau de bord · maquette mobile", "w": 390, "x": 1520, "y": 1700},
+    "ScrDocuments.dc.html": {"h": 900, "page": "page-wfdocs", "title": "Documents · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill", "is_interactive": true},
+    "ScrDocumentsM.dc.html": {"h": 1300, "page": "page-wfdocs", "title": "Documents · maquette mobile", "w": 390, "x": 1520, "y": 1300, "is_interactive": true},
+    "ScrDocument.dc.html": {"h": 960, "page": "page-wfdoc", "title": "Détail d’un document · maquette", "w": 1440, "x": 0, "y": 1500, "expand": "fill"},
+    "ScrDocumentM.dc.html": {"h": 1560, "page": "page-wfdoc", "title": "Détail d’un document · maquette mobile", "w": 390, "x": 1520, "y": 1500},
+    "ScrClients.dc.html": {"h": 860, "page": "page-wfclients", "title": "Clients · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill"},
+    "ScrClientsM.dc.html": {"h": 1100, "page": "page-wfclients", "title": "Clients · maquette mobile", "w": 390, "x": 1520, "y": 1300},
+    "ScrClient.dc.html": {"h": 960, "page": "page-wfclient", "title": "Fiche client · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill", "is_interactive": true},
+    "ScrClientM.dc.html": {"h": 1500, "page": "page-wfclient", "title": "Fiche client · maquette mobile", "w": 390, "x": 1520, "y": 1300, "is_interactive": true},
+    "ScrEntreprise.dc.html": {"h": 1560, "page": "page-wfentreprise", "title": "Entreprise · maquette", "w": 1440, "x": 0, "y": 1700, "expand": "fill"},
+    "ScrEntrepriseM.dc.html": {"h": 2500, "page": "page-wfentreprise", "title": "Entreprise · maquette mobile", "w": 390, "x": 1520, "y": 1700},
+    "ScrConnexion.dc.html": {"h": 860, "page": "page-wfauth", "title": "Connexion · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill"},
+    "ScrInscription.dc.html": {"h": 940, "page": "page-wfauth", "title": "Inscription · maquette", "w": 1440, "x": 1560, "y": 1300, "expand": "fill"},
+    "ScrConnexionM.dc.html": {"h": 960, "page": "page-wfauth", "title": "Connexion · maquette mobile", "w": 390, "x": 3080, "y": 1300},
+    "ScrInscriptionM.dc.html": {"h": 1200, "page": "page-wfauth", "title": "Inscription · maquette mobile", "w": 390, "x": 3550, "y": 1300},
+    "ScrCompte.dc.html": {"h": 1180, "page": "page-wfcompte", "title": "Mon compte · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill"},
+    "ScrCompteM.dc.html": {"h": 1500, "page": "page-wfcompte", "title": "Mon compte · maquette mobile", "w": 390, "x": 1520, "y": 1300},
+    "ScrSources.dc.html": {"h": 1560, "page": "page-wfsources", "title": "Sources légales · maquette", "w": 1440, "x": 0, "y": 1700, "expand": "fill"},
+    "ScrSourcesM.dc.html": {"h": 2500, "page": "page-wfsources", "title": "Sources légales · maquette mobile", "w": 390, "x": 1520, "y": 1700},
+    "ScrMentions.dc.html": {"h": 1500, "page": "page-wflegal", "title": "Mentions légales · maquette", "w": 1440, "x": 0, "y": 1800, "expand": "fill"},
+    "ScrConfidentialite.dc.html": {"h": 1800, "page": "page-wflegal", "title": "Confidentialité · maquette", "w": 1440, "x": 1560, "y": 1800, "expand": "fill"},
+    "ScrMentionsM.dc.html": {"h": 2100, "page": "page-wflegal", "title": "Mentions légales · maquette mobile", "w": 390, "x": 3080, "y": 1800},
+    "ScrConfidentialiteM.dc.html": {"h": 2600, "page": "page-wflegal", "title": "Confidentialité · maquette mobile", "w": 390, "x": 3550, "y": 1800},
+    "Scr404.dc.html": {"h": 860, "page": "page-wf404", "title": "Page 404 · maquette", "w": 1440, "x": 0, "y": 1300, "expand": "fill"},
+    "Scr404M.dc.html": {"h": 900, "page": "page-wf404", "title": "Page 404 · maquette mobile", "w": 390, "x": 1520, "y": 1300},
+    "Artboard-pjyc.dc.html": {
+      "expand": "fill",
+      "h": 2324,
+      "page": "page-6d4njy",
+      "title": "Landing",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "EditorAcompte.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · facture d’acompte",
+      "w": 1440,
+      "x": 0,
+      "y": 3440
+    },
+    "EditorApercu.dc.html": {
+      "h": 780,
+      "page": "page-adcj62",
+      "title": "Aperçu PDF",
+      "w": 840,
+      "x": 2920,
+      "y": 2016
+    },
+    "EditorBarreMobile.dc.html": {
+      "h": 76,
+      "page": "page-adcj62",
+      "title": "Barre d’étapes · mobile",
+      "w": 390,
+      "x": 4390,
+      "y": 1572
+    },
+    "EditorBureau.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · devis",
+      "w": 1440,
+      "x": 0,
+      "y": 1400
+    },
+    "EditorBureauClient.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · modale nouveau client",
+      "w": 1440,
+      "x": 0,
+      "y": 4460
+    },
+    "EditorBureauEmetteur.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · modale émetteur",
+      "w": 1440,
+      "x": 1560,
+      "y": 4460
+    },
+    "EditorConditions.dc.html": {
+      "h": 320,
+      "page": "page-adcj62",
+      "title": "Conditions et notes",
+      "w": 600,
+      "x": 2920,
+      "y": 1576
+    },
+    "EditorDocBar.dc.html": {
+      "h": 56,
+      "page": "page-adcj62",
+      "title": "Barre du document",
+      "w": 1440,
+      "x": 1560,
+      "y": 1400
+    },
+    "EditorDocBarMobile.dc.html": {
+      "h": 52,
+      "page": "page-adcj62",
+      "title": "Barre du document · mobile",
+      "w": 390,
+      "x": 4390,
+      "y": 1400
+    },
+    "EditorFacture.dc.html": {
+      "expand": "fill",
+      "h": 900,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · facture",
+      "w": 1440,
+      "x": 0,
+      "y": 2420
+    },
+    "EditorInfos.dc.html": {
+      "h": 220,
+      "page": "page-adcj62",
+      "title": "Informations",
+      "w": 600,
+      "x": 1560,
+      "y": 1576
+    },
+    "EditorLignes.dc.html": {
+      "h": 460,
+      "page": "page-adcj62",
+      "title": "Lignes",
+      "w": 600,
+      "x": 1560,
+      "y": 2016
+    },
+    "EditorMobile.dc.html": {
+      "h": 844,
+      "page": "page-adcj62",
+      "title": "Éditeur · mobile",
+      "w": 390,
+      "x": 1520,
+      "y": 0
+    },
+    "EditorMobileMaquette.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "page": "page-adcj62",
+      "title": "Éditeur · mobile, maquette",
+      "w": 390,
+      "x": 3880,
+      "y": 1400
+    },
+    "EditorModalClient.dc.html": {
+      "h": 760,
+      "page": "page-adcj62",
+      "title": "Modale · nouveau client",
+      "w": 560,
+      "x": 4900,
+      "y": 1400
+    },
+    "EditorModalEmetteur.dc.html": {
+      "h": 800,
+      "page": "page-adcj62",
+      "title": "Modale · modifier l’émetteur",
+      "w": 560,
+      "x": 5540,
+      "y": 1400
+    },
+    "EditorParties.dc.html": {
+      "h": 230,
+      "page": "page-adcj62",
+      "title": "Émetteur et client",
+      "w": 600,
+      "x": 2240,
+      "y": 1576
+    },
+    "EditorTotaux.dc.html": {
+      "h": 72,
+      "page": "page-adcj62",
+      "title": "Totaux",
+      "w": 600,
+      "x": 2240,
+      "y": 2016
+    },
+    "Invite.dc.html": {
+      "h": 64,
+      "title": "Invité · clair",
+      "w": 1280,
+      "x": 0,
+      "y": 184
+    },
+    "LandingAtouts.dc.html": {
+      "h": 320,
+      "page": "page-6d4njy",
+      "title": "Atouts",
+      "w": 1280,
+      "x": 1560,
+      "y": 760
+    },
+    "LandingConformite.dc.html": {
+      "h": 340,
+      "page": "page-6d4njy",
+      "title": "Conformité",
+      "w": 1280,
+      "x": 1560,
+      "y": 1200
+    },
+    "LandingFaq.dc.html": {
+      "h": 500,
+      "page": "page-6d4njy",
+      "title": "Questions fréquentes",
+      "w": 1280,
+      "x": 1560,
+      "y": 1960
+    },
+    "LandingHero.dc.html": {
+      "h": 640,
+      "page": "page-6d4njy",
+      "title": "Héros",
+      "w": 1280,
+      "x": 1560,
+      "y": 0
+    },
+    "LandingMobile.dc.html": {
+      "h": 3200,
+      "page": "page-6d4njy",
+      "title": "Landing · mobile",
+      "w": 390,
+      "x": 2920,
+      "y": 0
+    },
+    "LandingSoutien.dc.html": {
+      "h": 180,
+      "page": "page-6d4njy",
+      "title": "Soutien",
+      "w": 1280,
+      "x": 1560,
+      "y": 1660
+    },
+    "Main.dc.html": {
+      "h": 64,
+      "is_interactive": true,
+      "title": "Connecté · clair",
+      "w": 1280,
+      "x": 0,
+      "y": 0
+    },
+    "Mobile.dc.html": {
+      "h": 640,
+      "title": "Mobile · menu ouvert",
+      "w": 390,
+      "x": 1360,
+      "y": 0
+    },
+    "NavMobileInvite.dc.html": {
+      "h": 60,
+      "title": "Mobile · invité",
+      "w": 390,
+      "x": 1830,
+      "y": 0
+    },
+    "SiteFooter.dc.html": {
+      "h": 280,
+      "page": "page-6d4njy",
+      "title": "Pied de page",
+      "w": 1280,
+      "x": 1560,
+      "y": 2580
+    },
+    "Sombre.dc.html": {
+      "h": 64,
+      "title": "Connecté · sombre",
+      "w": 1280,
+      "x": 0,
+      "y": 368
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-26T10:25:00Z",
+    "v": 1
+  },
+  "designSystems": [
+    {
+      "artifact": "https://claude.ai/code/artifact/c46e654d-8fcb-472c-a4a1-bae46c74773a",
+      "copiedAt": "2026-10-26T10:25:00Z",
+      "namespace": "devisui",
+      "title": "Devis Generator : VIBED",
+      "version": "1793009933-d5da"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "alternatives": {
+      "kind": "title1",
+      "maxW": 1280,
+      "text": "Alternatives : moins de libellés, sur une seule ligne",
+      "w": 240,
+      "x": 0,
+      "y": 560
+    },
+    "composants": {
+      "kind": "title1",
+      "maxW": 1280,
+      "page": "page-6d4njy",
+      "text": "Composants de la landing",
+      "w": 240,
+      "x": 1560,
+      "y": -300
+    },
+    "editeur": {
+      "kind": "title1",
+      "maxW": 1910,
+      "page": "page-adcj62",
+      "text": "Éditeur de document : zonage",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "maquette": {
+      "kind": "title1",
+      "maxW": 6100,
+      "page": "page-adcj62",
+      "text": "Éditeur de document : maquettes et composants",
+      "w": 240,
+      "x": 0,
+      "y": 1100
+    },
+    "titre": {
+      "kind": "title1",
+      "maxW": 1750,
+      "text": "Barre de navigation",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Invite.dc.html",
+    "Sombre.dc.html",
+    "Mobile.dc.html",
+    "NavMobileInvite.dc.html",
+    "AltCourt.dc.html",
+    "AltMenu.dc.html",
+    "AltDeuxNiveaux.dc.html",
+    "Artboard-pjyc.dc.html",
+    "LandingHero.dc.html",
+    "LandingAtouts.dc.html",
+    "LandingConformite.dc.html",
+    "LandingSoutien.dc.html",
+    "LandingFaq.dc.html",
+    "SiteFooter.dc.html",
+    "LandingMobile.dc.html",
+    "Artboard-buj2.dc.html",
+    "Artboard-frvg.dc.html",
+    "EditorMobile.dc.html",
+    "EditorBureau.dc.html",
+    "EditorFacture.dc.html",
+    "EditorAcompte.dc.html",
+    "EditorDocBar.dc.html",
+    "EditorInfos.dc.html",
+    "EditorParties.dc.html",
+    "EditorConditions.dc.html",
+    "EditorLignes.dc.html",
+    "EditorTotaux.dc.html",
+    "EditorApercu.dc.html",
+    "EditorMobileMaquette.dc.html",
+    "EditorDocBarMobile.dc.html",
+    "EditorBarreMobile.dc.html",
+    "EditorModalClient.dc.html",
+    "EditorModalEmetteur.dc.html",
+    "EditorBureauClient.dc.html",
+    "EditorBureauEmetteur.dc.html",
+    "Artboard-h81v.dc.html",
+    "WfDocuments.dc.html",
+    "WfDocument.dc.html",
+    "WfClients.dc.html",
+    "WfClient.dc.html",
+    "WfEntreprise.dc.html",
+    "WfConnexion.dc.html",
+    "WfInscription.dc.html",
+    "WfCompte.dc.html",
+    "WfSources.dc.html",
+    "WfMentions.dc.html",
+    "WfConfidentialite.dc.html",
+    "Wf404.dc.html",
+    "MWfDashboard.dc.html",
+    "MWfDocuments.dc.html",
+    "MWfDocument.dc.html",
+    "MWfClients.dc.html",
+    "MWfClient.dc.html",
+    "MWfEntreprise.dc.html",
+    "MWfConnexion.dc.html",
+    "MWfInscription.dc.html",
+    "MWfCompte.dc.html",
+    "MWfSources.dc.html",
+    "MWfMentions.dc.html",
+    "MWfConfidentialite.dc.html",
+    "MWf404.dc.html",
+    "ScrDashboard.dc.html", "ScrDashboardM.dc.html",
+    "ScrDocuments.dc.html", "ScrDocumentsM.dc.html",
+    "ScrDocument.dc.html", "ScrDocumentM.dc.html",
+    "ScrClients.dc.html", "ScrClientsM.dc.html",
+    "ScrClient.dc.html", "ScrClientM.dc.html",
+    "ScrEntreprise.dc.html", "ScrEntrepriseM.dc.html",
+    "ScrConnexion.dc.html", "ScrInscription.dc.html", "ScrConnexionM.dc.html", "ScrInscriptionM.dc.html",
+    "ScrCompte.dc.html", "ScrCompteM.dc.html",
+    "ScrSources.dc.html", "ScrSourcesM.dc.html",
+    "ScrMentions.dc.html", "ScrConfidentialite.dc.html", "ScrMentionsM.dc.html", "ScrConfidentialiteM.dc.html",
+    "Scr404.dc.html", "Scr404M.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Nav"
+    },
+    {
+      "id": "page-6d4njy",
+      "name": "Landing"
+    },
+    {
+      "id": "page-adcj62",
+      "name": "Editor"
+    },
+    {
+      "id": "page-aveq9p",
+      "name": "Dashboard"
+    },
+    {"id": "page-wfdocs", "name": "Documents"},
+    {"id": "page-wfdoc", "name": "Détail document"},
+    {"id": "page-wfclients", "name": "Clients"},
+    {"id": "page-wfclient", "name": "Fiche client"},
+    {"id": "page-wfentreprise", "name": "Entreprise"},
+    {"id": "page-wfauth", "name": "Connexion et inscription"},
+    {"id": "page-wfcompte", "name": "Mon compte"},
+    {"id": "page-wfsources", "name": "Sources légales"},
+    {"id": "page-wflegal", "name": "Pages légales"},
+    {"id": "page-wf404", "name": "Page 404"}
+  ],
+  "title": "Nav bar · Devis Generator : VIBED"
+}
