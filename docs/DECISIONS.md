@@ -2,6 +2,12 @@
 
 Décisions validées par le propriétaire. Ce fichier est la référence courte.
 
+## Objectif
+
+**Plateforme gratuite pour signer les factures en France.**
+
+Aujourd’hui, l’application produit des devis et des factures PDF, avec un compte optionnel. Le XML Factur-X (profil EN 16931) se prépare à côté du PDF. La suite est une Factur-X téléchargeable, puis la signature électronique du fichier, puis sa transmission — par une plateforme agréée déjà immatriculée, ou par une immatriculation DGFiP si cet outil assure lui-même l’envoi.
+
 ## Identité
 
 - **Nom officiel** : `Devis Generator : VIBED`
@@ -115,4 +121,4 @@ Rédigées d’après le fonctionnement réel (données, chiffrement, conservati
 
 ## Suite
 
-SMTP reset MDP ; Factur-X V2 ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.
+SMTP reset MDP ; Factur-X téléchargeable puis signature électronique ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.

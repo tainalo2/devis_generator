@@ -17,9 +17,10 @@ backend/
   internal/httpapi/      chi : health, auth, métier, legal, SPA
   internal/legal/        providers officiels + cache append-only + refresh
   internal/billing/      totaux HT/TVA/TTC (centimes)
+  internal/facturx/      XML CII Factur-X EN 16931 (hors PDF)
   internal/pdfgen/       gofpdf
 frontend/                React + TS + Vite + Tailwind + shadcn (FR)
-docs/
+docs/                    humain, technique, ia, factur-x, présentation Pages
 compose.yaml
 Dockerfile.vibed
 LICENSE.vibed            Apache-2.0

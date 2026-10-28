@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Devis Generator — signer les factures en France</title>
+  <meta name="description" content="Devis Generator prépare une plateforme gratuite pour signer les factures en France. Aujourd’hui : devis et factures PDF. Ensuite : Factur-X et signature électronique.">
+  <meta property="og:title" content="Devis Generator — signer les factures en France">
+  <meta property="og:description" content="Une plateforme gratuite pour préparer, puis signer, les factures des indépendants et des petites sociétés.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,640&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #17262f;
+      --muted: #526572;
+      --paper: #f3f6f7;
+      --card: #fffcf8;
+      --line: #d5e0e4;
+      --brand: #0c746c;
+      --brand-deep: #083f45;
+      --brand-soft: #e5f3f1;
+      --warn: #8a5a12;
+      --warn-soft: #f8efd8;
+      --ok: #1d6b45;
+      --ok-soft: #e5f4eb;
+      --shadow: 0 24px 60px -36px rgba(23, 38, 47, 0.45);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(900px 420px at 100% -10%, rgba(12, 116, 108, 0.16), transparent 60%),
+        var(--paper);
+      font-family: Manrope, "Segoe UI", sans-serif;
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+    a { color: var(--brand-deep); }
+    a:hover { color: var(--brand); }
+    .skip {
+      position: absolute;
+      left: 1rem;
+      top: -3rem;
+      background: var(--ink);
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 0.4rem;
+    }
+    .skip:focus { top: 0.6rem; }
+    header, main, footer { width: min(1120px, calc(100% - 2rem)); margin-inline: auto; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 0;
+    }
+    .mark {
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 640;
+      letter-spacing: -0.03em;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 1.15rem;
+    }
+    nav { display: flex; flex-wrap: wrap; gap: 0.9rem 1.1rem; }
+    nav a { text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3rem;
+      align-items: center;
+      padding: 1.5rem 0 3.5rem;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin: 0 0 1rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      color: var(--brand-deep);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 640;
+      font-size: clamp(2.4rem, 5vw, 4.3rem);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+    }
+    .lede { max-width: 38rem; font-size: 1.15rem; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding: 0.55rem 1rem;
+      border-radius: 0.7rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .btn.primary { background: var(--brand-deep); color: white; }
+    .btn.primary:hover { background: var(--brand); color: white; }
+    .btn.ghost { border: 1px solid var(--line); background: white; color: var(--ink); }
+    .sheet {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 1.1rem;
+      box-shadow: var(--shadow);
+      padding: 1.3rem 1.3rem 1.1rem;
+      transform: rotate(1.25deg);
+    }
+    .sheet-top, .sign {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .kicker { margin: 0; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+    .num { margin: 0.15rem 0 0; font-family: Fraunces, Georgia, serif; font-size: 1.35rem; }
+    .pill {
+      align-self: flex-start;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: var(--warn-soft);
+      color: var(--warn);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .lines { margin: 1.1rem 0; border-top: 1px solid var(--line); }
+    .lines div {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .muted { color: var(--muted); }
+    .sign {
+      align-items: end;
+      margin-top: 1rem;
+    }
+    .sign p { margin: 0; }
+    .stroke {
+      width: 9.5rem;
+      height: 2.4rem;
+      border-bottom: 1.5px dashed var(--brand);
+      color: var(--brand);
+      font-family: Fraunces, Georgia, serif;
+      font-style: italic;
+      text-align: right;
+    }
+    section { padding: 2.5rem 0; }
+    h2 {
+      margin: 0 0 0.4rem;
+      font-family: Fraunces, Georgia, serif;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .intro { max-width: 40rem; color: var(--muted); margin-top: 0; }
+    .steps, .cards, .docs {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+    .steps { grid-template-columns: repeat(3, 1fr); }
+    .cards { grid-template-columns: 1.2fr 1fr 1fr; }
+    .docs { grid-template-columns: repeat(3, 1fr); }
+    article {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 1rem;
+      padding: 1.15rem 1.15rem 1.2rem;
+    }
+    article h3 { margin: 0.35rem 0; font-size: 1.15rem; }
+    article p { margin: 0; color: var(--muted); }
+    .ord {
+      font-family: Fraunces, Georgia, serif;
+      color: var(--brand);
+      font-size: 1.3rem;
+    }
+    .tag {
+      display: inline-block;
+      margin: 0;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .tag.now { color: var(--ok); }
+    .tag.next { color: var(--warn); }
+    .tag.goal { color: var(--brand-deep); }
+    footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.6rem 1.5rem;
+      padding: 1.4rem 0 2rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    @media (max-width: 860px) {
+      .hero, .steps, .cards, .docs { grid-template-columns: 1fr; }
+      .sheet { transform: none; }
+      header { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#contenu">Aller au contenu</a>
+  <header>
+    <a class="mark" href="./">Devis Generator</a>
+    <nav aria-label="Liens du projet">
+      <a href="https://www.devisgenerator.fr/">Application</a>
+      <a href="https://github.com/tainalo2/devis_generator">Code</a>
+      <a href="#docs">Documentation</a>
+    </nav>
+  </header>
+  <main id="contenu">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Gratuit · France</p>
+        <h1>Signer les factures, sans les faire payer.</h1>
+        <p class="lede">Devis Generator prépare une plateforme gratuite pour que les indépendants et les petites sociétés signent leurs factures en France. Aujourd’hui, l’outil rédige le devis et la facture, puis les remet en PDF.</p>
+        <div class="actions">
+          <a class="btn primary" href="https://www.devisgenerator.fr/">Ouvrir l’application</a>
+          <a class="btn ghost" href="#chemin">Voir le chemin</a>
+        </div>
+      </div>
+      <aside class="sheet" aria-label="Aperçu d’une facture encore non signée">
+        <div class="sheet-top">
+          <div>
+            <p class="kicker">Facture</p>
+            <p class="num">F-2026-0042</p>
+          </div>
+          <span class="pill">Signature à venir</span>
+        </div>
+        <div class="lines">
+          <div><span>Atelier, une journée</span><span>650,00&nbsp;€</span></div>
+          <div><span>Déplacement</span><span>40,00&nbsp;€</span></div>
+          <div><span class="muted">TVA 20&nbsp;%</span><span>138,00&nbsp;€</span></div>
+          <div><strong>Total</strong><strong>828,00&nbsp;€</strong></div>
+        </div>
+        <div class="sign">
+          <p class="muted">Émise par l’atelier<br>PDF lisible, déjà disponible</p>
+          <p class="stroke">signer</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="chemin" aria-labelledby="chemin-titre">
+      <h2 id="chemin-titre">Trois gestes, dans cet ordre</h2>
+      <p class="intro">Signer une facture, c’est lier le fichier à celui qui l’émet, après l’avoir écrite dans un format que l’administration et le client peuvent lire.</p>
+      <div class="steps">
+        <article>
+          <p class="ord">01</p>
+          <h3>Écrire la facture</h3>
+          <p>Devis, facture, acompte, avoir. TVA au taux de la ligne ou franchise 293&nbsp;B. Le PDF se télécharge déjà. Le fichier de données Factur-X se prépare à côté, profil européen EN&nbsp;16931.</p>
+        </article>
+        <article>
+          <p class="ord">02</p>
+          <h3>La signer</h3>
+          <p>La signature électronique sera posée sur la facture Factur-X, au nom de l’émetteur. Elle dit qui a émis le fichier et si quelqu’un l’a modifié après.</p>
+        </article>
+        <article>
+          <p class="ord">03</p>
+          <h3>La faire partir</h3>
+          <p>L’envoi vers le client et les données attendues par l’administration passeront par une plateforme agréée. Celle du projet, le jour où elle sera immatriculée, ou une plateforme déjà en place.</p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="etat-titre">
+      <h2 id="etat-titre">Où en est le projet</h2>
+      <div class="cards">
+        <article>
+          <p class="tag now">En service</p>
+          <h3>Devis et factures PDF</h3>
+          <p>Mode invité sans conservation, ou compte avec historique, export et suppression. Mentions figées à l’émission. Documents émis corrigés par un avoir.</p>
+        </article>
+        <article>
+          <p class="tag next">En préparation</p>
+          <h3>Factur-X dans le PDF</h3>
+          <p>Le XML existe. Il reste à l’embarquer dans un PDF/A-3. Le téléchargement actuel est encore un PDF simple, et l’application le dit.</p>
+        </article>
+        <article>
+          <p class="tag goal">Objectif</p>
+          <h3>Signature, puis envoi</h3>
+          <p>Plateforme gratuite. Pas d’encaissement pour le compte de l’utilisateur. L’émission par les micro-entrepreneurs est attendue au plus tard le 1er&nbsp;septembre 2027.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="docs" aria-labelledby="docs-titre">
+      <h2 id="docs-titre">Trois lectures</h2>
+      <p class="intro">La même intention, écrite pour trois lecteurs.</p>
+      <div class="docs">
+        <article>
+          <h3><a href="https://github.com/tainalo2/devis_generator/blob/vibed/docs/humain.md">Pour un humain</a></h3>
+          <p>Ce que le service fait, ce que signer veut dire, et ce qui reste à construire.</p>
+        </article>
+        <article>
+          <h3><a href="https://github.com/tainalo2/devis_generator/blob/vibed/docs/technique.md">Pour un développeur</a></h3>
+          <p>Pile, commandes, paquet Factur-X, et l’ordre technique jusqu’à la transmission.</p>
+        </article>
+        <article>
+          <h3><a href="https://github.com/tainalo2/devis_generator/blob/vibed/docs/ia.md">Pour une IA</a></h3>
+          <p>Règles de travail dans le dépôt : quoi affirmer, quels fichiers toucher, quoi laisser tranquille.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span>Devis Generator : VIBED · Apache-2.0</span>
+    <span>L’application en service reste <a href="https://www.devisgenerator.fr/">devisgenerator.fr</a>.</span>
+  </footer>
+</body>
+</html>
