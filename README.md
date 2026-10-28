@@ -4,6 +4,18 @@ Branche de développement de **Devis Generator : VIBED** — backend Go + Postgr
 
 Site officiel actuel : [devisgenerator.fr](https://www.devisgenerator.fr/)
 
+## Objectif
+
+Une plateforme gratuite pour signer les factures en France. L’application produit déjà des devis et des factures PDF. La signature électronique et la Factur-X téléchargeable viennent ensuite.
+
+| Public | Document |
+|--------|----------|
+| Humain | [docs/humain.md](docs/humain.md) |
+| Technique | [docs/technique.md](docs/technique.md) |
+| Agent / IA | [docs/ia.md](docs/ia.md) |
+
+Présentation : [docs/index.html](docs/index.html), publiée sur GitHub Pages depuis la branche `vibed`.
+
 ## Licence
 
 - **VIBED** (code sous `backend/`, `frontend/`, `docs/`, `Dockerfile.vibed`, etc.) : [Apache-2.0](LICENSE.APACHE-2.0) (aussi `LICENSE.vibed`)
@@ -92,4 +104,4 @@ Voir [docs/architecture.md](docs/architecture.md) et [docs/DECISIONS.md](docs/DE
 - TVA franchise 293 B ou multi-taux ; sources légales officielles
 - Thème clair/sombre, shell sidebar desktop / navigation mobile
 
-Suite : SMTP reset MDP, Factur-X V2, compléter identité éditeur/hébergeur et `DONATE_URL`.
+Suite : SMTP reset MDP, Factur-X téléchargeable, signature électronique des factures, identité éditeur/hébergeur et `DONATE_URL`.
