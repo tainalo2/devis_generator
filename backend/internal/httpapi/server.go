@@ -176,6 +176,10 @@ func New(opts Options) *Server {
 			r.Get("/auth/export", s.requireAuth(s.handleExport))
 			r.Delete("/auth/me", s.requireAuth(s.handleDeleteAccount))
 
+			r.Get("/auth/api-keys", s.requireAuth(s.handleListAPIKeys))
+			r.Post("/auth/api-keys", s.requireAuth(s.handleCreateAPIKey))
+			r.Delete("/auth/api-keys/{id}", s.requireAuth(s.handleRevokeAPIKey))
+
 			r.Post("/billing/preview", s.handlePreviewTotals)
 			r.Post("/guest/pdf", s.handleGuestPDF)
 
