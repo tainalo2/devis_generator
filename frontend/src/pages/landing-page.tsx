@@ -43,8 +43,8 @@ const faq = [
     a: "Elles restent tant que le compte existe. Export JSON et suppression complète sont disponibles dans Mon compte.",
   },
   {
-    q: "Factur-X est-il inclus ?",
-    a: "Pas en V1 (PDF simple). Le calendrier d’obligation pour les micro-entrepreneurs est rappelé dans les sources légales (à partir du 1er sept. 2027).",
+    q: "La facture électronique est-elle disponible ?",
+    a: "Pas encore en V1 : vos documents sont générés en PDF. Factur-X est prévu pour vous permettre de répondre aux clients qui demandent un format structuré, sans changer d’outil.",
   },
 ]
 
@@ -122,11 +122,11 @@ export function LandingPage() {
               Devis Generator : VIBED
             </p>
             <h1 className="max-w-xl font-sans text-xl font-medium tracking-[-0.01em] text-balance text-foreground/90 sm:text-2xl">
-              Des devis et factures clairs, conformes, sans friction.
+              Du devis à la facture d’acompte, sans friction.
             </h1>
             <p className="max-w-lg text-muted-foreground">
-              Pour micro-entrepreneurs, indépendants et petites sociétés. Créez un document en mode
-              invité, ou ouvrez un compte pour les conserver.
+              Pour micro-entrepreneurs, indépendants et petites sociétés. Créez un PDF sans compte,
+              ou conservez vos clients et vos documents dans un espace dédié.
             </p>
             <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap">
               <Button size="lg" className="h-11 sm:h-9" render={<Link to="/documents/nouveau" />}>
@@ -163,7 +163,7 @@ export function LandingPage() {
         <div className={`${container} grid items-center gap-7 py-12 md:py-16 lg:grid-cols-[1.4fr_1fr] lg:gap-12`}>
           <div className="flex max-w-2xl flex-col gap-3">
             <h2 className="font-heading text-[28px] leading-9 font-semibold tracking-tight">
-              Conformité utile, pas du marketing
+              Des documents fiables au quotidien
             </h2>
             <p className="text-muted-foreground">
               Numérotation continue, documents émis immuables, chiffrement des IBAN et adresses,
