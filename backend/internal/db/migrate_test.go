@@ -33,7 +33,7 @@ func TestMigrateURLUsesAdvisoryLockDefault(t *testing.T) {
 }
 
 func TestIdempotencyMigrationPersistsPerUserKeys(t *testing.T) {
-	up, err := embeddedMigrations.ReadFile("migrations/000008_document_idempotency.up.sql")
+	up, err := embeddedMigrations.ReadFile("migrations/000009_document_idempotency.up.sql")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestIdempotencyMigrationPersistsPerUserKeys(t *testing.T) {
 			t.Fatalf("migration must contain %q: %s", want, sql)
 		}
 	}
-	if _, err := embeddedMigrations.ReadFile("migrations/000008_document_idempotency.down.sql"); err != nil {
+	if _, err := embeddedMigrations.ReadFile("migrations/000009_document_idempotency.down.sql"); err != nil {
 		t.Fatal(err)
 	}
 }

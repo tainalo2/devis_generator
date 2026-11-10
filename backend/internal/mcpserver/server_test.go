@@ -128,7 +128,7 @@ func TestCreateAcompteScalesQuoteLines(t *testing.T) {
 	defer api.Close()
 
 	s := &Server{APIURL: api.URL, APIKey: "k", Client: api.Client()}
-	res, err := s.callTool("create_acompte", json.RawMessage(`{"devis_id":"quote-id","pourcentage":"30"}`))
+	res, err := s.callTool("create_acompte", json.RawMessage(`{"devis_id":"quote-id","pourcentage":"30","idempotency_key":"deposit-2026-001"}`))
 	if err != nil {
 		t.Fatal(err)
 	}

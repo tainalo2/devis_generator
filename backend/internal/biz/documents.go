@@ -26,6 +26,7 @@ type DocumentInput struct {
 	PaymentTerms      string     `json:"payment_terms"`
 	RelatedDocumentID *uuid.UUID `json:"related_document_id"`
 	Lines             []DocLine  `json:"lines"`
+	IdempotencyKey    string     `json:"idempotency_key"`
 }
 
 func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document, error) {
@@ -169,12 +170,27 @@ func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in Documen
 	var id uuid.UUID
 	err = tx.QueryRow(ctx, `
 		INSERT INTO documents (user_id, client_id, kind, status, title, issue_date, due_date, currency, vat_regime,
-		                       notes, payment_terms, related_document_id, subtotal_cents, tax_cents, total_cents)
-		VALUES ($1,$2,$3::document_kind,'draft',$4,$5::date,$6::date,$7,$8::vat_regime,$9,$10,$11,$12,$13,$14)
+		                       notes, payment_terms, related_document_id, subtotal_cents, tax_cents, total_cents, idempotency_key)
+		VALUES ($1,$2,$3::document_kind,'draft',$4,$5::date,$6::date,$7,$8::vat_regime,$9,$10,$11,$12,$13,$14,$15)
+		ON CONFLICT (user_id, idempotency_key)
+		WHERE user_id IS NOT NULL AND idempotency_key IS NOT NULL
+		DO NOTHING
 		RETURNING id
 	`, userID, in.ClientID, in.Kind, in.Title, in.IssueDate, in.DueDate, defaultCurrency(in.Currency), in.VATRegime,
-		in.Notes, in.PaymentTerms, in.RelatedDocumentID, calc.SubtotalCents, calc.TaxCents, calc.TotalCents,
+		in.Notes, in.PaymentTerms, in.RelatedDocumentID, calc.SubtotalCents, calc.TaxCents, calc.TotalCents, nullableIdempotencyKey(in.IdempotencyKey),
 	).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		if rollbackErr := tx.Rollback(ctx); rollbackErr != nil && !errors.Is(rollbackErr, pgx.ErrTxClosed) {
+			return Document{}, rollbackErr
+		}
+		err = s.pool.QueryRow(ctx, `
+			SELECT id FROM documents WHERE user_id = $1 AND idempotency_key = $2
+		`, userID, strings.TrimSpace(in.IdempotencyKey)).Scan(&id)
+		if err != nil {
+			return Document{}, err
+		}
+		return s.GetDocument(ctx, userID, id)
+	}
 	if err != nil {
 		return Document{}, err
 	}
@@ -185,6 +201,14 @@ func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in Documen
 		return Document{}, err
 	}
 	return s.GetDocument(ctx, userID, id)
+}
+
+func nullableIdempotencyKey(key string) any {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return nil
+	}
+	return key
 }
 
 func (s *Store) UpdateDocument(ctx context.Context, userID, id uuid.UUID, in DocumentInput) (Document, error) {
