@@ -92,8 +92,10 @@ type Document struct {
 	Notes             string          `json:"notes"`
 	PaymentTerms      string          `json:"payment_terms"`
 	LegalMentions     string          `json:"legal_mentions"`
-	RelatedDocumentID *uuid.UUID      `json:"related_document_id"`
-	SubtotalCents     int64           `json:"subtotal_cents"`
+	RelatedDocumentID  *uuid.UUID      `json:"related_document_id"`
+	ReplacesDocumentID *uuid.UUID      `json:"replaces_document_id,omitempty"`
+	QuoteVersion       int             `json:"quote_version"`
+	SubtotalCents      int64           `json:"subtotal_cents"`
 	TaxCents          int64           `json:"tax_cents"`
 	TotalCents        int64           `json:"total_cents"`
 	IssuedAt          *time.Time      `json:"issued_at"`

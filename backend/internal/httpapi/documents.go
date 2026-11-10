@@ -472,3 +472,30 @@ func (s *Server) writeBizError(w http.ResponseWriter, r *http.Request, err error
 	slog.Error("erreur métier", "path", r.URL.Path, "error", err)
 	writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 }
+func (s *Server) handleReplaceQuote(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	id, err := parseID(r)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Identifiant invalide.")
+		return
+	}
+	d, err := s.biz.ReplaceQuote(r.Context(), u.ID, id)
+	if errors.Is(err, biz.ErrNotFound) {
+		writeAPIError(w, http.StatusNotFound, "Document introuvable.")
+		return
+	}
+	if errors.Is(err, biz.ErrInvalidInput) {
+		writeAPIError(w, http.StatusConflict, err.Error())
+		return
+	}
+	if err != nil {
+		s.writeBizError(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
+}
+

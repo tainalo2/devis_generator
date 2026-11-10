@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Server struct {
@@ -19,6 +20,7 @@ type Server struct {
 	Client *http.Client
 	In     io.Reader
 	Out    io.Writer
+	Now    func() time.Time
 }
 
 func New() *Server {
@@ -130,15 +132,15 @@ func toolDefs() []map[string]any {
 	str := func(d string) map[string]any { return map[string]any{"type": "string", "description": d} }
 	return []map[string]any{
 		mk("create_devis", "Créer un devis", map[string]any{
-			"client": str("client"), "lignes": map[string]any{"type": "array"}, "devise": str("devise ISO"), "valide_jusqu_au": str("date"), "delai_validite_jours": str("jours"),
-		}, []string{"client", "lignes"}),
+			"client": str("client"), "lignes": map[string]any{"type": "array"}, "devise": str("devise ISO"), "valide_jusqu_au": str("date"), "delai_validite_jours": str("jours"), "idempotency_key": str("clé unique de création"),
+		}, []string{"client", "lignes", "idempotency_key"}),
 		mk("create_facture", "Créer une facture", map[string]any{
 			"depuis_devis_id": str("id devis"), "client": str("client"), "lignes": map[string]any{"type": "array"},
-			"date_echeance": str("date"), "delai_paiement_jours": str("jours"),
-		}, []string{}),
+			"date_echeance": str("date"), "delai_paiement_jours": str("jours"), "idempotency_key": str("clé unique de création"),
+		}, []string{"idempotency_key"}),
 		mk("create_acompte", "Créer un acompte", map[string]any{
-			"devis_id": str("id devis"), "pourcentage": str("pct"), "montant_ht": str("montant"),
-		}, []string{"devis_id"}),
+			"devis_id": str("id devis"), "pourcentage": str("pct"), "montant_ht": str("montant"), "idempotency_key": str("clé unique de création"),
+		}, []string{"devis_id", "idempotency_key"}),
 		mk("get_document_link", "Lien direct d'un document", map[string]any{"id": str("id document")}, []string{"id"}),
 		mk("list_documents", "Lister documents", map[string]any{"type": str("type"), "cursor": str("cursor")}, []string{}),
 	}
@@ -193,6 +195,9 @@ func parseArgs(raw json.RawMessage) map[string]any {
 
 func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any, error) {
 	a := parseArgs(args)
+	if key, _ := a["idempotency_key"].(string); strings.TrimSpace(key) == "" {
+		return map[string]any{"status": "clarification", "missing": []string{"idempotency_key"}, "alternatives": []string{}}, nil
+	}
 	// ambiguity checks
 	switch kind {
 	case "devis":
@@ -235,15 +240,23 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 	case "devis":
 		path = "/documents"
 		body = map[string]any{
-			"kind":       "quote",
-			"client_id":  a["client"],
-			"lines":      a["lignes"],
-			"currency":   valueOr(a, "devise", "EUR"),
-			"vat_regime": valueOr(a, "regime_tva", "standard"),
-			"title":      valueOr(a, "titre", "Devis"),
+			"kind":            "quote",
+			"client_id":       a["client"],
+			"lines":           a["lignes"],
+			"currency":        valueOr(a, "devise", "EUR"),
+			"vat_regime":      valueOr(a, "regime_tva", "standard"),
+			"title":           valueOr(a, "titre", "Devis"),
+			"idempotency_key": a["idempotency_key"],
 		}
+		body["issue_date"] = s.now().Format("2006-01-02")
 		if due, ok := a["valide_jusqu_au"]; ok {
 			body["due_date"] = due
+		} else if delay, ok := a["delai_validite_jours"].(string); ok && delay != "" {
+			days, err := strconv.Atoi(delay)
+			if err != nil || days < 0 {
+				return map[string]any{"status": "error", "error": "délai de validité invalide"}, nil
+			}
+			body["due_date"] = s.now().AddDate(0, 0, days).Format("2006-01-02")
 		}
 	case "facture":
 		if quoteID, ok := a["depuis_devis_id"].(string); ok && quoteID != "" {
@@ -252,14 +265,26 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 		} else {
 			path = "/documents"
 			body = map[string]any{
-				"kind":       "invoice",
-				"client_id":  a["client"],
-				"lines":      a["lignes"],
-				"currency":   valueOr(a, "devise", "EUR"),
-				"vat_regime": valueOr(a, "regime_tva", "standard"),
-				"title":      valueOr(a, "titre", "Facture"),
+				"kind":            "invoice",
+				"client_id":       a["client"],
+				"lines":           a["lignes"],
+				"currency":        valueOr(a, "devise", "EUR"),
+				"vat_regime":      valueOr(a, "regime_tva", "standard"),
+				"title":           valueOr(a, "titre", "Facture"),
+				"idempotency_key": a["idempotency_key"],
 			}
 		}
+		body["issue_date"] = s.now().Format("2006-01-02")
+		if due, ok := a["date_echeance"]; ok {
+			body["due_date"] = due
+		} else if delay, ok := a["delai_paiement_jours"].(string); ok && delay != "" {
+			days, err := strconv.Atoi(delay)
+			if err != nil || days < 0 {
+				return map[string]any{"status": "error", "error": "délai de paiement invalide"}, nil
+			}
+			body["due_date"] = s.now().AddDate(0, 0, days).Format("2006-01-02")
+		}
+		body["idempotency_key"] = a["idempotency_key"]
 	case "acompte":
 		return s.createDeposit(a), nil
 	default:
@@ -336,6 +361,13 @@ func valueOr(values map[string]any, key string, fallback any) any {
 		return value
 	}
 	return fallback
+}
+
+func (s *Server) now() time.Time {
+	if s.Now != nil {
+		return s.Now()
+	}
+	return time.Now()
 }
 
 func (s *Server) documentResult(status string, out map[string]any) map[string]any {

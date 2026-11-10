@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
@@ -29,6 +30,7 @@ type Server struct {
 	legal             *legal.Service
 	publicConfig      *PublicSiteConfig
 	docLinkSecret     []byte
+	resolveDocumentLink func(context.Context, uuid.UUID) (documentLinkTarget, error)
 	staticDir         string
 	version           string
 	router            chi.Router
@@ -90,6 +92,11 @@ func New(opts Options) *Server {
 				s.store.TouchAPIKey(ctx, key.ID)
 			}
 			return key, user, err
+		}
+	}
+	if s.biz != nil {
+		s.resolveDocumentLink = func(ctx context.Context, id uuid.UUID) (documentLinkTarget, error) {
+			return s.biz.ResolveDocumentLink(ctx, id)
 		}
 	}
 	if s.version == "" {
@@ -161,6 +168,7 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))
 			r.Post("/documents/{id}/status", s.requireAuth(s.handleDocumentStatus))
 			r.Post("/documents/{id}/convert-to-invoice", s.requireAuth(s.handleConvertQuote))
+			r.Post("/documents/{id}/replace", s.requireAuth(s.handleReplaceQuote))
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))

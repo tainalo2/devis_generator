@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestInitializeAndToolsList(t *testing.T) {
@@ -34,6 +35,7 @@ func TestInitializeAndToolsList(t *testing.T) {
 }
 
 func TestCreateDevisCallsPublicAPIContract(t *testing.T) {
+	var createBody map[string]any
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodGet && r.URL.Path == "/documents/quote-id/link" {
@@ -43,28 +45,65 @@ func TestCreateDevisCallsPublicAPIContract(t *testing.T) {
 		if r.Method != http.MethodPost || r.URL.Path != "/documents" {
 			t.Fatalf("request=%s %s", r.Method, r.URL.Path)
 		}
-		var body map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&createBody); err != nil {
 			t.Fatal(err)
 		}
-		if body["kind"] != "quote" || body["client_id"] != "client-id" || body["currency"] != "EUR" || body["vat_regime"] != "standard" {
-			t.Fatalf("unexpected body: %#v", body)
+		if createBody["kind"] != "quote" || createBody["client_id"] != "client-id" || createBody["currency"] != "EUR" || createBody["vat_regime"] != "standard" {
+			t.Fatalf("unexpected body: %#v", createBody)
 		}
-		if _, leaked := body["client"]; leaked {
-			t.Fatalf("MCP-only client field leaked to API: %#v", body)
+		if _, leaked := createBody["client"]; leaked {
+			t.Fatalf("MCP-only client field leaked to API: %#v", createBody)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"document":{"id":"quote-id","kind":"quote"}}`))
 	}))
 	defer api.Close()
 
-	s := &Server{APIURL: api.URL, APIKey: "k", Client: api.Client()}
-	res, err := s.callTool("create_devis", json.RawMessage(`{"client":"client-id","lignes":[{"description":"Conseil","quantity_milli":1000,"unit_price_cents":50000,"tax_rate_bps":2000}],"devise":"EUR","delai_validite_jours":"30"}`))
+	s := &Server{APIURL: api.URL, Client: api.Client(), Now: func() time.Time {
+		return time.Date(2026, time.November, 10, 15, 0, 0, 0, time.UTC)
+	}}
+	res, err := s.callTool("create_devis", json.RawMessage(`{"client":"client-id","lignes":[{"description":"Conseil","quantity_milli":1000,"unit_price_cents":50000,"tax_rate_bps":2000}],"devise":"EUR","delai_validite_jours":"30","idempotency_key":"quote-2026-001"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if res["status"] != "created" || res["id"] != "quote-id" || res["link"] != "https://example.test/d/stable" {
 		t.Fatalf("unexpected result: %#v", res)
+	}
+	if createBody["idempotency_key"] != "quote-2026-001" || createBody["issue_date"] != "2026-11-10" || createBody["due_date"] != "2026-12-10" {
+		t.Fatalf("idempotency and validity not applied: %#v", createBody)
+	}
+}
+
+func TestCreateFactureAppliesExplicitDueDateAndIdempotency(t *testing.T) {
+	var createBody map[string]any
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/documents":
+			if err := json.NewDecoder(r.Body).Decode(&createBody); err != nil {
+				t.Fatal(err)
+			}
+			_, _ = w.Write([]byte(`{"document":{"id":"invoice-id"}}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/documents/invoice-id/link":
+			_, _ = w.Write([]byte(`{"link":"https://example.test/d/invoice"}`))
+		default:
+			t.Fatalf("request=%s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer api.Close()
+
+	s := &Server{APIURL: api.URL, Client: api.Client(), Now: func() time.Time {
+		return time.Date(2026, time.November, 10, 15, 0, 0, 0, time.UTC)
+	}}
+	res, err := s.callTool("create_facture", json.RawMessage(`{"client":"client-id","lignes":[{"description":"Conseil"}],"date_echeance":"2027-01-15","idempotency_key":"invoice-2026-001"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res["status"] != "created" || res["id"] != "invoice-id" {
+		t.Fatalf("unexpected result: %#v", res)
+	}
+	if createBody["issue_date"] != "2026-11-10" || createBody["due_date"] != "2027-01-15" || createBody["idempotency_key"] != "invoice-2026-001" {
+		t.Fatalf("invoice dates and idempotency not applied: %#v", createBody)
 	}
 }
 
@@ -119,6 +158,32 @@ func TestGetDocumentLinkUsesStableLinkEndpoint(t *testing.T) {
 	}
 	if res["link"] != "https://example.test/d/token" || res["status"] != "ok" {
 		t.Fatalf("unexpected result: %#v", res)
+	}
+}
+
+func TestCreateRequiresIdempotencyKey(t *testing.T) {
+	s := &Server{APIURL: "http://unused", Client: &http.Client{}}
+	res, err := s.callTool("create_devis", json.RawMessage(`{"client":"c","lignes":[]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res["status"] != "clarification" {
+		t.Fatalf("expected clarification, got %#v", res)
+	}
+	missing, _ := res["missing"].([]string)
+	if len(missing) != 1 || missing[0] != "idempotency_key" {
+		t.Fatalf("unexpected missing fields: %#v", res)
+	}
+	for _, tool := range toolDefs()[:3] {
+		schema := tool["inputSchema"].(map[string]any)
+		required := schema["required"].([]string)
+		found := false
+		for _, field := range required {
+			found = found || field == "idempotency_key"
+		}
+		if !found {
+			t.Fatalf("tool %s does not require idempotency_key: %#v", tool["name"], required)
+		}
 	}
 }
 

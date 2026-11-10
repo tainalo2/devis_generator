@@ -1,6 +1,9 @@
 package db
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestToMigrateURL(t *testing.T) {
 	cases := []struct {
@@ -26,5 +29,21 @@ func TestMigrateURLUsesAdvisoryLockDefault(t *testing.T) {
 	disabled := "postgres://u:p@localhost:5432/db?x-lock-strategy=off"
 	if MigrateURLUsesAdvisoryLockDefault(disabled) {
 		t.Fatalf("expected advisory lock disabled for %q", disabled)
+	}
+}
+
+func TestIdempotencyMigrationPersistsPerUserKeys(t *testing.T) {
+	up, err := embeddedMigrations.ReadFile("migrations/000008_document_idempotency.up.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(up)
+	for _, want := range []string{"idempotency_key", "UNIQUE", "user_id"} {
+		if !strings.Contains(sql, want) {
+			t.Fatalf("migration must contain %q: %s", want, sql)
+		}
+	}
+	if _, err := embeddedMigrations.ReadFile("migrations/000008_document_idempotency.down.sql"); err != nil {
+		t.Fatal(err)
 	}
 }
