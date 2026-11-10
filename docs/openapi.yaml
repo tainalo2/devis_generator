@@ -120,7 +120,7 @@ paths:
       requestBody:
         content:
           application/json:
-            example: { type: "quote", client_id: "uuid" }
+            example: { kind: "quote", client_id: "uuid" }
       responses:
         '200': { description: OK }
   /documents/{id}:
@@ -136,6 +136,16 @@ paths:
       summary: Supprimer un document
       responses:
         '200': { description: OK }
+  /documents/{id}/link:
+    get:
+      summary: Obtenir le lien public stable du document
+      description: Le lien d'un devis expire après 90 jours ; les liens de facture et d'acompte sont permanents.
+      responses:
+        '200':
+          description: Lien stable
+          content:
+            application/json:
+              example: { link: "https://example.com/d/token", permanent: false, expires_at: "2027-02-08T08:59:59Z" }
   /documents/{id}/issue:
     post:
       summary: Émettre un document
