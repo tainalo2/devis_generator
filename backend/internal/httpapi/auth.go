@@ -29,6 +29,7 @@ type contextKey string
 const (
 	ctxUserKey    contextKey = "user"
 	ctxSessionKey contextKey = "session"
+	ctxAPIKeyKey  contextKey = "api-key"
 )
 
 type authCredentials struct {
@@ -310,6 +311,19 @@ func (s *Server) withOptionalSession(next http.Handler) http.Handler {
 			ctx = context.WithValue(ctx, ctxSessionKey, sess)
 			r = r.WithContext(ctx)
 			_ = s.store.TouchSession(r.Context(), sess.ID)
+		} else if s.apiKeyLookup != nil {
+			authorization := strings.TrimSpace(r.Header.Get("Authorization"))
+			const prefix = "Bearer "
+			if strings.HasPrefix(authorization, prefix) {
+				raw := strings.TrimSpace(strings.TrimPrefix(authorization, prefix))
+				if raw != "" {
+					if key, u, err := s.apiKeyLookup(r.Context(), auth.HashToken(raw)); err == nil {
+						ctx := context.WithValue(r.Context(), ctxUserKey, u)
+						ctx = context.WithValue(ctx, ctxAPIKeyKey, key)
+						r = r.WithContext(ctx)
+					}
+				}
+			}
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -321,8 +335,28 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
 			return
 		}
+		if key, ok := APIKeyFromContext(r.Context()); ok {
+			required := "write"
+			switch r.Method {
+			case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
+				required = "read"
+			}
+			if !hasScope(key.Scopes, required) {
+				writeAPIError(w, http.StatusForbidden, "Scope API insuffisant.")
+				return
+			}
+		}
 		next(w, r)
 	}
+}
+
+func hasScope(scopes []string, required string) bool {
+	for _, scope := range scopes {
+		if scope == required {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Server) requireCSRF(next http.Handler) http.Handler {
@@ -360,6 +394,12 @@ func UserFromContext(ctx context.Context) (authstore.User, bool) {
 func SessionFromContext(ctx context.Context) (authstore.Session, bool) {
 	s, ok := ctx.Value(ctxSessionKey).(authstore.Session)
 	return s, ok
+}
+
+// APIKeyFromContext returns the API key used for this request, if any.
+func APIKeyFromContext(ctx context.Context) (authstore.APIKey, bool) {
+	key, ok := ctx.Value(ctxAPIKeyKey).(authstore.APIKey)
+	return key, ok
 }
 
 func normalizeEmail(email string) (string, error) {

@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -227,16 +229,116 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 			return map[string]any{"status": "clarification", "missing": []string{}, "alternatives": []string{"pourcentage", "montant_ht"}}, nil
 		}
 	}
-	path := "/documents"
-	body := map[string]any{"kind": kind}
-	for k, v := range a {
-		body[k] = v
+	var path string
+	var body map[string]any
+	switch kind {
+	case "devis":
+		path = "/documents"
+		body = map[string]any{
+			"kind":       "quote",
+			"client_id":  a["client"],
+			"lines":      a["lignes"],
+			"currency":   valueOr(a, "devise", "EUR"),
+			"vat_regime": valueOr(a, "regime_tva", "standard"),
+			"title":      valueOr(a, "titre", "Devis"),
+		}
+		if due, ok := a["valide_jusqu_au"]; ok {
+			body["due_date"] = due
+		}
+	case "facture":
+		if quoteID, ok := a["depuis_devis_id"].(string); ok && quoteID != "" {
+			path = "/documents/" + quoteID + "/convert-to-invoice"
+			body = map[string]any{}
+		} else {
+			path = "/documents"
+			body = map[string]any{
+				"kind":       "invoice",
+				"client_id":  a["client"],
+				"lines":      a["lignes"],
+				"currency":   valueOr(a, "devise", "EUR"),
+				"vat_regime": valueOr(a, "regime_tva", "standard"),
+				"title":      valueOr(a, "titre", "Facture"),
+			}
+		}
+	case "acompte":
+		return s.createDeposit(a), nil
+	default:
+		return map[string]any{"status": "error", "error": "création non prise en charge"}, nil
 	}
 	out, err := s.doAPI("POST", path, body)
 	if err != nil {
 		return map[string]any{"status": "error", "error": err.Error()}, nil
 	}
-	// standardized
+	return s.documentResult("created", out), nil
+}
+
+func (s *Server) createDeposit(args map[string]any) map[string]any {
+	quoteID, _ := args["devis_id"].(string)
+	out, err := s.doAPI(http.MethodGet, "/documents/"+quoteID, nil)
+	if err != nil {
+		return map[string]any{"status": "error", "error": err.Error()}
+	}
+	document, ok := out["document"].(map[string]any)
+	if !ok {
+		return map[string]any{"status": "error", "error": "réponse document invalide"}
+	}
+	factor, err := depositFactor(args, document)
+	if err != nil {
+		return map[string]any{"status": "error", "error": err.Error()}
+	}
+	rawLines, ok := document["lines"].([]any)
+	if !ok || len(rawLines) == 0 {
+		return map[string]any{"status": "error", "error": "devis sans lignes"}
+	}
+	lines := make([]any, 0, len(rawLines))
+	for _, raw := range rawLines {
+		line, ok := raw.(map[string]any)
+		if !ok {
+			return map[string]any{"status": "error", "error": "ligne de devis invalide"}
+		}
+		copyLine := make(map[string]any, len(line))
+		for key, value := range line {
+			copyLine[key] = value
+		}
+		price, ok := copyLine["unit_price_cents"].(float64)
+		if !ok {
+			return map[string]any{"status": "error", "error": "prix de ligne invalide"}
+		}
+		copyLine["unit_price_cents"] = math.Round(price * factor)
+		lines = append(lines, copyLine)
+	}
+	created, err := s.doAPI(http.MethodPost, "/documents/"+quoteID+"/deposit-invoice", map[string]any{"lines": lines})
+	if err != nil {
+		return map[string]any{"status": "error", "error": err.Error()}
+	}
+	return s.documentResult("created", created)
+}
+
+func depositFactor(args, document map[string]any) (float64, error) {
+	if percentage, ok := args["pourcentage"].(string); ok && percentage != "" {
+		value, err := strconv.ParseFloat(percentage, 64)
+		if err != nil || value <= 0 || value > 100 {
+			return 0, fmt.Errorf("pourcentage invalide")
+		}
+		return value / 100, nil
+	}
+	amount, _ := args["montant_ht"].(string)
+	value, err := strconv.ParseFloat(amount, 64)
+	subtotal, ok := document["subtotal_cents"].(float64)
+	if err != nil || value <= 0 || !ok || subtotal <= 0 {
+		return 0, fmt.Errorf("montant HT invalide")
+	}
+	return math.Round(value*100) / subtotal, nil
+}
+
+func valueOr(values map[string]any, key string, fallback any) any {
+	if value, ok := values[key]; ok && value != nil && value != "" {
+		return value
+	}
+	return fallback
+}
+
+func (s *Server) documentResult(status string, out map[string]any) map[string]any {
 	id, _ := out["id"].(string)
 	if id == "" {
 		if d, ok := out["document"].(map[string]any); ok {
@@ -246,20 +348,30 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 	link := ""
 	if id != "" {
 		link = s.APIURL + "/documents/" + id
+		if stable, err := s.doAPI(http.MethodGet, "/documents/"+id+"/link", nil); err == nil {
+			if stableLink, ok := stable["link"].(string); ok && stableLink != "" {
+				link = stableLink
+			}
+		}
 	}
-	status := "created"
-	return map[string]any{"status": status, "id": id, "link": link}, nil
+	return map[string]any{"status": status, "id": id, "link": link}
 }
 
 func (s *Server) handleGetLink(args json.RawMessage) (map[string]any, error) {
 	a := parseArgs(args)
 	id, _ := a["id"].(string)
-	out, err := s.doAPI("GET", "/documents/"+id, nil)
+	out, err := s.doAPI("GET", "/documents/"+id+"/link", nil)
 	if err != nil {
 		return map[string]any{"status": "error", "error": err.Error()}, nil
 	}
-	link := s.APIURL + "/documents/" + id
-	return map[string]any{"status": "ok", "id": id, "link": link, "document": out}, nil
+	link, _ := out["link"].(string)
+	result := map[string]any{"status": "ok", "id": id, "link": link}
+	for _, key := range []string{"permanent", "expires_at", "message"} {
+		if value, ok := out[key]; ok {
+			result[key] = value
+		}
+	}
+	return result, nil
 }
 
 func (s *Server) handleList(args json.RawMessage) (map[string]any, error) {

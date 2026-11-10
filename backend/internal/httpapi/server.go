@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"os"
@@ -22,10 +23,12 @@ import (
 type Server struct {
 	db                Pinger
 	store             *authstore.Store
+	apiKeyLookup      func(context.Context, string) (authstore.APIKey, authstore.User, error)
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
 	publicConfig      *PublicSiteConfig
+	docLinkSecret     []byte
 	staticDir         string
 	version           string
 	router            chi.Router
@@ -42,17 +45,18 @@ type Server struct {
 
 // Options configures the HTTP server.
 type Options struct {
-	DB           Pinger
-	Store        *authstore.Store
-	Biz          *biz.Store
-	Box          *crypto.Box
-	Legal        *legal.Service
-	PublicConfig *PublicSiteConfig
-	StaticDir    string
-	Version      string
-	CookieSecure bool
-	SessionTTL   time.Duration
-	Argon2       auth.Argon2Params
+	DB            Pinger
+	Store         *authstore.Store
+	Biz           *biz.Store
+	Box           *crypto.Box
+	Legal         *legal.Service
+	PublicConfig  *PublicSiteConfig
+	DocLinkSecret []byte
+	StaticDir     string
+	Version       string
+	CookieSecure  bool
+	SessionTTL    time.Duration
+	Argon2        auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
 	TrustedProxies []*net.IPNet
 }
@@ -66,6 +70,7 @@ func New(opts Options) *Server {
 		box:               opts.Box,
 		legal:             opts.Legal,
 		publicConfig:      opts.PublicConfig,
+		docLinkSecret:     opts.DocLinkSecret,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
 		cookieSecure:      opts.CookieSecure,
@@ -78,8 +83,20 @@ func New(opts Options) *Server {
 		previewLimiter:    NewRateLimiter(120, time.Minute),
 		trustedProxies:    opts.TrustedProxies,
 	}
+	if s.store != nil {
+		s.apiKeyLookup = func(ctx context.Context, hash string) (authstore.APIKey, authstore.User, error) {
+			key, user, err := s.store.GetAPIKeyByHash(ctx, hash)
+			if err == nil {
+				s.store.TouchAPIKey(ctx, key.ID)
+			}
+			return key, user, err
+		}
+	}
 	if s.version == "" {
 		s.version = "dev"
+	}
+	if len(s.docLinkSecret) == 0 {
+		s.docLinkSecret = []byte("dev-doclink-secret")
 	}
 	if s.sessionTTL <= 0 {
 		s.sessionTTL = 30 * 24 * time.Hour
@@ -138,6 +155,7 @@ func New(opts Options) *Server {
 			r.Get("/documents", s.requireAuth(s.handleListDocuments))
 			r.Post("/documents", s.requireAuth(s.handleCreateDocument))
 			r.Get("/documents/{id}", s.requireAuth(s.handleGetDocument))
+			r.Get("/documents/{id}/link", s.requireAuth(s.handleCreateDocumentLink))
 			r.Put("/documents/{id}", s.requireAuth(s.handleUpdateDocument))
 			r.Delete("/documents/{id}", s.requireAuth(s.handleDeleteDocument))
 			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))
@@ -149,6 +167,7 @@ func New(opts Options) *Server {
 		})
 	})
 
+	r.Get("/d/{token}", s.handleDocumentLink)
 	s.mountStatic(r)
 	s.router = r
 	return s

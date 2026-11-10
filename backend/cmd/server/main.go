@@ -137,6 +137,7 @@ func main() {
 		},
 		StaticDir:      staticDir,
 		Version:        Version,
+		DocLinkSecret:  []byte(cfg.SessionSecret),
 		CookieSecure:   cfg.CookieSecure,
 		SessionTTL:     cfg.SessionTTL,
 		TrustedProxies: cfg.TrustedProxies,
