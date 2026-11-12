@@ -127,3 +127,34 @@ func TestLoadRejectsWeakProductionSessionSecret(t *testing.T) {
 		t.Fatal("expected weak SESSION_SECRET error")
 	}
 }
+
+func TestLoadGoogleOAuthConfiguration(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://db")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_ID", "google-client-id")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_SECRET", "google-client-secret")
+	t.Setenv("GOOGLE_OAUTH_REDIRECT_URL", "https://app.example.test/api/v1/email/gmail/callback")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.GoogleOAuthClientID != "google-client-id" || cfg.GoogleOAuthClientSecret != "google-client-secret" {
+		t.Fatalf("unexpected Google credentials: %#v", cfg)
+	}
+	if cfg.GoogleOAuthRedirectURL != "https://app.example.test/api/v1/email/gmail/callback" {
+		t.Fatalf("redirect URL = %q", cfg.GoogleOAuthRedirectURL)
+	}
+}
+
+func TestLoadRejectsPartialGoogleOAuthConfiguration(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://db")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_ID", "google-client-id")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+	t.Setenv("GOOGLE_OAUTH_REDIRECT_URL", "")
+
+	if _, err := Load(); err == nil {
+		t.Fatal("expected partial Google OAuth configuration error")
+	}
+}

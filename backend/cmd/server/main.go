@@ -17,6 +17,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/config"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
+	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
@@ -102,6 +103,23 @@ func main() {
 		Logger:    slog.Default(),
 	}
 
+	secretRepo := paymentsecrets.NewPGRepository(pool)
+	secretVault := paymentsecrets.NewVault(secretRepo, box)
+
+	var gmailSvc *gmailmail.Service
+	if cfg.GoogleOAuthClientID != "" {
+		gmailSvc, err = gmailmail.New(gmailmail.Config{
+			ClientID:     cfg.GoogleOAuthClientID,
+			ClientSecret: cfg.GoogleOAuthClientSecret,
+			RedirectURL:  cfg.GoogleOAuthRedirectURL,
+			StateKey:     []byte(cfg.SessionSecret),
+		}, secretVault, &http.Client{Timeout: 15 * time.Second})
+		if err != nil {
+			slog.Error("google oauth", "error", err)
+			os.Exit(1)
+		}
+	}
+
 	var microsoftSvc *microsoftmail.Service
 	if cfg.MicrosoftOAuthClientID != "" {
 		microsoftSvc, err = microsoftmail.New(microsoftmail.Config{
@@ -109,7 +127,7 @@ func main() {
 			ClientSecret: cfg.MicrosoftOAuthClientSecret,
 			RedirectURL:  cfg.MicrosoftOAuthRedirectURL,
 			StateKey:     []byte(cfg.SessionSecret),
-		}, paymentsecrets.NewVault(paymentsecrets.NewPGRepository(pool), box), &http.Client{Timeout: 15 * time.Second})
+		}, secretVault, &http.Client{Timeout: 15 * time.Second})
 		if err != nil {
 			slog.Error("microsoft oauth", "error", err)
 			os.Exit(1)
@@ -117,8 +135,6 @@ func main() {
 	}
 
 	bizStore := biz.NewStore(pool, box)
-	secretRepo := paymentsecrets.NewPGRepository(pool)
-	secretVault := paymentsecrets.NewVault(secretRepo, box)
 	smtpService := smtpconfig.NewService(smtpconfig.NewPGStore(pool), secretVault, smtpconfig.NewSMTPTester(nil))
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
@@ -145,6 +161,7 @@ func main() {
 		Biz:           bizStore,
 		Box:           box,
 		Legal:         legalSvc,
+		GmailMail:     gmailSvc,
 		MicrosoftMail: microsoftSvc,
 		SMTP:          smtpService,
 		PublicConfig: &httpapi.PublicSiteConfig{

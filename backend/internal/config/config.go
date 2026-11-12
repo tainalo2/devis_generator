@@ -50,6 +50,9 @@ type Config struct {
 	MicrosoftOAuthClientID     string
 	MicrosoftOAuthClientSecret string
 	MicrosoftOAuthRedirectURL  string
+	GoogleOAuthClientID        string
+	GoogleOAuthClientSecret    string
+	GoogleOAuthRedirectURL     string
 
 	// Site public (landing / pages légales) — aucune identité inventée.
 	DonateURL           string
@@ -93,6 +96,9 @@ func Load() (Config, error) {
 		MicrosoftOAuthClientID:     getEnv("MICROSOFT_OAUTH_CLIENT_ID", ""),
 		MicrosoftOAuthClientSecret: getEnv("MICROSOFT_OAUTH_CLIENT_SECRET", ""),
 		MicrosoftOAuthRedirectURL:  getEnv("MICROSOFT_OAUTH_REDIRECT_URL", ""),
+		GoogleOAuthClientID:        getEnv("GOOGLE_OAUTH_CLIENT_ID", ""),
+		GoogleOAuthClientSecret:    getEnv("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+		GoogleOAuthRedirectURL:     getEnv("GOOGLE_OAUTH_REDIRECT_URL", ""),
 		DonateURL:                  getEnv("DONATE_URL", ""),
 		LegalPublisherName:         getEnv("LEGAL_PUBLISHER_NAME", ""),
 		LegalPublisherAddr:         getEnv("LEGAL_PUBLISHER_ADDRESS", ""),
@@ -110,6 +116,15 @@ func Load() (Config, error) {
 	}
 	if configuredMicrosoftFields != 0 && configuredMicrosoftFields != 3 {
 		return Config{}, fmt.Errorf("MICROSOFT_OAUTH_CLIENT_ID, MICROSOFT_OAUTH_CLIENT_SECRET and MICROSOFT_OAUTH_REDIRECT_URL must be configured together")
+	}
+	configuredGoogleFields := 0
+	for _, value := range []string{cfg.GoogleOAuthClientID, cfg.GoogleOAuthClientSecret, cfg.GoogleOAuthRedirectURL} {
+		if value != "" {
+			configuredGoogleFields++
+		}
+	}
+	if configuredGoogleFields != 0 && configuredGoogleFields != 3 {
+		return Config{}, fmt.Errorf("GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET and GOOGLE_OAUTH_REDIRECT_URL must be configured together")
 	}
 
 	if cfg.DatabaseURL == "" {

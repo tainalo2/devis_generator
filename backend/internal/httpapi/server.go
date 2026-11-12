@@ -17,6 +17,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
+	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
@@ -30,6 +31,7 @@ type Server struct {
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
+	gmailMail         gmailMailer
 	microsoftMail     microsoftMailer
 	smtp              *smtpconfig.Service
 	publicConfig      *PublicSiteConfig
@@ -56,12 +58,21 @@ type microsoftMailer interface {
 	Disconnect(context.Context, paymentsecrets.Actor, uuid.UUID) error
 }
 
+type gmailMailer interface {
+	AuthorizationURL(uuid.UUID) (string, error)
+	HandleCallback(context.Context, paymentsecrets.Actor, uuid.UUID, string, string) error
+	Send(context.Context, paymentsecrets.Actor, uuid.UUID, gmailmail.Message) error
+	Status(context.Context, paymentsecrets.Actor, uuid.UUID) (bool, error)
+	Disconnect(context.Context, paymentsecrets.Actor, uuid.UUID) error
+}
+
 type Options struct {
 	DB            Pinger
 	Store         *authstore.Store
 	Biz           *biz.Store
 	Box           *crypto.Box
 	Legal         *legal.Service
+	GmailMail     gmailMailer
 	MicrosoftMail microsoftMailer
 	SMTP          *smtpconfig.Service
 	PublicConfig  *PublicSiteConfig
@@ -82,6 +93,7 @@ func New(opts Options) *Server {
 		biz:               opts.Biz,
 		box:               opts.Box,
 		legal:             opts.Legal,
+		gmailMail:         opts.GmailMail,
 		microsoftMail:     opts.MicrosoftMail,
 		smtp:              opts.SMTP,
 		publicConfig:      opts.PublicConfig,
@@ -171,6 +183,12 @@ func New(opts Options) *Server {
 			r.Get("/email/microsoft/status", s.requireAuth(s.handleMicrosoftStatus))
 			r.Post("/email/microsoft/send", s.requireAuth(s.handleMicrosoftSend))
 			r.Delete("/email/microsoft", s.requireAuth(s.handleMicrosoftDisconnect))
+
+			r.Get("/email/gmail/authorize", s.requireAuth(s.handleGmailAuthorize))
+			r.Get("/email/gmail/callback", s.requireAuth(s.handleGmailCallback))
+			r.Get("/email/gmail/status", s.requireAuth(s.handleGmailStatus))
+			r.Post("/email/gmail/send", s.requireAuth(s.handleGmailSend))
+			r.Delete("/email/gmail", s.requireAuth(s.handleGmailDisconnect))
 		})
 	})
 
