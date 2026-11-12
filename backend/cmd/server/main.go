@@ -19,6 +19,8 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 )
 
 // Version is injected at build time via -ldflags.
@@ -99,6 +101,20 @@ func main() {
 		Logger:    slog.Default(),
 	}
 
+	var microsoftSvc *microsoftmail.Service
+	if cfg.MicrosoftOAuthClientID != "" {
+		microsoftSvc, err = microsoftmail.New(microsoftmail.Config{
+			ClientID:     cfg.MicrosoftOAuthClientID,
+			ClientSecret: cfg.MicrosoftOAuthClientSecret,
+			RedirectURL:  cfg.MicrosoftOAuthRedirectURL,
+			StateKey:     []byte(cfg.SessionSecret),
+		}, paymentsecrets.NewVault(paymentsecrets.NewPGRepository(pool), box), &http.Client{Timeout: 15 * time.Second})
+		if err != nil {
+			slog.Error("microsoft oauth", "error", err)
+			os.Exit(1)
+		}
+	}
+
 	bizStore := biz.NewStore(pool, box)
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
@@ -120,11 +136,12 @@ func main() {
 	}
 
 	api := httpapi.New(httpapi.Options{
-		DB:    pool,
-		Store: authstore.New(pool),
-		Biz:   bizStore,
-		Box:   box,
-		Legal: legalSvc,
+		DB:            pool,
+		Store:         authstore.New(pool),
+		Biz:           bizStore,
+		Box:           box,
+		Legal:         legalSvc,
+		MicrosoftMail: microsoftSvc,
 		PublicConfig: &httpapi.PublicSiteConfig{
 			DonateURL:           cfg.DonateURL,
 			LegalPublisherName:  cfg.LegalPublisherName,

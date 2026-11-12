@@ -10,10 +10,11 @@ import (
 )
 
 type fakeRepository struct {
-	ciphertext []byte
-	metadata   Metadata
-	putActor   Actor
-	readActor  Actor
+	ciphertext  []byte
+	metadata    Metadata
+	putActor    Actor
+	readActor   Actor
+	deleteActor Actor
 }
 
 func (r *fakeRepository) PutCiphertext(_ context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string, ciphertext []byte, masked string) (Metadata, error) {
@@ -26,6 +27,12 @@ func (r *fakeRepository) PutCiphertext(_ context.Context, actor Actor, ownerID u
 func (r *fakeRepository) ReadCiphertext(_ context.Context, actor Actor, _ uuid.UUID, _ Kind, _ string) ([]byte, Metadata, error) {
 	r.readActor = actor
 	return append([]byte(nil), r.ciphertext...), r.metadata, nil
+}
+
+func (r *fakeRepository) DeleteCiphertext(_ context.Context, actor Actor, _ uuid.UUID, _ Kind, _ string) error {
+	r.deleteActor = actor
+	r.ciphertext = nil
+	return nil
 }
 
 func TestPutEncryptsAndReturnsOnlyMaskedMetadata(t *testing.T) {
@@ -130,5 +137,21 @@ func TestEmailSecretsKindsAccepted(t *testing.T) {
 		if !bytes.Equal(revealed, plaintext) {
 			t.Fatalf("revealed = %q, want %q", revealed, plaintext)
 		}
+	}
+}
+
+func TestDeleteForwardsAuditActor(t *testing.T) {
+	box, err := appcrypto.NewBox(bytes.Repeat([]byte{11}, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := &fakeRepository{}
+	vault := NewVault(repo, box)
+	actor := Actor{UserID: uuid.New(), RequestID: "req-delete"}
+	if err := vault.Delete(context.Background(), actor, actor.UserID, KindOAuthMicrosoftToken, "default"); err != nil {
+		t.Fatal(err)
+	}
+	if repo.deleteActor != actor {
+		t.Fatalf("delete actor not forwarded: %#v", repo.deleteActor)
 	}
 }

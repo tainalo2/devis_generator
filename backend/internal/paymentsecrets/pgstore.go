@@ -94,7 +94,7 @@ func (r *PGRepository) ReadCiphertext(ctx context.Context, actor Actor, ownerID 
 	return ciphertext, metadata, nil
 }
 
-func (r *PGRepository) Delete(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
+func (r *PGRepository) DeleteCiphertext(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err

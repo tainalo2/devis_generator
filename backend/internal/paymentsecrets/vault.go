@@ -55,6 +55,7 @@ type Metadata struct {
 type ciphertextRepository interface {
 	PutCiphertext(context.Context, Actor, uuid.UUID, Kind, string, []byte, string) (Metadata, error)
 	ReadCiphertext(context.Context, Actor, uuid.UUID, Kind, string) ([]byte, Metadata, error)
+	DeleteCiphertext(context.Context, Actor, uuid.UUID, Kind, string) error
 }
 
 // Vault is the only payment-secret plaintext boundary. Repositories receive
@@ -97,6 +98,14 @@ func (v *Vault) Reveal(ctx context.Context, actor Actor, ownerID uuid.UUID, kind
 		return nil, Metadata{}, err
 	}
 	return plaintext, metadata, nil
+}
+
+func (v *Vault) Delete(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
+	reference, err := validateAccess(actor, ownerID, kind, reference)
+	if err != nil {
+		return err
+	}
+	return v.repo.DeleteCiphertext(ctx, actor, ownerID, kind, reference)
 }
 
 func validateAccess(actor Actor, ownerID uuid.UUID, kind Kind, reference string) (string, error) {

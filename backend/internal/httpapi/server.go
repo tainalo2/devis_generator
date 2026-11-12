@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"net"
 	"net/http"
 	"os"
@@ -11,11 +12,14 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 )
 
 // Server is the HTTP API and static file server.
@@ -25,6 +29,7 @@ type Server struct {
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
+	microsoftMail     microsoftMailer
 	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
@@ -41,18 +46,27 @@ type Server struct {
 }
 
 // Options configures the HTTP server.
+type microsoftMailer interface {
+	AuthorizationURL(uuid.UUID) (string, error)
+	HandleCallback(context.Context, paymentsecrets.Actor, uuid.UUID, string, string) error
+	Send(context.Context, paymentsecrets.Actor, uuid.UUID, microsoftmail.Message) error
+	Status(context.Context, paymentsecrets.Actor, uuid.UUID) (bool, error)
+	Disconnect(context.Context, paymentsecrets.Actor, uuid.UUID) error
+}
+
 type Options struct {
-	DB           Pinger
-	Store        *authstore.Store
-	Biz          *biz.Store
-	Box          *crypto.Box
-	Legal        *legal.Service
-	PublicConfig *PublicSiteConfig
-	StaticDir    string
-	Version      string
-	CookieSecure bool
-	SessionTTL   time.Duration
-	Argon2       auth.Argon2Params
+	DB            Pinger
+	Store         *authstore.Store
+	Biz           *biz.Store
+	Box           *crypto.Box
+	Legal         *legal.Service
+	MicrosoftMail microsoftMailer
+	PublicConfig  *PublicSiteConfig
+	StaticDir     string
+	Version       string
+	CookieSecure  bool
+	SessionTTL    time.Duration
+	Argon2        auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
 	TrustedProxies []*net.IPNet
 }
@@ -65,6 +79,7 @@ func New(opts Options) *Server {
 		biz:               opts.Biz,
 		box:               opts.Box,
 		legal:             opts.Legal,
+		microsoftMail:     opts.MicrosoftMail,
 		publicConfig:      opts.PublicConfig,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
@@ -142,6 +157,12 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+
+			r.Get("/email/microsoft/authorize", s.requireAuth(s.handleMicrosoftAuthorize))
+			r.Get("/email/microsoft/callback", s.requireAuth(s.handleMicrosoftCallback))
+			r.Get("/email/microsoft/status", s.requireAuth(s.handleMicrosoftStatus))
+			r.Post("/email/microsoft/send", s.requireAuth(s.handleMicrosoftSend))
+			r.Delete("/email/microsoft", s.requireAuth(s.handleMicrosoftDisconnect))
 		})
 	})
 
