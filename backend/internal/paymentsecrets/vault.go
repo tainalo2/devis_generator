@@ -100,6 +100,7 @@ func (v *Vault) Reveal(ctx context.Context, actor Actor, ownerID uuid.UUID, kind
 	return plaintext, metadata, nil
 }
 
+// Delete removes a secret through the audited repository boundary.
 func (v *Vault) Delete(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
 	reference, err := validateAccess(actor, ownerID, kind, reference)
 	if err != nil {

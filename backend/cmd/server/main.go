@@ -21,6 +21,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
 // Version is injected at build time via -ldflags.
@@ -116,6 +117,9 @@ func main() {
 	}
 
 	bizStore := biz.NewStore(pool, box)
+	secretRepo := paymentsecrets.NewPGRepository(pool)
+	secretVault := paymentsecrets.NewVault(secretRepo, box)
+	smtpService := smtpconfig.NewService(smtpconfig.NewPGStore(pool), secretVault, smtpconfig.NewSMTPTester(nil))
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
 	})
@@ -142,6 +146,7 @@ func main() {
 		Box:           box,
 		Legal:         legalSvc,
 		MicrosoftMail: microsoftSvc,
+		SMTP:          smtpService,
 		PublicConfig: &httpapi.PublicSiteConfig{
 			DonateURL:           cfg.DonateURL,
 			LegalPublisherName:  cfg.LegalPublisherName,

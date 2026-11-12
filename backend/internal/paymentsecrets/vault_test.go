@@ -15,6 +15,7 @@ type fakeRepository struct {
 	putActor    Actor
 	readActor   Actor
 	deleteActor Actor
+	deleted     bool
 }
 
 func (r *fakeRepository) PutCiphertext(_ context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string, ciphertext []byte, masked string) (Metadata, error) {
@@ -32,7 +33,28 @@ func (r *fakeRepository) ReadCiphertext(_ context.Context, actor Actor, _ uuid.U
 func (r *fakeRepository) DeleteCiphertext(_ context.Context, actor Actor, _ uuid.UUID, _ Kind, _ string) error {
 	r.deleteActor = actor
 	r.ciphertext = nil
+	r.deleted = true
 	return nil
+}
+
+func TestDeleteValidatesAndForwardsAuditActor(t *testing.T) {
+	box, err := appcrypto.NewBox(bytes.Repeat([]byte{6}, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := &fakeRepository{}
+	vault := NewVault(repo, box)
+	actor := Actor{UserID: uuid.New(), RequestID: "req-delete"}
+
+	if err := vault.Delete(context.Background(), actor, uuid.New(), KindSMTPPassword, "default"); err != nil {
+		t.Fatal(err)
+	}
+	if !repo.deleted || repo.deleteActor != actor {
+		t.Fatalf("delete not forwarded with actor: %#v", repo.deleteActor)
+	}
+	if err := vault.Delete(context.Background(), Actor{}, uuid.New(), KindSMTPPassword, "default"); err != ErrActorRequired {
+		t.Fatalf("missing actor err = %v", err)
+	}
 }
 
 func TestPutEncryptsAndReturnsOnlyMaskedMetadata(t *testing.T) {

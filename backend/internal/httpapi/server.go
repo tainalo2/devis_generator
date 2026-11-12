@@ -20,6 +20,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
 // Server is the HTTP API and static file server.
@@ -30,6 +31,7 @@ type Server struct {
 	box               *crypto.Box
 	legal             *legal.Service
 	microsoftMail     microsoftMailer
+	smtp              *smtpconfig.Service
 	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
@@ -61,6 +63,7 @@ type Options struct {
 	Box           *crypto.Box
 	Legal         *legal.Service
 	MicrosoftMail microsoftMailer
+	SMTP          *smtpconfig.Service
 	PublicConfig  *PublicSiteConfig
 	StaticDir     string
 	Version       string
@@ -80,6 +83,7 @@ func New(opts Options) *Server {
 		box:               opts.Box,
 		legal:             opts.Legal,
 		microsoftMail:     opts.MicrosoftMail,
+		smtp:              opts.SMTP,
 		publicConfig:      opts.PublicConfig,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
@@ -139,6 +143,10 @@ func New(opts Options) *Server {
 
 			r.Get("/issuer", s.requireAuth(s.handleGetIssuer))
 			r.Put("/issuer", s.requireAuth(s.handlePutIssuer))
+
+			r.Get("/email/smtp", s.requireAuth(s.handleGetSMTPConfig))
+			r.Post("/email/smtp", s.requireAuth(s.handleSaveSMTPConfig))
+			r.Delete("/email/smtp", s.requireAuth(s.handleDeleteSMTPConfig))
 
 			r.Get("/clients", s.requireAuth(s.handleListClients))
 			r.Post("/clients", s.requireAuth(s.handleCreateClient))

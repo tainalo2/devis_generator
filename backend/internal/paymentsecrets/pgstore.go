@@ -103,9 +103,9 @@ func (r *PGRepository) DeleteCiphertext(ctx context.Context, actor Actor, ownerI
 
 	var secretID uuid.UUID
 	err = tx.QueryRow(ctx, `
-		DELETE FROM payment_secrets
+		SELECT id FROM payment_secrets
 		WHERE owner_id = $1 AND kind = $2 AND reference = $3
-		RETURNING id
+		FOR UPDATE
 	`, ownerID, kind, reference).Scan(&secretID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
@@ -114,6 +114,12 @@ func (r *PGRepository) DeleteCiphertext(ctx context.Context, actor Actor, ownerI
 		return err
 	}
 	if err := insertAudit(ctx, tx, &secretID, ownerID, kind, reference, actor, ActionDelete); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM payment_secrets
+		WHERE id = $1
+	`, secretID); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
