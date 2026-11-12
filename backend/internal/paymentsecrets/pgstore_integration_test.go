@@ -15,6 +15,15 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 )
 
+func TestAuditActionDistinguishesCreateFromRotation(t *testing.T) {
+	if got := auditAction(true); got != ActionCreate {
+		t.Fatalf("insert action=%q", got)
+	}
+	if got := auditAction(false); got != ActionUpdate {
+		t.Fatalf("rotation action=%q", got)
+	}
+}
+
 func TestPGRepositoryEncryptsAtRestAndAuditsEveryAccess(t *testing.T) {
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {

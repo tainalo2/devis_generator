@@ -1,6 +1,23 @@
 package db
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestEmailSecretsDownMigrationRemovesIncompatibleRowsFirst(t *testing.T) {
+	sqlBytes, err := embeddedMigrations.ReadFile("migrations/000014_email_secrets.down.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := string(sqlBytes)
+	deleteSecrets := strings.Index(sql, "DELETE FROM payment_secrets")
+	deleteAudit := strings.Index(sql, "DELETE FROM payment_secret_audit")
+	alterSecrets := strings.Index(sql, "ALTER TABLE payment_secrets")
+	if deleteSecrets < 0 || deleteAudit < 0 || alterSecrets < 0 || deleteSecrets > alterSecrets || deleteAudit > alterSecrets {
+		t.Fatalf("rollback must delete email credentials and audit rows before narrowing constraints:\n%s", sql)
+	}
+}
 
 func TestToMigrateURL(t *testing.T) {
 	cases := []struct {

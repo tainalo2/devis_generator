@@ -54,12 +54,12 @@ type Config struct {
 
 type Store interface {
 	Get(context.Context, uuid.UUID) (Config, error)
-	Upsert(context.Context, Config) (Config, error)
+	Save(context.Context, paymentsecrets.Actor, Config, paymentsecrets.SealedSecret) (Config, error)
 	Delete(context.Context, uuid.UUID) error
 }
 
 type Vault interface {
-	Put(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string, []byte) (paymentsecrets.Metadata, error)
+	Seal([]byte) (paymentsecrets.SealedSecret, error)
 	Delete(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) error
 }
 
@@ -85,12 +85,12 @@ func (s *Service) Save(ctx context.Context, actor paymentsecrets.Actor, ownerID 
 	if err := s.tester.Test(ctx, config, password); err != nil {
 		return Config{}, fmt.Errorf("%w: %v", ErrSMTPTestFailed, err)
 	}
-	if _, err := s.vault.Put(ctx, actor, ownerID, paymentsecrets.KindSMTPPassword, secretReference, []byte(password)); err != nil {
+	sealed, err := s.vault.Seal([]byte(password))
+	if err != nil {
 		return Config{}, err
 	}
-	stored, err := s.store.Upsert(ctx, config)
+	stored, err := s.store.Save(ctx, actor, config, sealed)
 	if err != nil {
-		_ = s.vault.Delete(ctx, actor, ownerID, paymentsecrets.KindSMTPPassword, secretReference)
 		return Config{}, err
 	}
 	stored.PasswordConfigured = true

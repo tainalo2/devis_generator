@@ -10,11 +10,11 @@ import (
 )
 
 type fakeStore struct {
-	config    Config
-	upserts   int
-	deletes   int
-	getErr    error
-	upsertErr error
+	config  Config
+	saves   int
+	deletes int
+	getErr  error
+	saveErr error
 }
 
 func (s *fakeStore) Get(_ context.Context, _ uuid.UUID) (Config, error) {
@@ -23,10 +23,10 @@ func (s *fakeStore) Get(_ context.Context, _ uuid.UUID) (Config, error) {
 	}
 	return s.config, nil
 }
-func (s *fakeStore) Upsert(_ context.Context, config Config) (Config, error) {
-	s.upserts++
-	if s.upsertErr != nil {
-		return Config{}, s.upsertErr
+func (s *fakeStore) Save(_ context.Context, _ paymentsecrets.Actor, config Config, _ paymentsecrets.SealedSecret) (Config, error) {
+	s.saves++
+	if s.saveErr != nil {
+		return Config{}, s.saveErr
 	}
 	s.config = config
 	return config, nil
@@ -37,15 +37,15 @@ func (s *fakeStore) Delete(_ context.Context, _ uuid.UUID) error {
 }
 
 type fakeVault struct {
-	puts      int
+	seals     int
 	deletes   int
 	plaintext []byte
 }
 
-func (v *fakeVault) Put(_ context.Context, _ paymentsecrets.Actor, ownerID uuid.UUID, kind paymentsecrets.Kind, reference string, plaintext []byte) (paymentsecrets.Metadata, error) {
-	v.puts++
+func (v *fakeVault) Seal(plaintext []byte) (paymentsecrets.SealedSecret, error) {
+	v.seals++
 	v.plaintext = append([]byte(nil), plaintext...)
-	return paymentsecrets.Metadata{OwnerID: ownerID, Kind: kind, Reference: reference}, nil
+	return paymentsecrets.SealedSecret{Ciphertext: []byte{1, 2, 3}, MaskedValue: paymentsecrets.Mask(plaintext)}, nil
 }
 func (v *fakeVault) Delete(_ context.Context, _ paymentsecrets.Actor, _ uuid.UUID, _ paymentsecrets.Kind, _ string) error {
 	v.deletes++
@@ -86,8 +86,8 @@ func TestSaveTestsSMTPBeforePersistingAndKeepsPasswordOutOfConfig(t *testing.T) 
 	if tester.calls != 1 || tester.password != "smtp-secret" {
 		t.Fatalf("tester calls=%d password=%q", tester.calls, tester.password)
 	}
-	if vault.puts != 1 || string(vault.plaintext) != "smtp-secret" || store.upserts != 1 {
-		t.Fatalf("vault puts=%d store upserts=%d", vault.puts, store.upserts)
+	if vault.seals != 1 || string(vault.plaintext) != "smtp-secret" || store.saves != 1 {
+		t.Fatalf("vault seals=%d store saves=%d", vault.seals, store.saves)
 	}
 	if got.Host != "smtp.example.com" || got.TLSMode != TLSModeSTARTTLS || !got.PasswordConfigured {
 		t.Fatalf("unexpected config: %#v", got)
@@ -103,8 +103,21 @@ func TestSaveDoesNotPersistWhenSMTPTestFails(t *testing.T) {
 	if !errors.Is(err, ErrSMTPTestFailed) {
 		t.Fatalf("err=%v", err)
 	}
-	if vault.puts != 0 || store.upserts != 0 {
-		t.Fatalf("persisted after test failure: vault=%d store=%d", vault.puts, store.upserts)
+	if vault.seals != 0 || store.saves != 0 {
+		t.Fatalf("persisted after test failure: vault=%d store=%d", vault.seals, store.saves)
+	}
+}
+
+func TestSaveFailureLeavesPreviousConfigurationUntouched(t *testing.T) {
+	previous := Config{Host: "old.example.com", Port: 465, Username: "old"}
+	store := &fakeStore{config: previous, saveErr: errors.New("database failed")}
+	service := NewService(store, &fakeVault{}, &fakeTester{})
+	_, err := service.Save(context.Background(), paymentsecrets.Actor{UserID: uuid.New()}, uuid.New(), validInput())
+	if err == nil {
+		t.Fatal("expected save failure")
+	}
+	if store.config != previous {
+		t.Fatalf("previous state changed: %#v", store.config)
 	}
 }
 

@@ -48,6 +48,7 @@ func (r *PGRepository) PutCiphertext(ctx context.Context, actor Actor, ownerID u
 	defer tx.Rollback(ctx)
 
 	var metadata Metadata
+	var inserted bool
 	err = tx.QueryRow(ctx, `
 		INSERT INTO payment_secrets (owner_id, kind, reference, key_id, ciphertext, masked_value)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -56,14 +57,14 @@ func (r *PGRepository) PutCiphertext(ctx context.Context, actor Actor, ownerID u
 		    ciphertext = EXCLUDED.ciphertext,
 		    masked_value = EXCLUDED.masked_value,
 		    updated_at = NOW()
-		RETURNING id, owner_id, kind, reference, masked_value, created_at, updated_at
+		RETURNING id, owner_id, kind, reference, masked_value, created_at, updated_at, (xmax = 0)
 	`, ownerID, kind, reference, ciphertext[0], ciphertext, masked).Scan(
-		&metadata.ID, &metadata.OwnerID, &metadata.Kind, &metadata.Reference, &metadata.MaskedValue, &metadata.CreatedAt, &metadata.UpdatedAt,
+		&metadata.ID, &metadata.OwnerID, &metadata.Kind, &metadata.Reference, &metadata.MaskedValue, &metadata.CreatedAt, &metadata.UpdatedAt, &inserted,
 	)
 	if err != nil {
 		return Metadata{}, err
 	}
-	if err := insertAudit(ctx, tx, &metadata.ID, ownerID, kind, reference, actor, ActionCreate); err != nil {
+	if err := insertAudit(ctx, tx, &metadata.ID, ownerID, kind, reference, actor, auditAction(inserted)); err != nil {
 		return Metadata{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -154,6 +155,13 @@ func (r *PGRepository) ListAudit(ctx context.Context, ownerID uuid.UUID, limit i
 		events = append(events, event)
 	}
 	return events, rows.Err()
+}
+
+func auditAction(inserted bool) AuditAction {
+	if inserted {
+		return ActionCreate
+	}
+	return ActionUpdate
 }
 
 type auditExecer interface {

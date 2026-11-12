@@ -26,7 +26,7 @@ func (s *apiSMTPStore) Get(_ context.Context, _ uuid.UUID) (smtpconfig.Config, e
 	}
 	return s.config, nil
 }
-func (s *apiSMTPStore) Upsert(_ context.Context, config smtpconfig.Config) (smtpconfig.Config, error) {
+func (s *apiSMTPStore) Save(_ context.Context, _ paymentsecrets.Actor, config smtpconfig.Config, _ paymentsecrets.SealedSecret) (smtpconfig.Config, error) {
 	s.config = config
 	return config, nil
 }
@@ -37,8 +37,8 @@ func (s *apiSMTPStore) Delete(_ context.Context, _ uuid.UUID) error {
 
 type apiSMTPVault struct{}
 
-func (apiSMTPVault) Put(_ context.Context, _ paymentsecrets.Actor, ownerID uuid.UUID, kind paymentsecrets.Kind, reference string, _ []byte) (paymentsecrets.Metadata, error) {
-	return paymentsecrets.Metadata{OwnerID: ownerID, Kind: kind, Reference: reference}, nil
+func (apiSMTPVault) Seal(secret []byte) (paymentsecrets.SealedSecret, error) {
+	return paymentsecrets.SealedSecret{Ciphertext: []byte{1}, MaskedValue: paymentsecrets.Mask(secret)}, nil
 }
 func (apiSMTPVault) Delete(_ context.Context, _ paymentsecrets.Actor, _ uuid.UUID, _ paymentsecrets.Kind, _ string) error {
 	return nil

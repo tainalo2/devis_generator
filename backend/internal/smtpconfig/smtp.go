@@ -6,17 +6,27 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"net/smtp"
 	"strings"
 	"time"
 )
 
+const smtpTestTimeout = 15 * time.Second
+
+var ErrUnsafeDestination = fmt.Errorf("SMTP destination is not public")
+
 type ContextDialer interface {
 	DialContext(context.Context, string, string) (net.Conn, error)
 }
 
+type IPResolver interface {
+	LookupIPAddr(context.Context, string) ([]net.IPAddr, error)
+}
+
 type SMTPTester struct {
 	dialer    ContextDialer
+	resolver  IPResolver
 	tlsConfig func(string) *tls.Config
 }
 
@@ -25,7 +35,8 @@ func NewSMTPTester(dialer ContextDialer) *SMTPTester {
 		dialer = &net.Dialer{Timeout: 10 * time.Second}
 	}
 	return &SMTPTester{
-		dialer: dialer,
+		dialer:   dialer,
+		resolver: net.DefaultResolver,
 		tlsConfig: func(host string) *tls.Config {
 			return &tls.Config{ServerName: host, MinVersion: tls.VersionTLS12}
 		},
@@ -34,7 +45,22 @@ func NewSMTPTester(dialer ContextDialer) *SMTPTester {
 
 // Test connects, authenticates, and sends a test email to the configured From address.
 func (t *SMTPTester) Test(ctx context.Context, config Config, password string) error {
-	address := net.JoinHostPort(config.Host, fmt.Sprintf("%d", config.Port))
+	ctx, cancel := context.WithTimeout(ctx, smtpTestTimeout)
+	defer cancel()
+	addresses, err := t.resolver.LookupIPAddr(ctx, config.Host)
+	if err != nil {
+		return err
+	}
+	if len(addresses) == 0 {
+		return ErrUnsafeDestination
+	}
+	for _, candidate := range addresses {
+		if !isPublicIP(candidate.IP) {
+			return fmt.Errorf("%w: %s", ErrUnsafeDestination, candidate.IP)
+		}
+	}
+	// Dial the vetted literal, preventing a second DNS lookup from rebinding.
+	address := net.JoinHostPort(addresses[0].IP.String(), fmt.Sprintf("%d", config.Port))
 	conn, err := t.dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		return err
@@ -101,4 +127,28 @@ func (t *SMTPTester) Test(ctx context.Context, config Config, password string) e
 		return err
 	}
 	return client.Quit()
+}
+
+func isPublicIP(ip net.IP) bool {
+	addr, ok := netip.AddrFromSlice(ip)
+	if !ok {
+		return false
+	}
+	addr = addr.Unmap()
+	if !addr.IsGlobalUnicast() || addr.IsPrivate() || addr.IsLoopback() || addr.IsLinkLocalUnicast() || addr.IsMulticast() || addr.IsUnspecified() {
+		return false
+	}
+	reserved := []netip.Prefix{
+		netip.MustParsePrefix("0.0.0.0/8"), netip.MustParsePrefix("100.64.0.0/10"),
+		netip.MustParsePrefix("192.0.0.0/24"), netip.MustParsePrefix("192.0.2.0/24"),
+		netip.MustParsePrefix("198.18.0.0/15"), netip.MustParsePrefix("198.51.100.0/24"),
+		netip.MustParsePrefix("203.0.113.0/24"), netip.MustParsePrefix("240.0.0.0/4"),
+		netip.MustParsePrefix("100::/64"), netip.MustParsePrefix("2001:db8::/32"),
+	}
+	for _, prefix := range reserved {
+		if prefix.Contains(addr) {
+			return false
+		}
+	}
+	return true
 }

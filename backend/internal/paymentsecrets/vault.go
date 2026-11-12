@@ -52,6 +52,12 @@ type Metadata struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// SealedSecret is encrypted data safe to pass to a transactional repository.
+type SealedSecret struct {
+	Ciphertext  []byte
+	MaskedValue string
+}
+
 type ciphertextRepository interface {
 	PutCiphertext(context.Context, Actor, uuid.UUID, Kind, string, []byte, string) (Metadata, error)
 	ReadCiphertext(context.Context, Actor, uuid.UUID, Kind, string) ([]byte, Metadata, error)
@@ -77,11 +83,24 @@ func (v *Vault) Put(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Ki
 	if len(plaintext) == 0 {
 		return Metadata{}, ErrEmptySecret
 	}
-	ciphertext, err := v.box.Encrypt(plaintext)
+	sealed, err := v.Seal(plaintext)
 	if err != nil {
 		return Metadata{}, err
 	}
-	return v.repo.PutCiphertext(ctx, actor, ownerID, kind, reference, ciphertext, Mask(plaintext))
+	return v.repo.PutCiphertext(ctx, actor, ownerID, kind, reference, sealed.Ciphertext, sealed.MaskedValue)
+}
+
+// Seal encrypts a secret without persisting it, allowing a caller to commit
+// the ciphertext atomically with related database state.
+func (v *Vault) Seal(plaintext []byte) (SealedSecret, error) {
+	if len(plaintext) == 0 {
+		return SealedSecret{}, ErrEmptySecret
+	}
+	ciphertext, err := v.box.Encrypt(plaintext)
+	if err != nil {
+		return SealedSecret{}, err
+	}
+	return SealedSecret{Ciphertext: ciphertext, MaskedValue: Mask(plaintext)}, nil
 }
 
 func (v *Vault) Reveal(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) ([]byte, Metadata, error) {
