@@ -47,6 +47,13 @@ type Config struct {
 	LegalTEDBURL         string
 	LegalBCEURL          string
 
+	MicrosoftOAuthClientID     string
+	MicrosoftOAuthClientSecret string
+	MicrosoftOAuthRedirectURL  string
+	GoogleOAuthClientID        string
+	GoogleOAuthClientSecret    string
+	GoogleOAuthRedirectURL     string
+
 	// Site public (landing / pages légales) — aucune identité inventée.
 	DonateURL           string
 	LegalPublisherName  string
@@ -79,21 +86,45 @@ func Load() (Config, error) {
 			Threads: uint8(getIntEnv("ARGON2_THREADS", 2)),
 			KeyLen:  uint32(getIntEnv("ARGON2_KEYLEN", 32)),
 		},
-		LegalRefreshEnabled:  getBoolEnv("LEGAL_REFRESH_ENABLED", true),
-		LegalRefreshInterval: getDurationEnv("LEGAL_REFRESH_INTERVAL", 24*time.Hour),
-		LegalHTTPTimeout:     getDurationEnv("LEGAL_HTTP_TIMEOUT", 8*time.Second),
-		LegalRechercheURL:    getEnv("LEGAL_RECHERCHE_BASE_URL", ""),
-		LegalVIESURL:         getEnv("LEGAL_VIES_URL", ""),
-		LegalTEDBURL:         getEnv("LEGAL_TEDB_URL", ""),
-		LegalBCEURL:          getEnv("LEGAL_BCE_URL", ""),
-		DonateURL:            getEnv("DONATE_URL", ""),
-		LegalPublisherName:   getEnv("LEGAL_PUBLISHER_NAME", ""),
-		LegalPublisherAddr:   getEnv("LEGAL_PUBLISHER_ADDRESS", ""),
-		LegalPublisherEmail:  getEnv("LEGAL_PUBLISHER_EMAIL", ""),
-		LegalPublisherSIRET:  getEnv("LEGAL_PUBLISHER_SIRET", ""),
-		LegalHostName:        getEnv("LEGAL_HOST_NAME", ""),
-		LegalHostAddr:        getEnv("LEGAL_HOST_ADDRESS", ""),
-		LegalHostURL:         getEnv("LEGAL_HOST_URL", ""),
+		LegalRefreshEnabled:        getBoolEnv("LEGAL_REFRESH_ENABLED", true),
+		LegalRefreshInterval:       getDurationEnv("LEGAL_REFRESH_INTERVAL", 24*time.Hour),
+		LegalHTTPTimeout:           getDurationEnv("LEGAL_HTTP_TIMEOUT", 8*time.Second),
+		LegalRechercheURL:          getEnv("LEGAL_RECHERCHE_BASE_URL", ""),
+		LegalVIESURL:               getEnv("LEGAL_VIES_URL", ""),
+		LegalTEDBURL:               getEnv("LEGAL_TEDB_URL", ""),
+		LegalBCEURL:                getEnv("LEGAL_BCE_URL", ""),
+		MicrosoftOAuthClientID:     getEnv("MICROSOFT_OAUTH_CLIENT_ID", ""),
+		MicrosoftOAuthClientSecret: getEnv("MICROSOFT_OAUTH_CLIENT_SECRET", ""),
+		MicrosoftOAuthRedirectURL:  getEnv("MICROSOFT_OAUTH_REDIRECT_URL", ""),
+		GoogleOAuthClientID:        getEnv("GOOGLE_OAUTH_CLIENT_ID", ""),
+		GoogleOAuthClientSecret:    getEnv("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+		GoogleOAuthRedirectURL:     getEnv("GOOGLE_OAUTH_REDIRECT_URL", ""),
+		DonateURL:                  getEnv("DONATE_URL", ""),
+		LegalPublisherName:         getEnv("LEGAL_PUBLISHER_NAME", ""),
+		LegalPublisherAddr:         getEnv("LEGAL_PUBLISHER_ADDRESS", ""),
+		LegalPublisherEmail:        getEnv("LEGAL_PUBLISHER_EMAIL", ""),
+		LegalPublisherSIRET:        getEnv("LEGAL_PUBLISHER_SIRET", ""),
+		LegalHostName:              getEnv("LEGAL_HOST_NAME", ""),
+		LegalHostAddr:              getEnv("LEGAL_HOST_ADDRESS", ""),
+		LegalHostURL:               getEnv("LEGAL_HOST_URL", ""),
+	}
+	configuredMicrosoftFields := 0
+	for _, value := range []string{cfg.MicrosoftOAuthClientID, cfg.MicrosoftOAuthClientSecret, cfg.MicrosoftOAuthRedirectURL} {
+		if value != "" {
+			configuredMicrosoftFields++
+		}
+	}
+	if configuredMicrosoftFields != 0 && configuredMicrosoftFields != 3 {
+		return Config{}, fmt.Errorf("MICROSOFT_OAUTH_CLIENT_ID, MICROSOFT_OAUTH_CLIENT_SECRET and MICROSOFT_OAUTH_REDIRECT_URL must be configured together")
+	}
+	configuredGoogleFields := 0
+	for _, value := range []string{cfg.GoogleOAuthClientID, cfg.GoogleOAuthClientSecret, cfg.GoogleOAuthRedirectURL} {
+		if value != "" {
+			configuredGoogleFields++
+		}
+	}
+	if configuredGoogleFields != 0 && configuredGoogleFields != 3 {
+		return Config{}, fmt.Errorf("GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET and GOOGLE_OAUTH_REDIRECT_URL must be configured together")
 	}
 
 	if cfg.DatabaseURL == "" {

@@ -52,9 +52,16 @@ type Metadata struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// SealedSecret is encrypted data safe to pass to a transactional repository.
+type SealedSecret struct {
+	Ciphertext  []byte
+	MaskedValue string
+}
+
 type ciphertextRepository interface {
 	PutCiphertext(context.Context, Actor, uuid.UUID, Kind, string, []byte, string) (Metadata, error)
 	ReadCiphertext(context.Context, Actor, uuid.UUID, Kind, string) ([]byte, Metadata, error)
+	DeleteCiphertext(context.Context, Actor, uuid.UUID, Kind, string) error
 }
 
 // Vault is the only payment-secret plaintext boundary. Repositories receive
@@ -76,11 +83,24 @@ func (v *Vault) Put(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Ki
 	if len(plaintext) == 0 {
 		return Metadata{}, ErrEmptySecret
 	}
-	ciphertext, err := v.box.Encrypt(plaintext)
+	sealed, err := v.Seal(plaintext)
 	if err != nil {
 		return Metadata{}, err
 	}
-	return v.repo.PutCiphertext(ctx, actor, ownerID, kind, reference, ciphertext, Mask(plaintext))
+	return v.repo.PutCiphertext(ctx, actor, ownerID, kind, reference, sealed.Ciphertext, sealed.MaskedValue)
+}
+
+// Seal encrypts a secret without persisting it, allowing a caller to commit
+// the ciphertext atomically with related database state.
+func (v *Vault) Seal(plaintext []byte) (SealedSecret, error) {
+	if len(plaintext) == 0 {
+		return SealedSecret{}, ErrEmptySecret
+	}
+	ciphertext, err := v.box.Encrypt(plaintext)
+	if err != nil {
+		return SealedSecret{}, err
+	}
+	return SealedSecret{Ciphertext: ciphertext, MaskedValue: Mask(plaintext)}, nil
 }
 
 func (v *Vault) Reveal(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) ([]byte, Metadata, error) {
@@ -97,6 +117,15 @@ func (v *Vault) Reveal(ctx context.Context, actor Actor, ownerID uuid.UUID, kind
 		return nil, Metadata{}, err
 	}
 	return plaintext, metadata, nil
+}
+
+// Delete removes a secret through the audited repository boundary.
+func (v *Vault) Delete(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
+	reference, err := validateAccess(actor, ownerID, kind, reference)
+	if err != nil {
+		return err
+	}
+	return v.repo.DeleteCiphertext(ctx, actor, ownerID, kind, reference)
 }
 
 func validateAccess(actor Actor, ownerID uuid.UUID, kind Kind, reference string) (string, error) {
