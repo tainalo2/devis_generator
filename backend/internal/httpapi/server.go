@@ -16,8 +16,12 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
+	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
+	"github.com/tainalo2/devis_generator/backend/internal/reminders"
+	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
 // Server is the HTTP API and static file server.
@@ -27,6 +31,10 @@ type Server struct {
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
+	gmailMail         gmailMailer
+	microsoftMail     microsoftMailer
+	smtp              *smtpconfig.Service
+	reminders         *reminders.Service
 	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
@@ -107,6 +115,7 @@ func New(opts Options) *Server {
 
 	r.Get("/healthz", s.handleHealthz)
 	r.Get("/readyz", s.handleReadyz)
+	r.Get("/d/{token}", s.handlePublicDocumentLink)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(s.apiRequestGuard)

@@ -17,6 +17,7 @@ type Kind string
 
 const (
 	KindIBAN                    Kind = "iban"
+	KindBIC                     Kind = "bic"
 	KindBYOProviderAPIKey       Kind = "byo_provider_api_key"
 	KindStripeConnectCredential Kind = "stripe_connect_credential"
 	KindOAuthGmailToken         Kind = "oauth_gmail_token"
@@ -147,7 +148,7 @@ func validateAccess(actor Actor, ownerID uuid.UUID, kind Kind, reference string)
 
 func (k Kind) Valid() bool {
 	switch k {
-	case KindIBAN, KindBYOProviderAPIKey, KindStripeConnectCredential,
+	case KindIBAN, KindBIC, KindBYOProviderAPIKey, KindStripeConnectCredential,
 		KindOAuthGmailToken, KindOAuthMicrosoftToken, KindSMTPPassword:
 		return true
 	default:

@@ -76,7 +76,7 @@ func (r *Repository) CreateOrUpdate(ctx context.Context, actor paymentsecrets.Ac
 	// Store BIC in vault if provided
 	var bicSecretID *uuid.UUID
 	if bic != "" {
-		bicMetadata, err := r.vault.Put(ctx, actor, userID, paymentsecrets.KindIBAN, "bic", []byte(bic))
+		bicMetadata, err := r.vault.Put(ctx, actor, userID, paymentsecrets.KindBIC, "bic", []byte(bic))
 		if err != nil {
 			return nil, err
 		}
@@ -137,7 +137,7 @@ func (r *Repository) Read(ctx context.Context, actor paymentsecrets.Actor, userI
 	
 	// Reveal BIC if available
 	if coords.BICSecretID != nil {
-		bicBytes, _, err := r.vault.Reveal(ctx, actor, userID, paymentsecrets.KindIBAN, "bic")
+		bicBytes, _, err := r.vault.Reveal(ctx, actor, userID, paymentsecrets.KindBIC, "bic")
 		if err != nil {
 			return "", "", "", "", err
 		}
