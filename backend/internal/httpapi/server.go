@@ -21,6 +21,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/reminders"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
@@ -34,6 +35,7 @@ type Server struct {
 	gmailMail         gmailMailer
 	microsoftMail     microsoftMailer
 	smtp              *smtpconfig.Service
+	reminders         *reminders.Service
 	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
@@ -75,6 +77,7 @@ type Options struct {
 	GmailMail     gmailMailer
 	MicrosoftMail microsoftMailer
 	SMTP          *smtpconfig.Service
+	Reminders     *reminders.Service
 	PublicConfig  *PublicSiteConfig
 	StaticDir     string
 	Version       string
@@ -96,6 +99,7 @@ func New(opts Options) *Server {
 		gmailMail:         opts.GmailMail,
 		microsoftMail:     opts.MicrosoftMail,
 		smtp:              opts.SMTP,
+		reminders:         opts.Reminders,
 		publicConfig:      opts.PublicConfig,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
@@ -177,6 +181,8 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
+			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))
 
 			r.Get("/email/microsoft/authorize", s.requireAuth(s.handleMicrosoftAuthorize))
 			r.Get("/email/microsoft/callback", s.requireAuth(s.handleMicrosoftCallback))
