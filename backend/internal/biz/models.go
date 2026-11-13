@@ -100,6 +100,8 @@ type Document struct {
 	SentAt            *time.Time      `json:"sent_at"`
 	AcceptedAt        *time.Time      `json:"accepted_at"`
 	PaidAt            *time.Time      `json:"paid_at"`
+	ReminderCount     int             `json:"reminder_count"`
+	LastReminderAt    *time.Time      `json:"last_reminder_at,omitempty"`
 	IssuerSnapshot    json.RawMessage `json:"issuer_snapshot,omitempty"`
 	ClientSnapshot    *ClientSnapshot `json:"client_snapshot,omitempty"`
 	// ClientName : nom du client figé à l'émission (liste des documents).
