@@ -34,7 +34,7 @@ func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, created_at, updated_at,
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, reminder_count, last_reminder_at, created_at, updated_at,
 		       COALESCE(client_snapshot->>'name', '')
 		FROM documents WHERE user_id = $1 ORDER BY created_at DESC
 	`, userID)
@@ -64,7 +64,7 @@ func scanDocHeader(row scannable) (Document, error) {
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.CreatedAt, &d.UpdatedAt,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.ReminderCount, &d.LastReminderAt, &d.CreatedAt, &d.UpdatedAt,
 		&d.ClientName,
 	)
 	if err != nil {
@@ -81,7 +81,7 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
-		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, issuer_snapshot, legal_snapshot,
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, reminder_count, last_reminder_at, issuer_snapshot, legal_snapshot,
 		       created_at, updated_at, client_snapshot
 		FROM documents WHERE id = $1 AND user_id = $2
 	`, id, userID)
@@ -92,7 +92,7 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		&d.ID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
-		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.IssuerSnapshot, &d.LegalSnapshot,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.ReminderCount, &d.LastReminderAt, &d.IssuerSnapshot, &d.LegalSnapshot,
 		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {

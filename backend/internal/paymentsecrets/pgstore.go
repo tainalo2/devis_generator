@@ -48,6 +48,7 @@ func (r *PGRepository) PutCiphertext(ctx context.Context, actor Actor, ownerID u
 	defer tx.Rollback(ctx)
 
 	var metadata Metadata
+	var inserted bool
 	err = tx.QueryRow(ctx, `
 		INSERT INTO payment_secrets (owner_id, kind, reference, key_id, ciphertext, masked_value)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -56,14 +57,14 @@ func (r *PGRepository) PutCiphertext(ctx context.Context, actor Actor, ownerID u
 		    ciphertext = EXCLUDED.ciphertext,
 		    masked_value = EXCLUDED.masked_value,
 		    updated_at = NOW()
-		RETURNING id, owner_id, kind, reference, masked_value, created_at, updated_at
+		RETURNING id, owner_id, kind, reference, masked_value, created_at, updated_at, (xmax = 0)
 	`, ownerID, kind, reference, ciphertext[0], ciphertext, masked).Scan(
-		&metadata.ID, &metadata.OwnerID, &metadata.Kind, &metadata.Reference, &metadata.MaskedValue, &metadata.CreatedAt, &metadata.UpdatedAt,
+		&metadata.ID, &metadata.OwnerID, &metadata.Kind, &metadata.Reference, &metadata.MaskedValue, &metadata.CreatedAt, &metadata.UpdatedAt, &inserted,
 	)
 	if err != nil {
 		return Metadata{}, err
 	}
-	if err := insertAudit(ctx, tx, &metadata.ID, ownerID, kind, reference, actor, ActionCreate); err != nil {
+	if err := insertAudit(ctx, tx, &metadata.ID, ownerID, kind, reference, actor, auditAction(inserted)); err != nil {
 		return Metadata{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -94,7 +95,7 @@ func (r *PGRepository) ReadCiphertext(ctx context.Context, actor Actor, ownerID 
 	return ciphertext, metadata, nil
 }
 
-func (r *PGRepository) Delete(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
+func (r *PGRepository) DeleteCiphertext(ctx context.Context, actor Actor, ownerID uuid.UUID, kind Kind, reference string) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -103,9 +104,9 @@ func (r *PGRepository) Delete(ctx context.Context, actor Actor, ownerID uuid.UUI
 
 	var secretID uuid.UUID
 	err = tx.QueryRow(ctx, `
-		DELETE FROM payment_secrets
+		SELECT id FROM payment_secrets
 		WHERE owner_id = $1 AND kind = $2 AND reference = $3
-		RETURNING id
+		FOR UPDATE
 	`, ownerID, kind, reference).Scan(&secretID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
@@ -114,6 +115,12 @@ func (r *PGRepository) Delete(ctx context.Context, actor Actor, ownerID uuid.UUI
 		return err
 	}
 	if err := insertAudit(ctx, tx, &secretID, ownerID, kind, reference, actor, ActionDelete); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `
+		DELETE FROM payment_secrets
+		WHERE id = $1
+	`, secretID); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
@@ -148,6 +155,13 @@ func (r *PGRepository) ListAudit(ctx context.Context, ownerID uuid.UUID, limit i
 		events = append(events, event)
 	}
 	return events, rows.Err()
+}
+
+func auditAction(inserted bool) AuditAction {
+	if inserted {
+		return ActionCreate
+	}
+	return ActionUpdate
 }
 
 type auditExecer interface {

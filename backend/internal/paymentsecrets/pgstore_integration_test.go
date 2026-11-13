@@ -3,6 +3,7 @@ package paymentsecrets
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -13,6 +14,15 @@ import (
 	appcrypto "github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 )
+
+func TestAuditActionDistinguishesCreateFromRotation(t *testing.T) {
+	if got := auditAction(true); got != ActionCreate {
+		t.Fatalf("insert action=%q", got)
+	}
+	if got := auditAction(false); got != ActionUpdate {
+		t.Fatalf("rotation action=%q", got)
+	}
+}
 
 func TestPGRepositoryEncryptsAtRestAndAuditsEveryAccess(t *testing.T) {
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
@@ -68,11 +78,18 @@ func TestPGRepositoryEncryptsAtRestAndAuditsEveryAccess(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 
+	if err := vault.Delete(ctx, actor, ownerID, KindBYOProviderAPIKey, "stripe"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := vault.Reveal(ctx, actor, ownerID, KindBYOProviderAPIKey, "stripe"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("reveal after delete err = %v", err)
+	}
+
 	events, err := repo.ListAudit(ctx, ownerID, 10)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(events) != 2 || events[0].Action != ActionRead || events[1].Action != ActionCreate {
+	if len(events) != 3 || events[0].Action != ActionDelete || events[1].Action != ActionRead || events[2].Action != ActionCreate {
 		t.Fatalf("unexpected audit events: %#v", events)
 	}
 	for _, event := range events {

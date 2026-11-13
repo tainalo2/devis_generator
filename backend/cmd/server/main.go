@@ -11,17 +11,20 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
-	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/config"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/db"
+	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
-	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
+	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/reminders"
+	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
 // Version is injected at build time via -ldflags.
@@ -102,7 +105,56 @@ func main() {
 		Logger:    slog.Default(),
 	}
 
+	secretRepo := paymentsecrets.NewPGRepository(pool)
+	secretVault := paymentsecrets.NewVault(secretRepo, box)
+
+	var gmailSvc *gmailmail.Service
+	if cfg.GoogleOAuthClientID != "" {
+		gmailSvc, err = gmailmail.New(gmailmail.Config{
+			ClientID:     cfg.GoogleOAuthClientID,
+			ClientSecret: cfg.GoogleOAuthClientSecret,
+			RedirectURL:  cfg.GoogleOAuthRedirectURL,
+			StateKey:     []byte(cfg.SessionSecret),
+		}, secretVault, &http.Client{Timeout: 15 * time.Second})
+		if err != nil {
+			slog.Error("google oauth", "error", err)
+			os.Exit(1)
+		}
+	}
+
+	var microsoftSvc *microsoftmail.Service
+	if cfg.MicrosoftOAuthClientID != "" {
+		microsoftSvc, err = microsoftmail.New(microsoftmail.Config{
+			ClientID:     cfg.MicrosoftOAuthClientID,
+			ClientSecret: cfg.MicrosoftOAuthClientSecret,
+			RedirectURL:  cfg.MicrosoftOAuthRedirectURL,
+			StateKey:     []byte(cfg.SessionSecret),
+		}, secretVault, &http.Client{Timeout: 15 * time.Second})
+		if err != nil {
+			slog.Error("microsoft oauth", "error", err)
+			os.Exit(1)
+		}
+	}
+
 	bizStore := biz.NewStore(pool, box)
+	reminderStore := reminders.NewPGStore(pool)
+	smtpService := smtpconfig.NewService(smtpconfig.NewPGStore(pool), secretVault, smtpconfig.NewSMTPTester(nil))
+	providerSenders := map[reminders.DeliveryMode]reminders.Sender{
+		reminders.DeliveryModeSMTP: reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+			return smtpService.SendMail(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, message.To, message.Subject, message.HTML)
+		}),
+	}
+	if gmailSvc != nil {
+		providerSenders[reminders.DeliveryModeGmail] = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+			return gmailSvc.Send(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, gmailmail.Message{To: []string{message.To}, Subject: message.Subject, HTML: message.HTML})
+		})
+	}
+	if microsoftSvc != nil {
+		providerSenders[reminders.DeliveryModeMicrosoft] = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+			return microsoftSvc.Send(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, microsoftmail.Message{To: []string{message.To}, Subject: message.Subject, HTML: message.HTML})
+		})
+	}
+	reminderService := reminders.NewService(reminderStore, reminders.NewProviderRouter(reminderStore, providerSenders))
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
 	})
@@ -122,18 +174,16 @@ func main() {
 		slog.Info("clients figés sur les documents émis", "documents", n)
 	}
 
-	// Initialize payment infrastructure (T1, T2a, T5)
-	pgRepo := paymentsecrets.NewPGRepository(pool)
-	paymentSecretsVault := paymentsecrets.NewVault(pgRepo, box)
-	paymentFlagsStore := paymentflags.NewStore(pool)
-	bankCoordRepo := bankcoordsvault.NewRepository(pool, paymentSecretsVault)
-
 	api := httpapi.New(httpapi.Options{
-		DB:    pool,
-		Store: authstore.New(pool),
-		Biz:   bizStore,
-		Box:   box,
-		Legal: legalSvc,
+		DB:            pool,
+		Store:         authstore.New(pool),
+		Biz:           bizStore,
+		Box:           box,
+		Legal:         legalSvc,
+		GmailMail:     gmailSvc,
+		MicrosoftMail: microsoftSvc,
+		SMTP:          smtpService,
+		Reminders:     reminderService,
 		PublicConfig: &httpapi.PublicSiteConfig{
 			DonateURL:           cfg.DonateURL,
 			LegalPublisherName:  cfg.LegalPublisherName,
@@ -144,15 +194,12 @@ func main() {
 			LegalHostAddr:       cfg.LegalHostAddr,
 			LegalHostURL:        cfg.LegalHostURL,
 		},
-		StaticDir:         staticDir,
-		Version:           Version,
-		CookieSecure:      cfg.CookieSecure,
-		SessionTTL:        cfg.SessionTTL,
-		TrustedProxies:    cfg.TrustedProxies,
-		Argon2:            cfg.Argon2,
-		DocLinkSecret:     []byte(cfg.SessionSecret),
-		BankCoordRepo:     bankCoordRepo,
-		PaymentFlagsStore: paymentFlagsStore,
+		StaticDir:      staticDir,
+		Version:        Version,
+		CookieSecure:   cfg.CookieSecure,
+		SessionTTL:     cfg.SessionTTL,
+		TrustedProxies: cfg.TrustedProxies,
+		Argon2:         cfg.Argon2,
 	})
 
 	srv := &http.Server{
