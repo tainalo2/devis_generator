@@ -149,6 +149,66 @@ func (s *Store) loadLines(ctx context.Context, docID uuid.UUID) ([]DocLine, erro
 	return lines, rows.Err()
 }
 
+// GetDocumentPublic retrieves a document for public display (no auth required).
+// Used by the public /d/{token} endpoint for stable document links.
+// Returns the document and its owning user ID for coordinate access.
+func (s *Store) GetDocumentPublic(ctx context.Context, docID uuid.UUID) (Document, uuid.UUID, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, user_id, client_id, kind::text, status::text, number, COALESCE(title,''),
+		       to_char(issue_date, 'YYYY-MM-DD'), to_char(due_date, 'YYYY-MM-DD'),
+		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
+		       COALESCE(legal_mentions,''), related_document_id,
+		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, issuer_snapshot, legal_snapshot,
+		       created_at, updated_at, client_snapshot
+		FROM documents WHERE id = $1
+	`, docID)
+	var d Document
+	var userID uuid.UUID
+	var issue, due *string
+	var clientSnap []byte
+	err := row.Scan(
+		&d.ID, &userID, &d.ClientID, &d.Kind, &d.Status, &d.Number, &d.Title,
+		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
+		&d.LegalMentions, &d.RelatedDocumentID,
+		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.IssuerSnapshot, &d.LegalSnapshot,
+		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Document{}, uuid.UUID{}, ErrNotFound
+	}
+	if err != nil {
+		return Document{}, uuid.UUID{}, err
+	}
+	d.IssueDate = issue
+	d.DueDate = due
+	// Decrypt issuer snapshot if present
+	if len(d.IssuerSnapshot) > 0 {
+		snap, err := s.openIssuerSnapshot(d.IssuerSnapshot)
+		if err != nil {
+			return Document{}, uuid.UUID{}, err
+		}
+		if d.IssuerSnapshot, err = json.Marshal(snap); err != nil {
+			return Document{}, uuid.UUID{}, err
+		}
+	}
+	// Decrypt client snapshot if present
+	if len(clientSnap) > 0 {
+		c, err := s.openClientSnapshot(clientSnap)
+		if err != nil {
+			return Document{}, uuid.UUID{}, err
+		}
+		d.ClientSnapshot = &c
+		d.ClientName = c.Name
+	}
+	// Load lines
+	lines, err := s.loadLines(ctx, d.ID)
+	if err != nil {
+		return Document{}, uuid.Nil, err
+	}
+	d.Lines = lines
+	return d, userID, nil
+}
+
 func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in DocumentInput) (Document, error) {
 	if err := validateDocInput(in, false); err != nil {
 		return Document{}, err
