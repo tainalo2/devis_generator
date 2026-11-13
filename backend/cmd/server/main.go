@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/config"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
@@ -21,8 +22,10 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
@@ -174,6 +177,12 @@ func main() {
 		slog.Info("clients figés sur les documents émis", "documents", n)
 	}
 
+	// Initialize payment infrastructure (T1, T2a, T5)
+	pgRepo := paymentsecrets.NewPGRepository(pool)
+	paymentSecretsVault := paymentsecrets.NewVault(pgRepo, box)
+	paymentFlagsStore := paymentflags.NewStore(pool)
+	bankCoordRepo := bankcoordsvault.NewRepository(pool, paymentSecretsVault)
+
 	api := httpapi.New(httpapi.Options{
 		DB:            pool,
 		Store:         authstore.New(pool),
@@ -194,12 +203,15 @@ func main() {
 			LegalHostAddr:       cfg.LegalHostAddr,
 			LegalHostURL:        cfg.LegalHostURL,
 		},
-		StaticDir:      staticDir,
-		Version:        Version,
-		CookieSecure:   cfg.CookieSecure,
-		SessionTTL:     cfg.SessionTTL,
-		TrustedProxies: cfg.TrustedProxies,
-		Argon2:         cfg.Argon2,
+		StaticDir:         staticDir,
+		Version:           Version,
+		CookieSecure:      cfg.CookieSecure,
+		SessionTTL:        cfg.SessionTTL,
+		TrustedProxies:    cfg.TrustedProxies,
+		Argon2:            cfg.Argon2,
+		DocLinkSecret:     []byte(cfg.SessionSecret),
+		BankCoordRepo:     bankCoordRepo,
+		PaymentFlagsStore: paymentFlagsStore,
 	})
 
 	srv := &http.Server{

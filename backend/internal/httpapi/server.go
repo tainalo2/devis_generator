@@ -15,12 +15,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
@@ -49,6 +51,9 @@ type Server struct {
 	guestLimiter      *RateLimiter
 	previewLimiter    *RateLimiter
 	trustedProxies    []*net.IPNet
+	bankCoordRepo     *bankcoordsvault.Repository
+	paymentFlags      *paymentflags.Store
+	docLinkSecret     []byte
 }
 
 // Options configures the HTTP server.
@@ -85,7 +90,10 @@ type Options struct {
 	SessionTTL    time.Duration
 	Argon2        auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
-	TrustedProxies []*net.IPNet
+	TrustedProxies    []*net.IPNet
+	DocLinkSecret     []byte
+	BankCoordRepo     *bankcoordsvault.Repository
+	PaymentFlagsStore *paymentflags.Store
 }
 
 // New builds the chi router with health, auth, business API and SPA.
@@ -112,6 +120,9 @@ func New(opts Options) *Server {
 		guestLimiter:      NewRateLimiter(20, time.Minute),
 		previewLimiter:    NewRateLimiter(120, time.Minute),
 		trustedProxies:    opts.TrustedProxies,
+		docLinkSecret:     opts.DocLinkSecret,
+		bankCoordRepo:     opts.BankCoordRepo,
+		paymentFlags:      opts.PaymentFlagsStore,
 	}
 	if s.version == "" {
 		s.version = "dev"

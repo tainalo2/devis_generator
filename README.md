@@ -13,6 +13,7 @@ Une plateforme gratuite pour signer les factures en France. L’application prod
 | Humain | [docs/humain.md](docs/humain.md) |
 | Technique | [docs/technique.md](docs/technique.md) |
 | Agent / IA | [docs/ia.md](docs/ia.md) |
+| **Paiement** | **[docs/PAIEMENT.md](docs/PAIEMENT.md)** |
 
 Présentation : [docs/index.html](docs/index.html), publiée sur GitHub Pages depuis la branche `vibed`.
 
@@ -47,14 +48,19 @@ Image d’essai GHCR : `ghcr.io/tainalo2/devisgenerator-vibed` (tags `vibed-v*` 
 
 | Variable | Rôle | Défaut |
 |----------|------|--------|
-| `DATABASE_URL` | Connexion PostgreSQL (obligatoire) | — |
-| `APP_ENV` | Environnement (`development` / `production`) | `development` |
-| `ADDR` | Adresse d’écoute HTTP | `0.0.0.0:8080` |
-| `SHUTDOWN_TIMEOUT` | Arrêt gracieux | `10s` |
-| `SESSION_SECRET` | Sessions / CSRF (≥ 32 car. en prod) | défaut dev |
-| `ENCRYPTION_KEY` | AES-256-GCM, 32 octets **base64** | défaut dev |
+|| `DATABASE_URL` | Connexion PostgreSQL (obligatoire) | — |
+|| `APP_ENV` | Environnement (`development` / `production`) | `development` |
+|| `ADDR` | Adresse d'écoute HTTP | `0.0.0.0:8080` |
+|| `SHUTDOWN_TIMEOUT` | Arrêt gracieux | `10s` |
+|| `SESSION_SECRET` | Sessions / CSRF (≥ 32 car. en prod) | défaut dev |
+|| `ENCRYPTION_KEY` | AES-256-GCM, 32 octets **base64** | défaut dev |
+|| `PAYMENT_RIB_ENABLED` | Active le mode RIB (virement) | `true` |
+|| `PAYMENT_BYO_ENABLED` | Active BYO (Stripe/Mollie/PayPal) | `false` |
+|| `PAYMENT_STRIPE_CONNECT_ENABLED` | Active Stripe Connect (plateforme) | `false` |
 
 En **production**, l’appli refuse de démarrer si `SESSION_SECRET` / `ENCRYPTION_KEY` sont absents ou faibles.
+
+**Configuration de paiement** : voir [docs/PAIEMENT.md](docs/PAIEMENT.md) pour les trois modes (RIB, BYO, Stripe Connect), clés API, webhooks, et procédures de sécurité.
 
 Optionnelles : `STATIC_DIR`, `STARTUP_TIMEOUT`, `SESSION_TTL`, `COOKIE_SECURE`, `ARGON2_*`, `LEGAL_*`, et site public :
 
