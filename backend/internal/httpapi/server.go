@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"os"
@@ -12,17 +11,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
-	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
-	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
-	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
-	"github.com/tainalo2/devis_generator/backend/internal/reminders"
-	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 )
 
 // Server is the HTTP API and static file server.
@@ -32,10 +27,6 @@ type Server struct {
 	biz               *biz.Store
 	box               *crypto.Box
 	legal             *legal.Service
-	gmailMail         gmailMailer
-	microsoftMail     microsoftMailer
-	smtp              *smtpconfig.Service
-	reminders         *reminders.Service
 	publicConfig      *PublicSiteConfig
 	staticDir         string
 	version           string
@@ -49,43 +40,29 @@ type Server struct {
 	guestLimiter      *RateLimiter
 	previewLimiter    *RateLimiter
 	trustedProxies    []*net.IPNet
+	bankCoordRepo     *bankcoordsvault.Repository
+	paymentFlags      *paymentflags.Store
+	docLinkSecret     []byte
 }
 
 // Options configures the HTTP server.
-type microsoftMailer interface {
-	AuthorizationURL(uuid.UUID) (string, error)
-	HandleCallback(context.Context, paymentsecrets.Actor, uuid.UUID, string, string) error
-	Send(context.Context, paymentsecrets.Actor, uuid.UUID, microsoftmail.Message) error
-	Status(context.Context, paymentsecrets.Actor, uuid.UUID) (bool, error)
-	Disconnect(context.Context, paymentsecrets.Actor, uuid.UUID) error
-}
-
-type gmailMailer interface {
-	AuthorizationURL(uuid.UUID) (string, error)
-	HandleCallback(context.Context, paymentsecrets.Actor, uuid.UUID, string, string) error
-	Send(context.Context, paymentsecrets.Actor, uuid.UUID, gmailmail.Message) error
-	Status(context.Context, paymentsecrets.Actor, uuid.UUID) (bool, error)
-	Disconnect(context.Context, paymentsecrets.Actor, uuid.UUID) error
-}
-
 type Options struct {
-	DB            Pinger
-	Store         *authstore.Store
-	Biz           *biz.Store
-	Box           *crypto.Box
-	Legal         *legal.Service
-	GmailMail     gmailMailer
-	MicrosoftMail microsoftMailer
-	SMTP          *smtpconfig.Service
-	Reminders     *reminders.Service
-	PublicConfig  *PublicSiteConfig
-	StaticDir     string
-	Version       string
-	CookieSecure  bool
-	SessionTTL    time.Duration
-	Argon2        auth.Argon2Params
+	DB           Pinger
+	Store        *authstore.Store
+	Biz          *biz.Store
+	Box          *crypto.Box
+	Legal        *legal.Service
+	PublicConfig *PublicSiteConfig
+	StaticDir    string
+	Version      string
+	CookieSecure bool
+	SessionTTL   time.Duration
+	Argon2       auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
-	TrustedProxies []*net.IPNet
+	TrustedProxies    []*net.IPNet
+	DocLinkSecret     []byte
+	BankCoordRepo     *bankcoordsvault.Repository
+	PaymentFlagsStore *paymentflags.Store
 }
 
 // New builds the chi router with health, auth, business API and SPA.
@@ -96,10 +73,6 @@ func New(opts Options) *Server {
 		biz:               opts.Biz,
 		box:               opts.Box,
 		legal:             opts.Legal,
-		gmailMail:         opts.GmailMail,
-		microsoftMail:     opts.MicrosoftMail,
-		smtp:              opts.SMTP,
-		reminders:         opts.Reminders,
 		publicConfig:      opts.PublicConfig,
 		staticDir:         opts.StaticDir,
 		version:           opts.Version,
@@ -112,6 +85,9 @@ func New(opts Options) *Server {
 		guestLimiter:      NewRateLimiter(20, time.Minute),
 		previewLimiter:    NewRateLimiter(120, time.Minute),
 		trustedProxies:    opts.TrustedProxies,
+		docLinkSecret:     opts.DocLinkSecret,
+		bankCoordRepo:     opts.BankCoordRepo,
+		paymentFlags:      opts.PaymentFlagsStore,
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -160,10 +136,6 @@ func New(opts Options) *Server {
 			r.Get("/issuer", s.requireAuth(s.handleGetIssuer))
 			r.Put("/issuer", s.requireAuth(s.handlePutIssuer))
 
-			r.Get("/email/smtp", s.requireAuth(s.handleGetSMTPConfig))
-			r.Post("/email/smtp", s.requireAuth(s.handleSaveSMTPConfig))
-			r.Delete("/email/smtp", s.requireAuth(s.handleDeleteSMTPConfig))
-
 			r.Get("/clients", s.requireAuth(s.handleListClients))
 			r.Post("/clients", s.requireAuth(s.handleCreateClient))
 			r.Get("/clients/{id}", s.requireAuth(s.handleGetClient))
@@ -181,26 +153,6 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
-			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
-			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))
-			r.Get("/email/delivery-mode", s.requireAuth(s.handleGetReminderDeliveryMode))
-			r.Put("/email/delivery-mode", s.requireAuth(s.handleSetReminderDeliveryMode))
-			r.Get("/reminder-templates", s.requireAuth(s.handleListReminderTemplates))
-			r.Post("/reminder-templates", s.requireAuth(s.handleCreateReminderTemplate))
-			r.Put("/reminder-templates/{id}", s.requireAuth(s.handleUpdateReminderTemplate))
-			r.Delete("/reminder-templates/{id}", s.requireAuth(s.handleDeleteReminderTemplate))
-
-			r.Get("/email/microsoft/authorize", s.requireAuth(s.handleMicrosoftAuthorize))
-			r.Get("/email/microsoft/callback", s.requireAuth(s.handleMicrosoftCallback))
-			r.Get("/email/microsoft/status", s.requireAuth(s.handleMicrosoftStatus))
-			r.Post("/email/microsoft/send", s.requireAuth(s.handleMicrosoftSend))
-			r.Delete("/email/microsoft", s.requireAuth(s.handleMicrosoftDisconnect))
-
-			r.Get("/email/gmail/authorize", s.requireAuth(s.handleGmailAuthorize))
-			r.Get("/email/gmail/callback", s.requireAuth(s.handleGmailCallback))
-			r.Get("/email/gmail/status", s.requireAuth(s.handleGmailStatus))
-			r.Post("/email/gmail/send", s.requireAuth(s.handleGmailSend))
-			r.Delete("/email/gmail", s.requireAuth(s.handleGmailDisconnect))
 		})
 	})
 
