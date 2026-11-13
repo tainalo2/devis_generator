@@ -10,7 +10,14 @@ export type User = {
   id: string
   email: string
   display_name: string
+  is_admin: boolean
   created_at: string
+}
+
+export type PaymentFeatures = {
+  rib: boolean
+  byo_provider: boolean
+  stripe_connect: boolean
 }
 
 function csrfToken(): string | null {
@@ -47,6 +54,21 @@ export async function fetchMe(): Promise<User | null> {
   if (res.status === 401) return null
   if (!res.ok) throw new Error(`me HTTP ${res.status}`)
   return ((await res.json()) as { user: User }).user
+}
+
+export async function getAdminPaymentFeatures(): Promise<PaymentFeatures> {
+  const res = await apiFetch("/api/v1/admin/payment-features")
+  if (!res.ok) throw new Error(await readError(res, "Configuration des paiements indisponible."))
+  return (await res.json()) as PaymentFeatures
+}
+
+export async function updateAdminPaymentFeatures(features: PaymentFeatures): Promise<PaymentFeatures> {
+  const res = await apiFetch("/api/v1/admin/payment-features", {
+    method: "PUT",
+    body: JSON.stringify(features),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Mise à jour des paiements impossible."))
+  return (await res.json()) as PaymentFeatures
 }
 
 export async function login(email: string, password: string): Promise<User> {

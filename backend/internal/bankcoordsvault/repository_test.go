@@ -98,6 +98,9 @@ func TestCreateOrUpdateAndRead(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Update failed: %v", err)
 	}
+	if coords2.AccountHolderName != "Jane Doe" || coords2.BankName != "BNP Paribas" {
+		t.Errorf("updated coordinates mismatch: got (%s, %s)", coords2.AccountHolderName, coords2.BankName)
+	}
 
 	name2, iban2, bic2, bank2, err := coordRepo.Read(ctx, actor, userID)
 	if err != nil {
@@ -107,8 +110,14 @@ func TestCreateOrUpdateAndRead(t *testing.T) {
 	if name2 != "Jane Doe" {
 		t.Errorf("updated name mismatch: got %s, want Jane Doe", name2)
 	}
+	if iban2 != "FR1420041010050500013M02606" {
+		t.Errorf("updated IBAN mismatch: got %s", iban2)
+	}
 	if bic2 != "" {
 		t.Errorf("BIC should be empty after update: got %s", bic2)
+	}
+	if bank2 != "BNP Paribas" {
+		t.Errorf("updated bank mismatch: got %s", bank2)
 	}
 
 	// Delete
