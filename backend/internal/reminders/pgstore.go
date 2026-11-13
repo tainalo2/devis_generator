@@ -104,8 +104,18 @@ func (s *PGStore) Prepare(ctx context.Context, owner, invoice, template uuid.UUI
 	if err == nil {
 		claimable := existing.Status == StatusQueued || existing.Status == StatusFailed || (existing.Status == StatusSending && existing.LeaseUntil != nil && !existing.LeaseUntil.After(now))
 		if claimable {
+			var hourly int
+			if err = tx.QueryRow(ctx, `SELECT count(*) FROM reminder_delivery_attempts WHERE user_id=$1 AND attempted_at >= $2 - interval '1 hour'`, owner, now).Scan(&hourly); err != nil {
+				return Reminder{}, false, err
+			}
+			if hourly >= 20 {
+				return Reminder{}, false, ErrRateLimited
+			}
 			existing, err = scanReminder(tx.QueryRow(ctx, `UPDATE reminders SET status='sending',lease_until=$3 + interval '5 minutes',attempt_count=attempt_count+1,error_message=NULL WHERE id=$1 AND user_id=$2 RETURNING id,user_id,invoice_id,template_id,reminder_type,recipient,status,error_message,created_at,sent_at,lease_until,attempt_count`, existing.ID, owner, now))
 			if err != nil {
+				return Reminder{}, false, err
+			}
+			if _, err = tx.Exec(ctx, `INSERT INTO reminder_delivery_attempts(reminder_id,user_id,attempted_at) VALUES($1,$2,$3)`, existing.ID, owner, now); err != nil {
 				return Reminder{}, false, err
 			}
 		}
@@ -118,7 +128,7 @@ func (s *PGStore) Prepare(ctx context.Context, owner, invoice, template uuid.UUI
 		return Reminder{}, false, err
 	}
 	var hourly int
-	if err = tx.QueryRow(ctx, `SELECT count(*) FROM reminders WHERE user_id=$1 AND created_at >= $2 - interval '1 hour' AND status IN ('queued','sending','sent')`, owner, now).Scan(&hourly); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM reminder_delivery_attempts WHERE user_id=$1 AND attempted_at >= $2 - interval '1 hour'`, owner, now).Scan(&hourly); err != nil {
 		return Reminder{}, false, err
 	}
 	if hourly >= 20 {
@@ -130,6 +140,9 @@ func (s *PGStore) Prepare(ctx context.Context, owner, invoice, template uuid.UUI
 		return Reminder{}, false, ErrDocumentChanged
 	}
 	if err != nil {
+		return Reminder{}, false, err
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO reminder_delivery_attempts(reminder_id,user_id,attempted_at) VALUES($1,$2,$3)`, r.ID, owner, now); err != nil {
 		return Reminder{}, false, err
 	}
 	if err = tx.Commit(ctx); err != nil {

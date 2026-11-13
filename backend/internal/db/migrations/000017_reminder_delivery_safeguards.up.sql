@@ -31,3 +31,12 @@ ALTER TABLE reminders ADD CONSTRAINT reminders_delivery_idempotency_key
 
 CREATE INDEX reminders_rate_limit_idx ON reminders(user_id, created_at DESC)
     WHERE status IN ('queued','sending','sent');
+
+CREATE TABLE reminder_delivery_attempts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    reminder_id UUID NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    attempted_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX reminder_delivery_attempts_rate_idx
+    ON reminder_delivery_attempts(user_id, attempted_at DESC);

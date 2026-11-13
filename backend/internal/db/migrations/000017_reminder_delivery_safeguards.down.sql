@@ -1,5 +1,11 @@
+DROP TABLE IF EXISTS reminder_delivery_attempts;
 DROP INDEX IF EXISTS reminders_rate_limit_idx;
 
+DELETE FROM reminders r
+USING reminders duplicate
+WHERE r.user_id = duplicate.user_id
+  AND r.idempotency_key = duplicate.idempotency_key
+  AND (r.created_at, r.id) < (duplicate.created_at, duplicate.id);
 ALTER TABLE reminders DROP CONSTRAINT reminders_delivery_idempotency_key;
 ALTER TABLE reminders ADD CONSTRAINT reminders_user_id_idempotency_key_key
     UNIQUE (user_id, idempotency_key);
