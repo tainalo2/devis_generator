@@ -89,7 +89,7 @@ func TestCreateOrUpdateAndRead(t *testing.T) {
 	}
 
 	// Update bank coordinates (BIC removal)
-	coords2, err := coordRepo.CreateOrUpdate(ctx, actor, userID,
+	_, err = coordRepo.CreateOrUpdate(ctx, actor, userID,
 		"Jane Doe",
 		"FR1420041010050500013M02606",
 		"", // No BIC
