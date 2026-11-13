@@ -68,7 +68,7 @@ func TestPutEncryptsAndReturnsOnlyMaskedMetadata(t *testing.T) {
 	ownerID := uuid.New()
 	plaintext := "FR7612345678901234567890185"
 
-	metadata, err := vault.Put(context.Background(), actor, ownerID, KindIBAN, "default", []byte(plaintext))
+	metadata, err := vault.Put(context.Background(), actor, ownerID, KindBIC, "bic", []byte(plaintext))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +124,7 @@ func TestPutRejectsUnknownKindAndMissingActor(t *testing.T) {
 	if _, err := vault.Put(context.Background(), actor, ownerID, Kind("password"), "default", []byte("secret")); err != ErrInvalidKind {
 		t.Fatalf("unknown kind err = %v", err)
 	}
-	if _, err := vault.Put(context.Background(), Actor{}, ownerID, KindIBAN, "default", []byte("FR76")); err != ErrActorRequired {
+	if _, err := vault.Put(context.Background(), Actor{}, ownerID, KindBIC, "bic", []byte("FR76")); err != ErrActorRequired {
 		t.Fatalf("missing actor err = %v", err)
 	}
 }
