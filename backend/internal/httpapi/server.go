@@ -183,6 +183,12 @@ func New(opts Options) *Server {
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
 			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
 			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))
+			r.Get("/email/delivery-mode", s.requireAuth(s.handleGetReminderDeliveryMode))
+			r.Put("/email/delivery-mode", s.requireAuth(s.handleSetReminderDeliveryMode))
+			r.Get("/reminder-templates", s.requireAuth(s.handleListReminderTemplates))
+			r.Post("/reminder-templates", s.requireAuth(s.handleCreateReminderTemplate))
+			r.Put("/reminder-templates/{id}", s.requireAuth(s.handleUpdateReminderTemplate))
+			r.Delete("/reminder-templates/{id}", s.requireAuth(s.handleDeleteReminderTemplate))
 
 			r.Get("/email/microsoft/authorize", s.requireAuth(s.handleMicrosoftAuthorize))
 			r.Get("/email/microsoft/callback", s.requireAuth(s.handleMicrosoftCallback))

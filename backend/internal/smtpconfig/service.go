@@ -60,11 +60,13 @@ type Store interface {
 
 type Vault interface {
 	Seal([]byte) (paymentsecrets.SealedSecret, error)
+	Reveal(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) ([]byte, paymentsecrets.Metadata, error)
 	Delete(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) error
 }
 
 type Tester interface {
 	Test(context.Context, Config, string) error
+	Send(context.Context, Config, string, string, string, string) error
 }
 
 type Service struct {
@@ -99,6 +101,18 @@ func (s *Service) Save(ctx context.Context, actor paymentsecrets.Actor, ownerID 
 
 func (s *Service) Get(ctx context.Context, ownerID uuid.UUID) (Config, error) {
 	return s.store.Get(ctx, ownerID)
+}
+
+func (s *Service) SendMail(ctx context.Context, actor paymentsecrets.Actor, ownerID uuid.UUID, recipient, subject, html string) error {
+	config, err := s.store.Get(ctx, ownerID)
+	if err != nil {
+		return err
+	}
+	password, _, err := s.vault.Reveal(ctx, actor, ownerID, paymentsecrets.KindSMTPPassword, secretReference)
+	if err != nil {
+		return err
+	}
+	return s.tester.Send(ctx, config, string(password), recipient, subject, html)
 }
 
 func (s *Service) Delete(ctx context.Context, actor paymentsecrets.Actor, ownerID uuid.UUID) error {

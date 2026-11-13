@@ -42,6 +42,10 @@ type fakeVault struct {
 	plaintext []byte
 }
 
+func (v *fakeVault) Reveal(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) ([]byte, paymentsecrets.Metadata, error) {
+	return append([]byte(nil), v.plaintext...), paymentsecrets.Metadata{}, nil
+}
+
 func (v *fakeVault) Seal(plaintext []byte) (paymentsecrets.SealedSecret, error) {
 	v.seals++
 	v.plaintext = append([]byte(nil), plaintext...)
@@ -53,10 +57,18 @@ func (v *fakeVault) Delete(_ context.Context, _ paymentsecrets.Actor, _ uuid.UUI
 }
 
 type fakeTester struct {
-	calls    int
-	config   Config
-	password string
-	err      error
+	calls     int
+	config    Config
+	password  string
+	err       error
+	recipient string
+	subject   string
+}
+
+func (t *fakeTester) Send(_ context.Context, config Config, password, recipient, subject, html string) error {
+	t.calls++
+	t.config, t.password, t.recipient, t.subject = config, password, recipient, subject
+	return t.err
 }
 
 func (t *fakeTester) Test(_ context.Context, config Config, password string) error {
@@ -167,5 +179,19 @@ func TestGetReturnsNonSecretConfig(t *testing.T) {
 	}
 	if got.Host != store.config.Host || !got.PasswordConfigured {
 		t.Fatalf("unexpected config: %#v", got)
+	}
+}
+
+func TestSendMailRevealsPasswordAndUsesStoredConfiguration(t *testing.T) {
+	owner := uuid.New()
+	store := &fakeStore{config: Config{OwnerID: owner, Host: "smtp.example.com", Port: 465, Username: "mailer", FromAddress: "mailer@example.com", TLSMode: TLSModeTLS}}
+	vault := &fakeVault{plaintext: []byte("secret")}
+	tester := &fakeTester{}
+	service := NewService(store, vault, tester)
+	if err := service.SendMail(context.Background(), paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, "client@example.com", "Facture", "<p>Bonjour</p>"); err != nil {
+		t.Fatal(err)
+	}
+	if tester.recipient != "client@example.com" || tester.subject != "Facture" || tester.password != "secret" {
+		t.Fatalf("recipient=%q subject=%q password=%q", tester.recipient, tester.subject, tester.password)
 	}
 }

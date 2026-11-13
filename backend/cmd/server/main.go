@@ -138,21 +138,23 @@ func main() {
 
 	bizStore := biz.NewStore(pool, box)
 	reminderStore := reminders.NewPGStore(pool)
-	var reminderSender reminders.Sender
+	smtpService := smtpconfig.NewService(smtpconfig.NewPGStore(pool), secretVault, smtpconfig.NewSMTPTester(nil))
+	providerSenders := map[reminders.DeliveryMode]reminders.Sender{
+		reminders.DeliveryModeSMTP: reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+			return smtpService.SendMail(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, message.To, message.Subject, message.HTML)
+		}),
+	}
 	if gmailSvc != nil {
-		reminderSender = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+		providerSenders[reminders.DeliveryModeGmail] = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
 			return gmailSvc.Send(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, gmailmail.Message{To: []string{message.To}, Subject: message.Subject, HTML: message.HTML})
 		})
-	} else if microsoftSvc != nil {
-		reminderSender = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
+	}
+	if microsoftSvc != nil {
+		providerSenders[reminders.DeliveryModeMicrosoft] = reminders.SenderFunc(func(ctx context.Context, owner uuid.UUID, message reminders.Message) error {
 			return microsoftSvc.Send(ctx, paymentsecrets.Actor{UserID: owner, RequestID: "reminder"}, owner, microsoftmail.Message{To: []string{message.To}, Subject: message.Subject, HTML: message.HTML})
 		})
 	}
-	var reminderService *reminders.Service
-	if reminderSender != nil {
-		reminderService = reminders.NewService(reminderStore, reminderSender)
-	}
-	smtpService := smtpconfig.NewService(smtpconfig.NewPGStore(pool), secretVault, smtpconfig.NewSMTPTester(nil))
+	reminderService := reminders.NewService(reminderStore, reminders.NewProviderRouter(reminderStore, providerSenders))
 	bizStore.SetMentionsResolver(func(ctx context.Context) legal.Mentions {
 		return legalSvc.MentionsForIssue(ctx)
 	})

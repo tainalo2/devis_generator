@@ -53,6 +53,14 @@ func (s *Server) handleSendReminder(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadGateway, map[string]any{"reminder": item, "error": "Échec de livraison."})
 		return
 	}
+	if errors.Is(err, reminders.ErrRateLimited) {
+		writeAPIError(w, http.StatusTooManyRequests, "Limite horaire de relances atteinte.")
+		return
+	}
+	if errors.Is(err, reminders.ErrDocumentChanged) {
+		writeJSON(w, http.StatusConflict, map[string]any{"reminder": item, "error": "Le document a changé; relance annulée."})
+		return
+	}
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
@@ -83,4 +91,45 @@ func (s *Server) handleListReminders(w http.ResponseWriter, r *http.Request) {
 	}
 	page, size = reminders.BoundPagination(page, size)
 	writeJSON(w, http.StatusOK, map[string]any{"reminders": items, "page": page, "page_size": size, "total": total})
+}
+
+func (s *Server) handleGetReminderDeliveryMode(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	mode, err := s.reminders.Mode(r.Context(), u.ID)
+	if errors.Is(err, reminders.ErrDeliveryMode) {
+		writeAPIError(w, http.StatusNotFound, "Mode d’envoi non configuré.")
+		return
+	}
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"mode": mode})
+}
+
+func (s *Server) handleSetReminderDeliveryMode(w http.ResponseWriter, r *http.Request) {
+	u, ok := UserFromContext(r.Context())
+	if !ok {
+		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	var body struct {
+		Mode reminders.DeliveryMode `json:"mode"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Requête invalide.")
+		return
+	}
+	if err := s.reminders.SetMode(r.Context(), u.ID, body.Mode); errors.Is(err, reminders.ErrInvalid) {
+		writeAPIError(w, http.StatusBadRequest, "Mode d’envoi invalide.")
+		return
+	} else if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"mode": body.Mode})
 }

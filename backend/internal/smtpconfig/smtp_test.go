@@ -80,6 +80,33 @@ func TestSMTPTesterSendsTestMessageWithImplicitTLSAndTLS12Minimum(t *testing.T) 
 	testSMTPTransport(t, TLSModeTLS)
 }
 
+func TestSMTPTesterSendsReminderToDocumentRecipient(t *testing.T) {
+	cert := localhostCertificate(t)
+	results := make(chan smtpServerResult, 1)
+	tester := NewSMTPTester(dialFunc(func(context.Context, string, string) (net.Conn, error) {
+		client, server := net.Pipe()
+		go serveSMTP(server, TLSModeTLS, cert, results)
+		return client, nil
+	}))
+	tester.resolver = resolverFunc(func(context.Context, string) ([]net.IPAddr, error) {
+		return []net.IPAddr{{IP: net.ParseIP("93.184.216.34")}}, nil
+	})
+	tester.tlsConfig = func(host string) *tls.Config {
+		return &tls.Config{ServerName: host, RootCAs: certPool(t, cert), MinVersion: tls.VersionTLS12}
+	}
+	config := Config{Host: "localhost", Port: 2525, Username: "mailer", FromAddress: "mailer@example.com", TLSMode: TLSModeTLS}
+	if err := tester.Send(context.Background(), config, "secret", "client@example.com", "Facture F-42", "<p>À régler</p>"); err != nil {
+		t.Fatal(err)
+	}
+	result := <-results
+	if result.err != nil {
+		t.Fatal(result.err)
+	}
+	if !strings.Contains(result.message, "To: client@example.com") || !strings.Contains(result.message, "Subject: Facture F-42") || !strings.Contains(result.message, "<p>À régler</p>") {
+		t.Fatalf("message=%q", result.message)
+	}
+}
+
 func testSMTPTransport(t *testing.T, mode TLSMode) {
 	t.Helper()
 	cert := localhostCertificate(t)

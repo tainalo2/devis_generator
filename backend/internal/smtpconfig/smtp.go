@@ -5,7 +5,9 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"mime"
 	"net"
+	"net/mail"
 	"net/netip"
 	"net/smtp"
 	"strings"
@@ -117,6 +119,93 @@ func (t *SMTPTester) Test(ctx context.Context, config Config, password string) e
 		"Content-Type: text/plain; charset=UTF-8",
 		"",
 		"SMTP configuration is working.",
+		"",
+	}, "\r\n")
+	if _, err := io.WriteString(writer, message); err != nil {
+		writer.Close()
+		return err
+	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+	return client.Quit()
+}
+
+// Send delivers a reminder through the same SSRF-safe SMTP transport used by Test.
+func (t *SMTPTester) Send(ctx context.Context, config Config, password, recipient, subject, html string) error {
+	address, err := mail.ParseAddress(recipient)
+	if err != nil || address.Address != recipient || strings.ContainsAny(subject, "\r\n") || strings.TrimSpace(subject) == "" {
+		return ErrInvalidConfig
+	}
+	ctx, cancel := context.WithTimeout(ctx, smtpTestTimeout)
+	defer cancel()
+	addresses, err := t.resolver.LookupIPAddr(ctx, config.Host)
+	if err != nil {
+		return err
+	}
+	if len(addresses) == 0 {
+		return ErrUnsafeDestination
+	}
+	for _, candidate := range addresses {
+		if !isPublicIP(candidate.IP) {
+			return fmt.Errorf("%w: %s", ErrUnsafeDestination, candidate.IP)
+		}
+	}
+	conn, err := t.dialer.DialContext(ctx, "tcp", net.JoinHostPort(addresses[0].IP.String(), fmt.Sprintf("%d", config.Port)))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	if deadline, ok := ctx.Deadline(); ok {
+		_ = conn.SetDeadline(deadline)
+	}
+	var client *smtp.Client
+	switch config.TLSMode {
+	case TLSModeTLS:
+		tlsConn := tls.Client(conn, t.tlsConfig(config.Host))
+		if err := tlsConn.HandshakeContext(ctx); err != nil {
+			return err
+		}
+		client, err = smtp.NewClient(tlsConn, config.Host)
+	case TLSModeSTARTTLS:
+		client, err = smtp.NewClient(conn, config.Host)
+		if err == nil {
+			if ok, _ := client.Extension("STARTTLS"); !ok {
+				client.Close()
+				return fmt.Errorf("server does not support STARTTLS")
+			}
+			err = client.StartTLS(t.tlsConfig(config.Host))
+		}
+	default:
+		return ErrInvalidConfig
+	}
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	if err := client.Auth(smtp.PlainAuth("", config.Username, password, config.Host)); err != nil {
+		return err
+	}
+	if err := client.Mail(config.FromAddress); err != nil {
+		return err
+	}
+	if err := client.Rcpt(recipient); err != nil {
+		return err
+	}
+	writer, err := client.Data()
+	if err != nil {
+		return err
+	}
+	message := strings.Join([]string{
+		"From: " + config.FromAddress,
+		"To: " + recipient,
+		"Subject: " + mime.QEncoding.Encode("utf-8", subject),
+		"Date: " + time.Now().UTC().Format(time.RFC1123Z),
+		"MIME-Version: 1.0",
+		"Content-Type: text/html; charset=UTF-8",
+		"Content-Transfer-Encoding: 8bit",
+		"",
+		html,
 		"",
 	}, "\r\n")
 	if _, err := io.WriteString(writer, message); err != nil {

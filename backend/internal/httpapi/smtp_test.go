@@ -40,6 +40,9 @@ type apiSMTPVault struct{}
 func (apiSMTPVault) Seal(secret []byte) (paymentsecrets.SealedSecret, error) {
 	return paymentsecrets.SealedSecret{Ciphertext: []byte{1}, MaskedValue: paymentsecrets.Mask(secret)}, nil
 }
+func (apiSMTPVault) Reveal(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) ([]byte, paymentsecrets.Metadata, error) {
+	return []byte("secret"), paymentsecrets.Metadata{}, nil
+}
 func (apiSMTPVault) Delete(_ context.Context, _ paymentsecrets.Actor, _ uuid.UUID, _ paymentsecrets.Kind, _ string) error {
 	return nil
 }
@@ -47,6 +50,10 @@ func (apiSMTPVault) Delete(_ context.Context, _ paymentsecrets.Actor, _ uuid.UUI
 type apiSMTPTester struct{ calls int }
 
 func (t *apiSMTPTester) Test(_ context.Context, _ smtpconfig.Config, _ string) error {
+	t.calls++
+	return nil
+}
+func (t *apiSMTPTester) Send(context.Context, smtpconfig.Config, string, string, string, string) error {
 	t.calls++
 	return nil
 }
