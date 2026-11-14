@@ -45,6 +45,7 @@ type DocumentStore interface {
 	GetDocument(context.Context, uuid.UUID, uuid.UUID) (biz.Document, error)
 }
 type Vault interface {
+	Seal([]byte) (paymentsecrets.SealedSecret, error)
 	Put(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string, []byte) (paymentsecrets.Metadata, error)
 	Reveal(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) ([]byte, paymentsecrets.Metadata, error)
 	Delete(context.Context, paymentsecrets.Actor, uuid.UUID, paymentsecrets.Kind, string) error
@@ -84,28 +85,50 @@ func kindsFor(p paymentbyo.Provider) []paymentsecrets.Kind {
 }
 func (s *Service) PutConfig(ctx context.Context, actor paymentsecrets.Actor, in ConfigInput) (ConfigView, error) {
 	ad := s.adapters[in.Provider]
-	if ad == nil && in.Provider != paymentbyo.ProviderStripeConnect {
+	if ad == nil {
 		return ConfigView{}, fmt.Errorf("unsupported provider")
 	}
-	cfg := paymentbyo.Config{Provider: in.Provider, Env: in.Env, StripeSecretKey: in.StripeSecretKey, StripeWebhookSecret: in.StripeWebhookSecret, MollieAPIKey: in.MollieAPIKey, PayPalClientID: in.PayPalClientID, PayPalClientSecret: in.PayPalClientSecret, PayPalWebhookID: in.PayPalWebhookID}
-	if in.Provider == paymentbyo.ProviderStripeConnect {
-		if in.StripeConnectSecret == "" || in.StripeConnectWebhookSecret == "" {
-			return ConfigView{}, fmt.Errorf("missing connect credentials")
+	cfg := paymentbyo.Config{Provider: in.Provider, Env: in.Env, StripeSecretKey: in.StripeSecretKey, StripeWebhookSecret: in.StripeWebhookSecret, MollieAPIKey: in.MollieAPIKey, PayPalClientID: in.PayPalClientID, PayPalClientSecret: in.PayPalClientSecret, PayPalWebhookID: in.PayPalWebhookID, StripeConnectSecret: in.StripeConnectSecret, StripeConnectWebhookSecret: in.StripeConnectWebhookSecret}
+	if err := ad.ValidateConfig(cfg); err != nil {
+		return ConfigView{}, err
+	}
+	sealed := map[paymentsecrets.Kind]paymentsecrets.SealedSecret{}
+	for _, k := range kindsFor(in.Provider) {
+		m, err := s.vault.Seal([]byte(secretFields(in)[k]))
+		if err != nil {
+			return ConfigView{}, err
 		}
-	} else if err := ad.ValidateConfig(cfg); err != nil {
+		sealed[k] = m
+	}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return ConfigView{}, err
+	}
+	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, `INSERT INTO payment_provider_configs(owner_id,provider,environment) VALUES($1,$2,$3) ON CONFLICT(owner_id,provider) DO UPDATE SET environment=EXCLUDED.environment,updated_at=NOW()`, actor.UserID, in.Provider, in.Env); err != nil {
 		return ConfigView{}, err
 	}
 	masked := map[string]string{}
-	for _, k := range kindsFor(in.Provider) {
-		v := secretFields(in)[k]
-		m, err := s.vault.Put(ctx, actor, actor.UserID, k, string(in.Provider), []byte(v))
+	for k, m := range sealed {
+		var id uuid.UUID
+		var inserted bool
+		err = tx.QueryRow(ctx, `INSERT INTO payment_secrets(owner_id,kind,reference,key_id,ciphertext,masked_value) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(owner_id,kind,reference) DO UPDATE SET key_id=EXCLUDED.key_id,ciphertext=EXCLUDED.ciphertext,masked_value=EXCLUDED.masked_value,updated_at=NOW() RETURNING id,(xmax=0)`, actor.UserID, k, string(in.Provider), m.Ciphertext[0], m.Ciphertext, m.MaskedValue).Scan(&id, &inserted)
 		if err != nil {
+			return ConfigView{}, err
+		}
+		action := paymentsecrets.ActionUpdate
+		if inserted {
+			action = paymentsecrets.ActionCreate
+		}
+		if _, err = tx.Exec(ctx, `INSERT INTO payment_secret_audit(secret_id,owner_id,kind,reference,actor_id,actor_request_id,action) VALUES($1,$2,$3,$4,$5,$6,$7)`, id, actor.UserID, k, string(in.Provider), actor.UserID, actor.RequestID, action); err != nil {
 			return ConfigView{}, err
 		}
 		masked[string(k)] = m.MaskedValue
 	}
-	_, err := s.pool.Exec(ctx, `INSERT INTO payment_provider_configs(owner_id,provider,environment) VALUES($1,$2,$3) ON CONFLICT(owner_id,provider) DO UPDATE SET environment=EXCLUDED.environment,updated_at=NOW()`, actor.UserID, in.Provider, in.Env)
-	return ConfigView{Provider: in.Provider, Env: in.Env, Masked: masked}, err
+	if err = tx.Commit(ctx); err != nil {
+		return ConfigView{}, err
+	}
+	return ConfigView{Provider: in.Provider, Env: in.Env, Masked: masked}, nil
 }
 func (s *Service) GetConfig(ctx context.Context, actor paymentsecrets.Actor, p paymentbyo.Provider) (ConfigView, error) {
 	var env paymentbyo.Env
@@ -125,16 +148,35 @@ func (s *Service) GetConfig(ctx context.Context, actor paymentsecrets.Actor, p p
 	return out, nil
 }
 func (s *Service) DeleteConfig(ctx context.Context, actor paymentsecrets.Actor, p paymentbyo.Provider) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
 	for _, k := range kindsFor(p) {
-		if err := s.vault.Delete(ctx, actor, actor.UserID, k, string(p)); err != nil && !errors.Is(err, paymentsecrets.ErrNotFound) {
-			return err
+		var id uuid.UUID
+		e := tx.QueryRow(ctx, `SELECT id FROM payment_secrets WHERE owner_id=$1 AND kind=$2 AND reference=$3 FOR UPDATE`, actor.UserID, k, string(p)).Scan(&id)
+		if errors.Is(e, pgx.ErrNoRows) {
+			continue
+		}
+		if e != nil {
+			return e
+		}
+		if _, e = tx.Exec(ctx, `INSERT INTO payment_secret_audit(secret_id,owner_id,kind,reference,actor_id,actor_request_id,action) VALUES($1,$2,$3,$4,$5,$6,$7)`, id, actor.UserID, k, string(p), actor.UserID, actor.RequestID, paymentsecrets.ActionDelete); e != nil {
+			return e
+		}
+		if _, e = tx.Exec(ctx, `DELETE FROM payment_secrets WHERE id=$1`, id); e != nil {
+			return e
 		}
 	}
-	tag, err := s.pool.Exec(ctx, `DELETE FROM payment_provider_configs WHERE owner_id=$1 AND provider=$2`, actor.UserID, p)
-	if err == nil && tag.RowsAffected() == 0 {
+	tag, err := tx.Exec(ctx, `DELETE FROM payment_provider_configs WHERE owner_id=$1 AND provider=$2`, actor.UserID, p)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
 		return ErrNotFound
 	}
-	return err
+	return tx.Commit(ctx)
 }
 func (s *Service) load(ctx context.Context, actor paymentsecrets.Actor, p paymentbyo.Provider) (paymentbyo.Config, error) {
 	v, e := s.GetConfig(ctx, actor, p)
@@ -160,6 +202,10 @@ func (s *Service) load(ctx context.Context, actor paymentsecrets.Actor, p paymen
 			c.PayPalClientSecret = string(b)
 		case paymentsecrets.KindPayPalWebhookID:
 			c.PayPalWebhookID = string(b)
+		case paymentsecrets.KindStripeConnectSecret:
+			c.StripeConnectSecret = string(b)
+		case paymentsecrets.KindStripeConnectWebhookSecret:
+			c.StripeConnectWebhookSecret = string(b)
 		}
 	}
 	return c, nil
@@ -168,12 +214,15 @@ func IdempotencyKey(owner, doc uuid.UUID, p paymentbyo.Provider) string {
 	h := sha256.Sum256([]byte(owner.String() + ":" + doc.String() + ":" + string(p)))
 	return hex.EncodeToString(h[:])
 }
+func isPayableDocument(doc biz.Document) bool {
+	return doc.Kind == "invoice" && (doc.Status == "sent" || doc.Status == "accepted") && doc.TotalCents > 0
+}
 func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docID uuid.UUID, in CheckoutInput) (paymentbyo.PaymentSession, error) {
 	doc, err := s.docs.GetDocument(ctx, actor.UserID, docID)
 	if err != nil {
 		return paymentbyo.PaymentSession{}, ErrNotFound
 	}
-	if doc.Kind != "invoice" || doc.TotalCents <= 0 {
+	if !isPayableDocument(doc) {
 		return paymentbyo.PaymentSession{}, fmt.Errorf("document is not a payable invoice")
 	}
 	cfg, err := s.load(ctx, actor, in.Provider)
@@ -181,44 +230,103 @@ func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docI
 		return paymentbyo.PaymentSession{}, err
 	}
 	req := paymentbyo.PaymentRequest{DocumentID: doc.ID.String(), TenantID: actor.UserID.String(), Amount: doc.TotalCents, Currency: strings.ToUpper(doc.Currency), ReturnURL: in.ReturnURL, CancelURL: in.CancelURL, IdempotencyKey: IdempotencyKey(actor.UserID, doc.ID, in.Provider)}
-	session, err := s.adapters[in.Provider].CreatePayment(ctx, cfg, req)
+	ad := s.adapters[in.Provider]
+	if ad == nil {
+		return paymentbyo.PaymentSession{}, fmt.Errorf("unsupported provider")
+	}
+	var existingID, existingURL *string
+	var state string
+	var reserved bool
+	err = s.pool.QueryRow(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,idempotency_key,status) VALUES($1,$2,$3,$4,'creating') ON CONFLICT(provider,idempotency_key) DO NOTHING RETURNING true`, actor.UserID, doc.ID, in.Provider, req.IdempotencyKey).Scan(&reserved)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = s.pool.QueryRow(ctx, `UPDATE payment_attempts SET status='creating',last_error=NULL,updated_at=NOW() WHERE provider=$1 AND idempotency_key=$2 AND owner_id=$3 AND document_id=$4 AND status='failed' RETURNING true`, in.Provider, req.IdempotencyKey, actor.UserID, doc.ID).Scan(&reserved)
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = s.pool.QueryRow(ctx, `SELECT external_id,checkout_url,status FROM payment_attempts WHERE provider=$1 AND idempotency_key=$2 AND owner_id=$3 AND document_id=$4`, in.Provider, req.IdempotencyKey, actor.UserID, doc.ID).Scan(&existingID, &existingURL, &state)
+		}
+	}
 	if err != nil {
+		return paymentbyo.PaymentSession{}, err
+	}
+	if !reserved {
+		if existingID != nil && existingURL != nil {
+			return paymentbyo.PaymentSession{Provider: in.Provider, Env: cfg.Env, ExternalID: *existingID, CheckoutURL: *existingURL}, nil
+		}
+		return paymentbyo.PaymentSession{}, fmt.Errorf("payment attempt in progress")
+	}
+	session, err := ad.CreatePayment(ctx, cfg, req)
+	if err != nil {
+		_, _ = s.pool.Exec(ctx, `UPDATE payment_attempts SET status='failed',last_error=$1,updated_at=NOW() WHERE provider=$2 AND idempotency_key=$3`, err.Error(), in.Provider, req.IdempotencyKey)
 		return session, err
 	}
-	_, err = s.pool.Exec(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,external_id,idempotency_key) VALUES($1,$2,$3,$4,$5) ON CONFLICT(provider,idempotency_key) DO UPDATE SET external_id=COALESCE(payment_attempts.external_id,EXCLUDED.external_id)`, actor.UserID, doc.ID, in.Provider, session.ExternalID, req.IdempotencyKey)
+	_, err = s.pool.Exec(ctx, `UPDATE payment_attempts SET external_id=$1,checkout_url=$2,status='pending',updated_at=NOW() WHERE owner_id=$3 AND provider=$4 AND idempotency_key=$5 AND status='creating'`, session.ExternalID, session.CheckoutURL, actor.UserID, in.Provider, req.IdempotencyKey)
 	return session, err
 }
 
 // ProcessWebhook verifies before opening the transaction. The UNIQUE ledger key
 // serializes retries; the document and attempt status update commit atomically.
-func (s *Service) ProcessWebhook(ctx context.Context, p paymentbyo.Provider, eventID, externalID string, headers map[string]string, body []byte) error {
-	if eventID == "" || externalID == "" {
-		return fmt.Errorf("missing event identity")
+func (s *Service) ProcessWebhook(ctx context.Context, p paymentbyo.Provider, headers map[string]string, body []byte) error {
+	ad := s.adapters[p]
+	if ad == nil {
+		return fmt.Errorf("unsupported provider")
 	}
-	var owner, attempt, doc uuid.UUID
-	if err := s.pool.QueryRow(ctx, `SELECT owner_id,id,document_id FROM payment_attempts WHERE provider=$1 AND external_id=$2`, p, externalID).Scan(&owner, &attempt, &doc); errors.Is(err, pgx.ErrNoRows) {
+	rows, err := s.pool.Query(ctx, `SELECT owner_id FROM payment_provider_configs WHERE provider=$1`, p)
+	if err != nil {
+		return err
+	}
+	var owners []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err = rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		owners = append(owners, id)
+	}
+	rows.Close()
+	var ev paymentbyo.WebhookEvent
+	var owner uuid.UUID
+	verified := false
+	for _, candidate := range owners {
+		actor := paymentsecrets.Actor{UserID: candidate, RequestID: "webhook-verify"}
+		cfg, e := s.load(ctx, actor, p)
+		if e != nil {
+			continue
+		}
+		ev, e = ad.VerifyWebhook(cfg, headers, body)
+		if e == nil && ev.TenantID == candidate.String() {
+			owner = candidate
+			verified = true
+			break
+		}
+	}
+	if !verified {
+		return fmt.Errorf("webhook verification failed")
+	}
+	if ev.EventID == "" || ev.ExternalID == "" || ev.TenantID != owner.String() {
+		return fmt.Errorf("verified identity missing or mismatched")
+	}
+	docID, err := uuid.Parse(ev.DocumentID)
+	if err != nil {
+		return fmt.Errorf("invalid verified document")
+	}
+	if ev.Status != "pending" && ev.Status != "paid" && ev.Status != "failed" {
+		return fmt.Errorf("invalid payment status")
+	}
+	var attempt, doc uuid.UUID
+	if err = s.pool.QueryRow(ctx, `SELECT id,document_id FROM payment_attempts WHERE provider=$1 AND external_id=$2 AND owner_id=$3`, p, ev.ExternalID, owner).Scan(&attempt, &doc); errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	} else if err != nil {
 		return err
 	}
-	actor := paymentsecrets.Actor{UserID: owner, RequestID: "webhook:" + eventID}
-	cfg, err := s.load(ctx, actor, p)
-	if err != nil {
-		return err
-	}
-	ev, err := s.adapters[p].VerifyWebhook(cfg, headers, body)
-	if err != nil {
-		return err
-	}
-	if ev.ExternalID != "" && ev.ExternalID != externalID {
-		return fmt.Errorf("external id mismatch")
+	if doc != docID {
+		return fmt.Errorf("verified document mismatch")
 	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	tag, err := tx.Exec(ctx, `INSERT INTO payment_webhook_events(provider,event_id,owner_id,payment_attempt_id) VALUES($1,$2,$3,$4) ON CONFLICT(provider,event_id) DO NOTHING`, p, eventID, owner, attempt)
+	tag, err := tx.Exec(ctx, `INSERT INTO payment_webhook_events(provider,event_id,owner_id,payment_attempt_id) VALUES($1,$2,$3,$4) ON CONFLICT(provider,event_id) DO NOTHING`, p, ev.EventID, owner, attempt)
 	if err != nil {
 		return err
 	}
@@ -229,8 +337,12 @@ func (s *Service) ProcessWebhook(ctx context.Context, p paymentbyo.Provider, eve
 		return err
 	}
 	if ev.Status == "paid" {
-		if _, err = tx.Exec(ctx, `UPDATE documents SET status='paid',paid_at=COALESCE(paid_at,NOW()),updated_at=NOW() WHERE id=$1 AND user_id=$2`, doc, owner); err != nil {
+		tag, err = tx.Exec(ctx, `UPDATE documents SET status='paid',paid_at=COALESCE(paid_at,NOW()),updated_at=NOW() WHERE id=$1 AND user_id=$2 AND status IN ('sent','accepted')`, doc, owner)
+		if err != nil {
 			return err
+		}
+		if tag.RowsAffected() != 1 {
+			return fmt.Errorf("document is not payable")
 		}
 	}
 	return tx.Commit(ctx)

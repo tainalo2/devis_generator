@@ -1,10 +1,25 @@
 package payments
 
 import (
-	"github.com/google/uuid"
-	"github.com/tainalo2/devis_generator/backend/internal/paymentbyo"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/tainalo2/devis_generator/backend/internal/biz"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentbyo"
 )
+
+func TestOnlyIssuedUnpaidInvoicesArePayable(t *testing.T) {
+	for _, status := range []string{"draft", "cancelled", "paid"} {
+		if isPayableDocument(biz.Document{Kind: "invoice", Status: status, TotalCents: 100}) {
+			t.Fatalf("%s was payable", status)
+		}
+	}
+	for _, status := range []string{"sent", "accepted"} {
+		if !isPayableDocument(biz.Document{Kind: "invoice", Status: status, TotalCents: 100}) {
+			t.Fatalf("%s was not payable", status)
+		}
+	}
+}
 
 func TestIdempotencyKeyDeterministicAndTenantScoped(t *testing.T) {
 	o := uuid.New()

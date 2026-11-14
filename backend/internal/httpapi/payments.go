@@ -114,10 +114,15 @@ func (s *Server) handlePaymentWebhook(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, 400, "Requête invalide.")
 		return
 	}
-	headers := map[string]string{"Stripe-Signature": r.Header.Get("Stripe-Signature"), "Paypal-Transmission-Id": r.Header.Get("Paypal-Transmission-Id")}
-	eventID := r.Header.Get("X-Payment-Event-ID")
-	externalID := r.Header.Get("X-Payment-External-ID")
-	if err = s.payments.ProcessWebhook(r.Context(), p, eventID, externalID, headers, body); err != nil {
+	headers := map[string]string{
+		"Stripe-Signature":         r.Header.Get("Stripe-Signature"),
+		"Paypal-Transmission-Id":   r.Header.Get("Paypal-Transmission-Id"),
+		"Paypal-Transmission-Time": r.Header.Get("Paypal-Transmission-Time"),
+		"Paypal-Cert-Url":          r.Header.Get("Paypal-Cert-Url"),
+		"Paypal-Auth-Algo":         r.Header.Get("Paypal-Auth-Algo"),
+		"Paypal-Transmission-Sig":  r.Header.Get("Paypal-Transmission-Sig"),
+	}
+	if err = s.payments.ProcessWebhook(r.Context(), p, headers, body); err != nil {
 		writeAPIError(w, 400, "Webhook invalide.")
 		return
 	}

@@ -37,7 +37,7 @@ func TestContract(t *testing.T) {
 		json.NewEncoder(w).Encode(map[string]any{"id": "tr_1", "_links": map[string]any{"checkout": map[string]string{"href": "https://mollie/checkout"}}})
 	}))
 	defer mollieSrv.Close()
-	ma := &MollieAdapter{HTTP: NewHTTPClient(mollieSrv.URL)}
+	ma := &MollieAdapter{HTTP: NewHTTPClient(mollieSrv.URL), WebhookURL: "https://app.example.test/api/v1/payments/webhooks/mollie"}
 	mcfg := Config{Provider: ProviderMollie, Env: EnvSandbox, MollieAPIKey: "test_key1234"}
 	if err := ma.ValidateConfig(mcfg); err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func TestContract(t *testing.T) {
 		json.NewEncoder(w).Encode(map[string]any{"id": "order_1", "links": []map[string]string{{"rel": "approve", "href": "https://paypal/approve"}}})
 	}))
 	defer paypalSrv.Close()
-	pa := &PayPalAdapter{HTTP: NewHTTPClient(paypalSrv.URL)}
+	pa := NewPayPalAdapter(NewHTTPClient(paypalSrv.URL), NewHTTPClient(paypalSrv.URL))
 	pcfg := Config{Provider: ProviderPayPal, Env: EnvSandbox, PayPalClientID: "cid", PayPalClientSecret: "csec", PayPalWebhookID: "wh"}
 	if err := pa.ValidateConfig(pcfg); err != nil {
 		t.Fatal(err)

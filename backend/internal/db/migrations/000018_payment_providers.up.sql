@@ -23,8 +23,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS documents_user_id_id_idx ON documents(user_id,
 
 CREATE TABLE payment_attempts (
  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
- document_id UUID NOT NULL, provider TEXT NOT NULL, external_id TEXT, idempotency_key TEXT NOT NULL,
- status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paid','failed')),
+ document_id UUID NOT NULL, provider TEXT NOT NULL, external_id TEXT, checkout_url TEXT, idempotency_key TEXT NOT NULL,
+ status TEXT NOT NULL DEFAULT 'creating' CHECK(status IN ('creating','pending','paid','failed')), last_error TEXT,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  UNIQUE(provider,idempotency_key), UNIQUE(owner_id,id),
  FOREIGN KEY(owner_id,document_id) REFERENCES documents(user_id,id) ON DELETE CASCADE

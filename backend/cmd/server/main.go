@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -129,10 +130,13 @@ func main() {
 	paymentSecretsVault := paymentsecrets.NewVault(pgRepo, box)
 	paymentFlagsStore := paymentflags.NewStore(pool)
 	bankCoordRepo := bankcoordsvault.NewRepository(pool, paymentSecretsVault)
+	stripeAdapter := &paymentbyo.StripeAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.stripe.com")}
+	publicBaseURL := strings.TrimRight(os.Getenv("PUBLIC_BASE_URL"), "/")
 	paymentSvc := payments.New(pool, paymentSecretsVault, bizStore, map[paymentbyo.Provider]paymentbyo.ProviderAdapter{
-		paymentbyo.ProviderStripe: &paymentbyo.StripeAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.stripe.com")},
-		paymentbyo.ProviderMollie: &paymentbyo.MollieAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.mollie.com")},
-		paymentbyo.ProviderPayPal: &paymentbyo.PayPalAdapter{HTTP: paymentbyo.NewHTTPClient("https://api-m.paypal.com")},
+		paymentbyo.ProviderStripe:        stripeAdapter,
+		paymentbyo.ProviderMollie:        &paymentbyo.MollieAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.mollie.com"), WebhookURL: publicBaseURL + "/api/v1/payments/webhooks/mollie"},
+		paymentbyo.ProviderPayPal:        paymentbyo.NewPayPalAdapter(paymentbyo.NewHTTPClient("https://api-m.sandbox.paypal.com"), paymentbyo.NewHTTPClient("https://api-m.paypal.com")),
+		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter},
 	})
 
 	api := httpapi.New(httpapi.Options{

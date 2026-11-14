@@ -53,7 +53,9 @@ type PaymentSession struct {
 
 type WebhookEvent struct {
 	Provider   Provider
+	EventID    string
 	ExternalID string
+	TenantID   string
 	DocumentID string
 	Status     string // pending/paid/failed
 	Raw        []byte
