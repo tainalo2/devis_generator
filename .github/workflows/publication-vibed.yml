@@ -172,6 +172,7 @@ jobs:
             -e DATABASE_URL="postgres://devis:controle@db:5432/devis?sslmode=disable" \
             -e ENCRYPTION_KEY="$(openssl rand -base64 32)" \
             -e SESSION_SECRET="$(openssl rand -base64 48)" \
+            -e DOC_LINK_SECRET="$(openssl rand -base64 32)" \
             "$IMAGE"
           for i in $(seq 1 60); do
             if curl -sf http://127.0.0.1:8080/api/v1/readyz > /dev/null; then
