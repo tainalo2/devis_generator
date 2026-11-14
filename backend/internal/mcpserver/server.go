@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/big"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -191,6 +193,80 @@ func parseArgs(raw json.RawMessage) map[string]any {
 	return m
 }
 
+var decimalPattern = regexp.MustCompile(`^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$`)
+
+// scaledDecimal converts a documented decimal string to an integer using
+// commercial rounding: an exact half is rounded away from zero.
+func scaledDecimal(value, field string, scale int64) (int64, error) {
+	const maxDecimalLength = 128
+	if len(value) > maxDecimalLength {
+		return 0, fmt.Errorf("%s trop longue (%d caractères maximum)", field, maxDecimalLength)
+	}
+	if !decimalPattern.MatchString(value) {
+		return 0, fmt.Errorf("%s invalide: chaîne décimale attendue (ex. \"2.5\")", field)
+	}
+	rational, ok := new(big.Rat).SetString(value)
+	if !ok {
+		return 0, fmt.Errorf("%s invalide: chaîne décimale attendue (ex. \"2.5\")", field)
+	}
+	scaled := new(big.Rat).Mul(rational, big.NewRat(scale, 1))
+	numerator := new(big.Int).Set(scaled.Num())
+	negative := numerator.Sign() < 0
+	numerator.Abs(numerator)
+	denominator := scaled.Denom()
+	quotient, remainder := new(big.Int), new(big.Int)
+	quotient.QuoRem(numerator, denominator, remainder)
+	if remainder.Lsh(remainder, 1).Cmp(denominator) >= 0 {
+		quotient.Add(quotient, big.NewInt(1))
+	}
+	if negative {
+		quotient.Neg(quotient)
+	}
+	if !quotient.IsInt64() {
+		return 0, fmt.Errorf("%s hors limites", field)
+	}
+	return quotient.Int64(), nil
+}
+
+func convertMCPLines(rawLines []any) ([]map[string]any, error) {
+	lines := make([]map[string]any, 0, len(rawLines))
+	for i, raw := range rawLines {
+		line, ok := raw.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("ligne %d: objet attendu", i+1)
+		}
+		quantity, ok := line["quantite"].(string)
+		if !ok {
+			return nil, fmt.Errorf("ligne %d: quantite doit être une chaîne décimale", i+1)
+		}
+		quantityMilli, err := scaledDecimal(quantity, "quantite", 1000)
+		if err != nil {
+			return nil, fmt.Errorf("ligne %d: %w", i+1, err)
+		}
+		if quantityMilli == 0 {
+			return nil, fmt.Errorf("ligne %d: quantite arrondie à zéro", i+1)
+		}
+		unitPrice, ok := line["prix_unitaire_ht"].(string)
+		if !ok {
+			return nil, fmt.Errorf("ligne %d: prix_unitaire_ht doit être une chaîne décimale", i+1)
+		}
+		unitPriceCents, err := scaledDecimal(unitPrice, "prix_unitaire_ht", 100)
+		if err != nil {
+			return nil, fmt.Errorf("ligne %d: %w", i+1, err)
+		}
+		converted := make(map[string]any, len(line))
+		for key, value := range line {
+			if key != "quantite" && key != "prix_unitaire_ht" {
+				converted[key] = value
+			}
+		}
+		converted["quantity_milli"] = quantityMilli
+		converted["unit_price_cents"] = unitPriceCents
+		lines = append(lines, converted)
+	}
+	return lines, nil
+}
+
 func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any, error) {
 	a := parseArgs(args)
 	// ambiguity checks
@@ -233,11 +309,15 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 	var body map[string]any
 	switch kind {
 	case "devis":
+		lines, err := convertCreateLines(a["lignes"])
+		if err != nil {
+			return map[string]any{"status": "error", "error": err.Error()}, nil
+		}
 		path = "/documents"
 		body = map[string]any{
 			"kind":       "quote",
 			"client_id":  a["client"],
-			"lines":      a["lignes"],
+			"lines":      lines,
 			"currency":   valueOr(a, "devise", "EUR"),
 			"vat_regime": valueOr(a, "regime_tva", "standard"),
 			"title":      valueOr(a, "titre", "Devis"),
@@ -250,11 +330,15 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 			path = "/documents/" + quoteID + "/convert-to-invoice"
 			body = map[string]any{}
 		} else {
+			lines, err := convertCreateLines(a["lignes"])
+			if err != nil {
+				return map[string]any{"status": "error", "error": err.Error()}, nil
+			}
 			path = "/documents"
 			body = map[string]any{
 				"kind":       "invoice",
 				"client_id":  a["client"],
-				"lines":      a["lignes"],
+				"lines":      lines,
 				"currency":   valueOr(a, "devise", "EUR"),
 				"vat_regime": valueOr(a, "regime_tva", "standard"),
 				"title":      valueOr(a, "titre", "Facture"),
@@ -270,6 +354,14 @@ func (s *Server) handleCreate(kind string, args json.RawMessage) (map[string]any
 		return map[string]any{"status": "error", "error": err.Error()}, nil
 	}
 	return s.documentResult("created", out), nil
+}
+
+func convertCreateLines(value any) ([]map[string]any, error) {
+	rawLines, ok := value.([]any)
+	if !ok {
+		return nil, fmt.Errorf("lignes doit être un tableau")
+	}
+	return convertMCPLines(rawLines)
 }
 
 func (s *Server) createDeposit(args map[string]any) map[string]any {
