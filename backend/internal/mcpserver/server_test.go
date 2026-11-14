@@ -95,13 +95,14 @@ func TestCreateDevisCallsPublicAPIContract(t *testing.T) {
 func TestConvertDocumentedLinesRoundsHalfAwayFromZero(t *testing.T) {
 	lines, err := convertMCPLines([]any{
 		map[string]any{"description": "integer", "quantite": "2", "prix_unitaire_ht": "10"},
+		map[string]any{"description": "exact documented precision", "quantite": "12.345", "prix_unitaire_ht": "0.1"},
 		map[string]any{"description": "quantity rounding", "quantite": "1.2345", "prix_unitaire_ht": "1.005"},
 		map[string]any{"description": "negative price rounding", "quantite": "1", "prix_unitaire_ht": "-1.005"},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := [][2]int64{{2000, 1000}, {1235, 101}, {1000, -101}}
+	want := [][2]int64{{2000, 1000}, {12345, 10}, {1235, 101}, {1000, -101}}
 	for i, line := range lines {
 		if line["quantity_milli"] != want[i][0] || line["unit_price_cents"] != want[i][1] {
 			t.Fatalf("line %d: got quantity=%v price=%v, want %v", i+1, line["quantity_milli"], line["unit_price_cents"], want[i])
