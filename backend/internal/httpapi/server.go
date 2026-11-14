@@ -175,6 +175,7 @@ func New(opts Options) *Server {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)
+		r.Get("/public/documents/{token}/pdf", s.handleDocumentLink)
 		if s.payments != nil {
 			r.Post("/payments/webhooks/{provider}", s.handlePaymentWebhook)
 		}
@@ -261,7 +262,6 @@ func New(opts Options) *Server {
 		})
 	})
 
-	r.Get("/d/{token}", s.handleDocumentLink)
 	s.mountStatic(r)
 	s.router = r
 	return s

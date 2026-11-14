@@ -1,14 +1,18 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/doclink"
+	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/pdfgen"
 )
 
 func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request) {
@@ -59,14 +63,58 @@ func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusGone, map[string]string{"error": "lien expire"})
 		return
 	}
-	msg := ""
-	if r.URL.Query().Get("replaced") == "1" {
-		msg = doclink.ReplacedMessage
+	docID, err := uuid.Parse(p.DocID)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"document_id": p.DocID,
-		"kind":        p.Kind,
-		"version":     p.Version,
-		"message":     msg,
-	})
+	document, ownerID, err := s.biz.GetDocumentPublic(r.Context(), docID)
+	if errors.Is(err, biz.ErrNotFound) || (err == nil && document.Kind != p.Kind) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+		return
+	}
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
+
+	issuer, err := s.biz.GetIssuer(r.Context(), ownerID)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
+	if len(document.IssuerSnapshot) > 0 {
+		_ = json.Unmarshal(document.IssuerSnapshot, &issuer)
+	}
+	client := biz.Client{Name: "Client"}
+	if document.ClientSnapshot != nil {
+		client = document.ClientSnapshot.AsClient()
+	} else if document.ClientID != nil {
+		if current, err := s.biz.GetClient(r.Context(), ownerID, *document.ClientID); err == nil {
+			client = current
+		}
+	}
+	mentions := legal.DefaultMentions()
+	if len(document.LegalSnapshot) > 0 {
+		_ = json.Unmarshal(document.LegalSnapshot, &mentions)
+	} else if s.legal != nil {
+		mentions = s.legal.MentionsForIssue(r.Context())
+	}
+	pdf, err := pdfgen.Render(document, issuer, client, mentions)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Génération PDF impossible.")
+		return
+	}
+	filename := "document.pdf"
+	if document.Number != nil {
+		filename = *document.Number + ".pdf"
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `inline; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "private, no-store")
+	if r.URL.Query().Get("replaced") == "1" {
+		w.Header().Set("X-Document-Link-Message", doclink.ReplacedMessage)
+	}
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(pdf)
 }

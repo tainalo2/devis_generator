@@ -19,6 +19,7 @@ import { MentionsLegalesPage } from "@/pages/mentions-legales-page"
 import { NewDocumentPage } from "@/pages/new-document-page"
 import { NotFoundPage } from "@/pages/not-found-page"
 import { PrivacyPage } from "@/pages/privacy-page"
+import { PublicDocumentPage } from "@/pages/public-document-page"
 import { RegisterPage } from "@/pages/register-page"
 
 export default function App() {
@@ -28,6 +29,7 @@ export default function App() {
         <ToastProvider>
           <BrowserRouter>
             <Routes>
+              <Route path="d/:token" element={<PublicDocumentPage />} />
               <Route element={<PublicLayout />}>
                 <Route index element={<LandingPage />} />
                 <Route path="mentions-legales" element={<MentionsLegalesPage />} />
