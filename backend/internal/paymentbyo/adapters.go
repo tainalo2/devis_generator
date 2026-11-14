@@ -315,16 +315,25 @@ func (p *PayPalAdapter) VerifyWebhook(c Config, h map[string]string, b []byte) (
 				ReferenceID string `json:"reference_id"`
 				CustomID    string `json:"custom_id"`
 			} `json:"purchase_units"`
+			SupplementaryData struct {
+				RelatedIDs struct {
+					OrderID string `json:"order_id"`
+				} `json:"related_ids"`
+			} `json:"supplementary_data"`
 		} `json:"resource"`
 	}
 	if err = json.Unmarshal(b, &x); err != nil {
 		return WebhookEvent{}, err
 	}
 	status := "pending"
-	if strings.Contains(x.EventType, "COMPLETED") {
+	if x.EventType == "CHECKOUT.ORDER.COMPLETED" || x.EventType == "PAYMENT.CAPTURE.COMPLETED" {
 		status = "paid"
-	} else if strings.Contains(x.EventType, "DENIED") || strings.Contains(x.EventType, "FAILED") {
+	} else if x.EventType == "PAYMENT.CAPTURE.DENIED" || x.EventType == "CHECKOUT.PAYMENT-APPROVAL.REVERSED" {
 		status = "failed"
+	}
+	externalID := x.Resource.ID
+	if x.EventType == "PAYMENT.CAPTURE.COMPLETED" || x.EventType == "PAYMENT.CAPTURE.DENIED" {
+		externalID = x.Resource.SupplementaryData.RelatedIDs.OrderID
 	}
 	doc, tenant := "", x.Resource.CustomID
 	if len(x.Resource.PurchaseUnits) > 0 {
@@ -333,7 +342,7 @@ func (p *PayPalAdapter) VerifyWebhook(c Config, h map[string]string, b []byte) (
 			tenant = x.Resource.PurchaseUnits[0].CustomID
 		}
 	}
-	return WebhookEvent{Provider: ProviderPayPal, EventID: x.ID, ExternalID: x.Resource.ID, TenantID: tenant, DocumentID: doc, Status: status, Raw: b}, nil
+	return WebhookEvent{Provider: ProviderPayPal, EventID: x.ID, ExternalID: externalID, TenantID: tenant, DocumentID: doc, Status: status, Raw: b}, nil
 }
 func (p *PayPalAdapter) Revoke(Config) error         { return nil }
 func (p *PayPalAdapter) Fingerprint(c Config) string { return "paypal:" + last4(c.PayPalClientID) }

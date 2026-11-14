@@ -35,13 +35,14 @@ type Config struct {
 }
 
 type PaymentRequest struct {
-	DocumentID     string
-	TenantID       string
-	Amount         int64 // minor units
-	Currency       string
-	ReturnURL      string
-	CancelURL      string
-	IdempotencyKey string
+	DocumentID         string
+	TenantID           string
+	Amount             int64 // minor units
+	Currency           string
+	ReturnURL          string
+	CancelURL          string
+	IdempotencyKey     string
+	ConnectedAccountID string
 }
 
 type PaymentSession struct {

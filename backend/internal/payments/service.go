@@ -4,8 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
@@ -230,6 +232,17 @@ func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docI
 		return paymentbyo.PaymentSession{}, err
 	}
 	req := paymentbyo.PaymentRequest{DocumentID: doc.ID.String(), TenantID: actor.UserID.String(), Amount: doc.TotalCents, Currency: strings.ToUpper(doc.Currency), ReturnURL: in.ReturnURL, CancelURL: in.CancelURL, IdempotencyKey: IdempotencyKey(actor.UserID, doc.ID, in.Provider)}
+	if in.Provider == paymentbyo.ProviderStripeConnect {
+		var charges, payouts, cards, transfers bool
+		if err = s.pool.QueryRow(ctx, `SELECT account_id,charges_enabled,payouts_enabled,card_payments_active,transfers_active FROM stripe_connect_accounts WHERE owner_id=$1`, actor.UserID).Scan(&req.ConnectedAccountID, &charges, &payouts, &cards, &transfers); errors.Is(err, pgx.ErrNoRows) {
+			return paymentbyo.PaymentSession{}, ErrNotFound
+		} else if err != nil {
+			return paymentbyo.PaymentSession{}, err
+		}
+		if !charges || !payouts || !cards || !transfers {
+			return paymentbyo.PaymentSession{}, fmt.Errorf("connected account capabilities inactive")
+		}
+	}
 	ad := s.adapters[in.Provider]
 	if ad == nil {
 		return paymentbyo.PaymentSession{}, fmt.Errorf("unsupported provider")
@@ -258,8 +271,72 @@ func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docI
 		_, _ = s.pool.Exec(ctx, `UPDATE payment_attempts SET status='failed',last_error=$1,updated_at=NOW() WHERE provider=$2 AND idempotency_key=$3`, err.Error(), in.Provider, req.IdempotencyKey)
 		return session, err
 	}
-	_, err = s.pool.Exec(ctx, `UPDATE payment_attempts SET external_id=$1,checkout_url=$2,status='pending',updated_at=NOW() WHERE owner_id=$3 AND provider=$4 AND idempotency_key=$5 AND status='creating'`, session.ExternalID, session.CheckoutURL, actor.UserID, in.Provider, req.IdempotencyKey)
-	return session, err
+	tag, err := s.pool.Exec(ctx, `UPDATE payment_attempts SET external_id=$1,checkout_url=$2,status='pending',updated_at=NOW() WHERE owner_id=$3 AND provider=$4 AND idempotency_key=$5 AND status='creating'`, session.ExternalID, session.CheckoutURL, actor.UserID, in.Provider, req.IdempotencyKey)
+	if err != nil || tag.RowsAffected() != 1 {
+		if err == nil {
+			err = fmt.Errorf("payment attempt finalization lost")
+		}
+		_, _ = s.pool.Exec(ctx, `UPDATE payment_attempts SET status='failed',last_error=$1,updated_at=NOW() WHERE owner_id=$2 AND provider=$3 AND idempotency_key=$4 AND status='creating'`, err.Error(), actor.UserID, in.Provider, req.IdempotencyKey)
+		return paymentbyo.PaymentSession{}, err
+	}
+	return session, nil
+}
+
+func webhookRouteIdentifier(p paymentbyo.Provider, headers map[string]string, body []byte) (string, error) {
+	switch p {
+	case paymentbyo.ProviderMollie:
+		v, err := url.ParseQuery(string(body))
+		if err != nil || v.Get("id") == "" {
+			return "", fmt.Errorf("missing route identifier")
+		}
+		return v.Get("id"), nil
+	case paymentbyo.ProviderStripe, paymentbyo.ProviderStripeConnect:
+		var x struct {
+			Account string `json:"account"`
+			Data    struct {
+				Object struct {
+					ID string `json:"id"`
+				} `json:"object"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(body, &x) != nil {
+			return "", fmt.Errorf("invalid webhook")
+		}
+		if p == paymentbyo.ProviderStripeConnect {
+			if x.Account == "" {
+				return "", fmt.Errorf("missing account")
+			}
+			return x.Account, nil
+		}
+		if x.Data.Object.ID == "" {
+			return "", fmt.Errorf("missing route identifier")
+		}
+		return x.Data.Object.ID, nil
+	case paymentbyo.ProviderPayPal:
+		var x struct {
+			EventType string `json:"event_type"`
+			Resource  struct {
+				ID                string `json:"id"`
+				SupplementaryData struct {
+					RelatedIDs struct {
+						OrderID string `json:"order_id"`
+					} `json:"related_ids"`
+				} `json:"supplementary_data"`
+			} `json:"resource"`
+		}
+		if json.Unmarshal(body, &x) != nil {
+			return "", fmt.Errorf("invalid webhook")
+		}
+		id := x.Resource.ID
+		if x.EventType == "PAYMENT.CAPTURE.COMPLETED" || x.EventType == "PAYMENT.CAPTURE.DENIED" {
+			id = x.Resource.SupplementaryData.RelatedIDs.OrderID
+		}
+		if id == "" {
+			return "", fmt.Errorf("missing route identifier")
+		}
+		return id, nil
+	}
+	return "", fmt.Errorf("unsupported provider")
 }
 
 // ProcessWebhook verifies before opening the transaction. The UNIQUE ledger key
@@ -269,56 +346,53 @@ func (s *Service) ProcessWebhook(ctx context.Context, p paymentbyo.Provider, hea
 	if ad == nil {
 		return fmt.Errorf("unsupported provider")
 	}
-	rows, err := s.pool.Query(ctx, `SELECT owner_id FROM payment_provider_configs WHERE provider=$1`, p)
+	routeID, err := webhookRouteIdentifier(p, headers, body)
 	if err != nil {
 		return err
 	}
-	var owners []uuid.UUID
-	for rows.Next() {
-		var id uuid.UUID
-		if err = rows.Scan(&id); err != nil {
-			rows.Close()
-			return err
-		}
-		owners = append(owners, id)
+	var owner, attempt, doc uuid.UUID
+	if p == paymentbyo.ProviderStripeConnect {
+		err = s.pool.QueryRow(ctx, `SELECT owner_id FROM stripe_connect_accounts WHERE account_id=$1`, routeID).Scan(&owner)
+	} else {
+		err = s.pool.QueryRow(ctx, `SELECT owner_id,id,document_id FROM payment_attempts WHERE provider=$1 AND external_id=$2`, p, routeID).Scan(&owner, &attempt, &doc)
 	}
-	rows.Close()
-	var ev paymentbyo.WebhookEvent
-	var owner uuid.UUID
-	verified := false
-	for _, candidate := range owners {
-		actor := paymentsecrets.Actor{UserID: candidate, RequestID: "webhook-verify"}
-		cfg, e := s.load(ctx, actor, p)
-		if e != nil {
-			continue
-		}
-		ev, e = ad.VerifyWebhook(cfg, headers, body)
-		if e == nil && ev.TenantID == candidate.String() {
-			owner = candidate
-			verified = true
-			break
-		}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
 	}
-	if !verified {
-		return fmt.Errorf("webhook verification failed")
+	if err != nil {
+		return err
+	}
+	actor := paymentsecrets.Actor{UserID: owner, RequestID: "webhook-verify"}
+	cfg, err := s.load(ctx, actor, p)
+	if err != nil {
+		return err
+	}
+	ev, err := ad.VerifyWebhook(cfg, headers, body)
+	if err != nil {
+		return fmt.Errorf("webhook verification failed: %w", err)
 	}
 	if ev.EventID == "" || ev.ExternalID == "" || ev.TenantID != owner.String() {
 		return fmt.Errorf("verified identity missing or mismatched")
 	}
-	docID, err := uuid.Parse(ev.DocumentID)
-	if err != nil {
-		return fmt.Errorf("invalid verified document")
+	var docID uuid.UUID
+	if ev.DocumentID != "" {
+		docID, err = uuid.Parse(ev.DocumentID)
+		if err != nil {
+			return fmt.Errorf("invalid verified document")
+		}
 	}
 	if ev.Status != "pending" && ev.Status != "paid" && ev.Status != "failed" {
 		return fmt.Errorf("invalid payment status")
 	}
-	var attempt, doc uuid.UUID
-	if err = s.pool.QueryRow(ctx, `SELECT id,document_id FROM payment_attempts WHERE provider=$1 AND external_id=$2 AND owner_id=$3`, p, ev.ExternalID, owner).Scan(&attempt, &doc); errors.Is(err, pgx.ErrNoRows) {
+	if p == paymentbyo.ProviderStripeConnect {
+		err = s.pool.QueryRow(ctx, `SELECT id,document_id FROM payment_attempts WHERE provider=$1 AND external_id=$2 AND owner_id=$3`, p, ev.ExternalID, owner).Scan(&attempt, &doc)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
 	} else if err != nil {
 		return err
 	}
-	if doc != docID {
+	if docID != uuid.Nil && doc != docID {
 		return fmt.Errorf("verified document mismatch")
 	}
 	tx, err := s.pool.Begin(ctx)

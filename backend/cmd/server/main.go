@@ -25,6 +25,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 	"github.com/tainalo2/devis_generator/backend/internal/payments"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
+	"github.com/tainalo2/devis_generator/backend/internal/stripeconnect"
 )
 
 // Version is injected at build time via -ldflags.
@@ -132,11 +133,12 @@ func main() {
 	bankCoordRepo := bankcoordsvault.NewRepository(pool, paymentSecretsVault)
 	stripeAdapter := &paymentbyo.StripeAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.stripe.com")}
 	publicBaseURL := strings.TrimRight(os.Getenv("PUBLIC_BASE_URL"), "/")
+	connectCfg := stripeconnect.ConfigFromEnv()
 	paymentSvc := payments.New(pool, paymentSecretsVault, bizStore, map[paymentbyo.Provider]paymentbyo.ProviderAdapter{
 		paymentbyo.ProviderStripe:        stripeAdapter,
 		paymentbyo.ProviderMollie:        &paymentbyo.MollieAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.mollie.com"), WebhookURL: publicBaseURL + "/api/v1/payments/webhooks/mollie"},
 		paymentbyo.ProviderPayPal:        paymentbyo.NewPayPalAdapter(paymentbyo.NewHTTPClient("https://api-m.sandbox.paypal.com"), paymentbyo.NewHTTPClient("https://api-m.paypal.com")),
-		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter},
+		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter, ComplianceAck: connectCfg.ComplianceAck, FeeBPS: connectCfg.FeeBPS, FeeFixedCents: connectCfg.FeeFixedCents, FeeCapCents: connectCfg.FeeCapCents},
 	})
 
 	api := httpapi.New(httpapi.Options{
