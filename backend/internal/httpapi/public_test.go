@@ -8,13 +8,13 @@ import (
 )
 
 func TestPublicConfig(t *testing.T) {
-	s := New(Options{
-		Version: "test",
-		PublicConfig: &PublicSiteConfig{
-			DonateURL:          "https://example.org/dons",
-			LegalPublisherName: "",
-		},
-	})
+	opts := testOptions()
+	opts.Version = "test"
+	opts.PublicConfig = &PublicSiteConfig{
+		DonateURL:          "https://example.org/dons",
+		LegalPublisherName: "",
+	}
+	s := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/public/config", nil)
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, req)

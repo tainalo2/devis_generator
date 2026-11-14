@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -33,6 +34,7 @@ import (
 type Server struct {
 	db                   Pinger
 	store                *authstore.Store
+	apiKeyLookup         func(context.Context, string) (authstore.APIKey, authstore.User, error)
 	biz                  *biz.Store
 	box                  *crypto.Box
 	legal                *legal.Service
@@ -101,7 +103,7 @@ type Options struct {
 	DocLinkSecret     []byte
 	Argon2            auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
-	TrustedProxies []*net.IPNet
+	TrustedProxies    []*net.IPNet
 }
 
 // New builds the chi router with health, auth, business API and SPA.
@@ -136,8 +138,21 @@ func New(opts Options) *Server {
 		stripeConnect:        opts.StripeConnect,
 		docLinkSecret:        opts.DocLinkSecret,
 	}
+	if s.store != nil {
+		s.apiKeyLookup = func(ctx context.Context, hash string) (authstore.APIKey, authstore.User, error) {
+			key, user, err := s.store.GetAPIKeyByHash(ctx, hash)
+			if err == nil {
+				s.store.TouchAPIKey(ctx, key.ID)
+			}
+			return key, user, err
+		}
+	}
 	if s.version == "" {
 		s.version = "dev"
+	}
+	if len(s.docLinkSecret) == 0 {
+		slog.Error("SESSION_SECRET environment variable is required but not set", "component", "httpapi")
+		os.Exit(1)
 	}
 	if s.sessionTTL <= 0 {
 		s.sessionTTL = 30 * 24 * time.Hour
@@ -176,6 +191,10 @@ func New(opts Options) *Server {
 			r.Get("/auth/export", s.requireAuth(s.handleExport))
 			r.Delete("/auth/me", s.requireAuth(s.handleDeleteAccount))
 
+			r.Get("/auth/api-keys", s.requireAuth(s.handleListAPIKeys))
+			r.Post("/auth/api-keys", s.requireAuth(s.handleCreateAPIKey))
+			r.Delete("/auth/api-keys/{id}", s.requireAuth(s.handleRevokeAPIKey))
+
 			r.Post("/billing/preview", s.handlePreviewTotals)
 			r.Post("/guest/pdf", s.handleGuestPDF)
 
@@ -199,6 +218,7 @@ func New(opts Options) *Server {
 			r.Get("/documents", s.requireAuth(s.handleListDocuments))
 			r.Post("/documents", s.requireAuth(s.handleCreateDocument))
 			r.Get("/documents/{id}", s.requireAuth(s.handleGetDocument))
+			r.Get("/documents/{id}/link", s.requireAuth(s.handleCreateDocumentLink))
 			r.Put("/documents/{id}", s.requireAuth(s.handleUpdateDocument))
 			r.Delete("/documents/{id}", s.requireAuth(s.handleDeleteDocument))
 			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))
@@ -241,6 +261,7 @@ func New(opts Options) *Server {
 		})
 	})
 
+	r.Get("/d/{token}", s.handleDocumentLink)
 	s.mountStatic(r)
 	s.router = r
 	return s

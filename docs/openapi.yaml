@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: Devis Generator API
+  version: 1.0.0
+  description: API publique du générateur de devis/factures (Factur-X/PDP).
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200': { description: OK }
+  /readyz:
+    get:
+      summary: Readiness check
+      responses:
+        '200': { description: OK }
+  /public/config:
+    get:
+      summary: Configuration publique
+      responses:
+        '200': { description: OK }
+  /auth/register:
+    post:
+      summary: Inscription
+      requestBody:
+        content:
+          application/json:
+            example: { email: "user@example.com", password: "secret123" }
+      responses:
+        '200': { description: OK }
+  /auth/login:
+    post:
+      summary: Connexion
+      requestBody:
+        content:
+          application/json:
+            example: { email: "user@example.com", password: "secret123" }
+      responses:
+        '200': { description: OK }
+  /auth/logout:
+    post:
+      summary: Déconnexion
+      responses:
+        '200': { description: OK }
+  /auth/me:
+    get:
+      summary: Utilisateur courant
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Supprimer le compte
+      responses:
+        '200': { description: OK }
+  /auth/export:
+    get:
+      summary: Export des données
+      responses:
+        '200': { description: OK }
+  /auth/api-keys:
+    get:
+      summary: Lister les clés API
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example: { api_keys: [] }
+    post:
+      summary: Créer une clé API
+      requestBody:
+        content:
+          application/json:
+            example: { name: "my-key", scopes: ["read","write"] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example: { key: "dg_...", prefix: "dg_abcd" }
+  /auth/api-keys/{id}:
+    delete:
+      summary: Révoquer une clé API
+      responses:
+        '200': { description: OK }
+  /clients:
+    get:
+      summary: Lister les clients
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Créer un client
+      requestBody:
+        content:
+          application/json:
+            example: { name: "Acme", email: "contact@acme.com" }
+      responses:
+        '200': { description: OK }
+  /clients/{id}:
+    get:
+      summary: Obtenir un client
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Mettre à jour un client
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Supprimer un client
+      responses:
+        '200': { description: OK }
+  /documents:
+    get:
+      summary: Lister les documents
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Créer un document
+      requestBody:
+        content:
+          application/json:
+            example: { kind: "quote", client_id: "uuid" }
+      responses:
+        '200': { description: OK }
+  /documents/{id}:
+    get:
+      summary: Obtenir un document
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Mettre à jour un document
+      responses:
+        '200': { description: OK }
+    delete:
+      summary: Supprimer un document
+      responses:
+        '200': { description: OK }
+  /documents/{id}/link:
+    get:
+      summary: Obtenir le lien public stable du document
+      description: Le lien d'un devis expire après 90 jours ; les liens de facture et d'acompte sont permanents.
+      responses:
+        '200':
+          description: Lien stable
+          content:
+            application/json:
+              example: { link: "https://example.com/d/token", permanent: false, expires_at: "2027-02-08T08:59:59Z" }
+  /documents/{id}/issue:
+    post:
+      summary: Émettre un document
+      responses:
+        '200': { description: OK }
+  /documents/{id}/status:
+    post:
+      summary: Changer le statut
+      responses:
+        '200': { description: OK }
+  /documents/{id}/convert-to-invoice:
+    post:
+      summary: Convertir devis en facture
+      responses:
+        '200': { description: OK }
+  /documents/{id}/deposit-invoice:
+    post:
+      summary: Créer acompte
+      responses:
+        '200': { description: OK }
+  /documents/{id}/credit-note:
+    post:
+      summary: Créer avoir
+      responses:
+        '200': { description: OK }
+  /documents/{id}/pdf:
+    get:
+      summary: Télécharger le PDF
+      responses:
+        '200': { description: OK }
+  /billing/preview:
+    post:
+      summary: Aperçu totaux
+      responses:
+        '200': { description: OK }
+  /guest/pdf:
+    post:
+      summary: PDF invité
+      responses:
+        '200': { description: OK }
+  /legal/status:
+    get:
+      summary: Statut légal
+      responses:
+        '200': { description: OK }
+  /legal/companies/search:
+    get:
+      summary: Recherche entreprise
+      responses:
+        '200': { description: OK }
+  /legal/vat/validate:
+    post:
+      summary: Valider TVA
+      responses:
+        '200': { description: OK }
+  /issuer:
+    get:
+      summary: Obtenir émetteur
+      responses:
+        '200': { description: OK }
+    put:
+      summary: Mettre à jour émetteur
+      responses:
+        '200': { description: OK }

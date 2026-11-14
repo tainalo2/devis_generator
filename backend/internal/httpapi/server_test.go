@@ -15,7 +15,10 @@ type stubPinger struct {
 func (s stubPinger) Ping(context.Context) error { return s.err }
 
 func TestHealthzAlwaysOKEvenIfDBDown(t *testing.T) {
-	srv := New(Options{DB: stubPinger{err: context.DeadlineExceeded}, Version: "test"})
+	opts := testOptions()
+	opts.DB = stubPinger{err: context.DeadlineExceeded}
+	opts.Version = "test"
+	srv := New(opts)
 
 	for _, path := range []string{"/healthz", "/api/v1/healthz"} {
 		req := httptest.NewRequest(http.MethodGet, path, nil)
@@ -40,7 +43,9 @@ func TestHealthzAlwaysOKEvenIfDBDown(t *testing.T) {
 }
 
 func TestHealthzWithoutDB(t *testing.T) {
-	srv := New(Options{Version: "test"})
+	opts := testOptions()
+	opts.Version = "test"
+	srv := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, req)
@@ -51,7 +56,10 @@ func TestHealthzWithoutDB(t *testing.T) {
 }
 
 func TestReadyzOK(t *testing.T) {
-	srv := New(Options{DB: stubPinger{}, Version: "test"})
+	opts := testOptions()
+	opts.DB = stubPinger{}
+	opts.Version = "test"
+	srv := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/readyz", nil)
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, req)
@@ -70,7 +78,10 @@ func TestReadyzOK(t *testing.T) {
 }
 
 func TestReadyzUnavailable(t *testing.T) {
-	srv := New(Options{DB: stubPinger{err: context.DeadlineExceeded}, Version: "test"})
+	opts := testOptions()
+	opts.DB = stubPinger{err: context.DeadlineExceeded}
+	opts.Version = "test"
+	srv := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, req)
@@ -81,7 +92,9 @@ func TestReadyzUnavailable(t *testing.T) {
 }
 
 func TestReadyzUnconfigured(t *testing.T) {
-	srv := New(Options{Version: "test"})
+	opts := testOptions()
+	opts.Version = "test"
+	srv := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	rec := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rec, req)

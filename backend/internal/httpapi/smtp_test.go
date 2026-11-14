@@ -62,7 +62,9 @@ func TestSMTPConfigRoutesCreateGetAndDeleteWithoutReturningPassword(t *testing.T
 	store := &apiSMTPStore{}
 	tester := &apiSMTPTester{}
 	service := smtpconfig.NewService(store, apiSMTPVault{}, tester)
-	srv := New(Options{SMTP: service})
+	opts := testOptions()
+	opts.SMTP = service
+	srv := New(opts)
 	user := authstore.User{ID: uuid.New()}
 
 	postBody := `{"host":"smtp.example.com","port":587,"username":"mailer@example.com","password":"super-secret","from_address":"mailer@example.com","tls_mode":"starttls"}`
@@ -109,7 +111,9 @@ func TestSMTPConfigRoutesCreateGetAndDeleteWithoutReturningPassword(t *testing.T
 
 func TestSMTPConfigGetReturnsNotFound(t *testing.T) {
 	service := smtpconfig.NewService(&apiSMTPStore{}, apiSMTPVault{}, &apiSMTPTester{})
-	srv := New(Options{SMTP: service})
+	opts := testOptions()
+	opts.SMTP = service
+	srv := New(opts)
 	user := authstore.User{ID: uuid.New()}
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/email/smtp", nil)
 	req = req.WithContext(context.WithValue(req.Context(), ctxUserKey, user))
