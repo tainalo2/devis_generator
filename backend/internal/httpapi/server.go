@@ -15,45 +15,51 @@ import (
 	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
+	"github.com/tainalo2/devis_generator/backend/internal/payments"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
-	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
-	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
+	"github.com/tainalo2/devis_generator/backend/internal/stripeconnect"
 )
 
 // Server is the HTTP API and static file server.
 type Server struct {
-	db                Pinger
-	store             *authstore.Store
-	biz               *biz.Store
-	box               *crypto.Box
-	legal             *legal.Service
-	gmailMail         gmailMailer
-	microsoftMail     microsoftMailer
-	smtp              *smtpconfig.Service
-	reminders         *reminders.Service
-	publicConfig      *PublicSiteConfig
-	staticDir         string
-	version           string
-	router            chi.Router
-	cookieSecure      bool
-	sessionTTL        time.Duration
-	argon2            auth.Argon2Params
-	authLimiter       *RateLimiter
-	accountLimiter    *RateLimiter
-	legalGuestLimiter *RateLimiter
-	guestLimiter      *RateLimiter
-	previewLimiter    *RateLimiter
-	trustedProxies    []*net.IPNet
-	bankCoordRepo     *bankcoordsvault.Repository
-	paymentFlags      *paymentflags.Store
-	docLinkSecret     []byte
+	db                   Pinger
+	store                *authstore.Store
+	biz                  *biz.Store
+	box                  *crypto.Box
+	legal                *legal.Service
+	gmailMail            gmailMailer
+	microsoftMail        microsoftMailer
+	smtp                 *smtpconfig.Service
+	reminders            *reminders.Service
+	publicConfig         *PublicSiteConfig
+	staticDir            string
+	version              string
+	router               chi.Router
+	cookieSecure         bool
+	sessionTTL           time.Duration
+	argon2               auth.Argon2Params
+	authLimiter          *RateLimiter
+	accountLimiter       *RateLimiter
+	legalGuestLimiter    *RateLimiter
+	guestLimiter         *RateLimiter
+	previewLimiter       *RateLimiter
+	webhookIPLimiter     *RateLimiter
+	webhookGlobalLimiter *RateLimiter
+	trustedProxies       []*net.IPNet
+	bankCoordRepo        *bankcoordsvault.Repository
+	paymentFlags         *paymentflags.Store
+	payments             *payments.Service
+	stripeConnect        *stripeconnect.Service
+	docLinkSecret        []byte
 }
 
 // Options configures the HTTP server.
@@ -74,24 +80,26 @@ type gmailMailer interface {
 }
 
 type Options struct {
-	DB            Pinger
-	Store         *authstore.Store
-	Biz           *biz.Store
-	Box           *crypto.Box
-	Legal         *legal.Service
-	GmailMail     gmailMailer
-	MicrosoftMail microsoftMailer
-	SMTP          *smtpconfig.Service
-	Reminders     *reminders.Service
-	PublicConfig  *PublicSiteConfig
-	StaticDir     string
-	Version       string
-	CookieSecure  bool
-	SessionTTL    time.Duration
+	DB                Pinger
+	Store             *authstore.Store
+	Biz               *biz.Store
+	Box               *crypto.Box
+	Legal             *legal.Service
+	GmailMail         gmailMailer
+	MicrosoftMail     microsoftMailer
+	SMTP              *smtpconfig.Service
+	Reminders         *reminders.Service
+	PublicConfig      *PublicSiteConfig
+	StaticDir         string
+	Version           string
+	CookieSecure      bool
+	SessionTTL        time.Duration
 	BankCoordRepo     *bankcoordsvault.Repository
 	PaymentFlagsStore *paymentflags.Store
+	Payments          *payments.Service
+	StripeConnect     *stripeconnect.Service
 	DocLinkSecret     []byte
-	Argon2        auth.Argon2Params
+	Argon2            auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
 	TrustedProxies []*net.IPNet
 }
@@ -99,27 +107,34 @@ type Options struct {
 // New builds the chi router with health, auth, business API and SPA.
 func New(opts Options) *Server {
 	s := &Server{
-		db:                opts.DB,
-		store:             opts.Store,
-		biz:               opts.Biz,
-		box:               opts.Box,
-		legal:             opts.Legal,
-		gmailMail:         opts.GmailMail,
-		microsoftMail:     opts.MicrosoftMail,
-		smtp:              opts.SMTP,
-		reminders:         opts.Reminders,
-		publicConfig:      opts.PublicConfig,
-		staticDir:         opts.StaticDir,
-		version:           opts.Version,
-		cookieSecure:      opts.CookieSecure,
-		sessionTTL:        opts.SessionTTL,
-		argon2:            opts.Argon2,
-		authLimiter:       NewRateLimiter(20, time.Minute),
-		accountLimiter:    NewRateLimiter(10, 15*time.Minute),
-		legalGuestLimiter: NewRateLimiter(30, time.Minute),
-		guestLimiter:      NewRateLimiter(20, time.Minute),
-		previewLimiter:    NewRateLimiter(120, time.Minute),
-		trustedProxies:    opts.TrustedProxies,
+		db:                   opts.DB,
+		store:                opts.Store,
+		biz:                  opts.Biz,
+		box:                  opts.Box,
+		legal:                opts.Legal,
+		gmailMail:            opts.GmailMail,
+		microsoftMail:        opts.MicrosoftMail,
+		smtp:                 opts.SMTP,
+		reminders:            opts.Reminders,
+		publicConfig:         opts.PublicConfig,
+		staticDir:            opts.StaticDir,
+		version:              opts.Version,
+		cookieSecure:         opts.CookieSecure,
+		sessionTTL:           opts.SessionTTL,
+		argon2:               opts.Argon2,
+		authLimiter:          NewRateLimiter(20, time.Minute),
+		accountLimiter:       NewRateLimiter(10, 15*time.Minute),
+		legalGuestLimiter:    NewRateLimiter(30, time.Minute),
+		guestLimiter:         NewRateLimiter(20, time.Minute),
+		previewLimiter:       NewRateLimiter(120, time.Minute),
+		webhookIPLimiter:     NewRateLimiter(60, time.Minute),
+		webhookGlobalLimiter: NewRateLimiter(600, time.Minute),
+		trustedProxies:       opts.TrustedProxies,
+		bankCoordRepo:        opts.BankCoordRepo,
+		paymentFlags:         opts.PaymentFlagsStore,
+		payments:             opts.Payments,
+		stripeConnect:        opts.StripeConnect,
+		docLinkSecret:        opts.DocLinkSecret,
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -145,6 +160,9 @@ func New(opts Options) *Server {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)
+		if s.payments != nil {
+			r.Post("/payments/webhooks/{provider}", s.handlePaymentWebhook)
+		}
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.withOptionalSession)
@@ -189,6 +207,17 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+			if s.payments != nil {
+				r.Get("/payments/config/{provider}", s.requireAuth(s.handleGetPaymentConfig))
+				r.Put("/payments/config/{provider}", s.requireAuth(s.handlePutPaymentConfig))
+				r.Delete("/payments/config/{provider}", s.requireAuth(s.handleDeletePaymentConfig))
+				r.Post("/documents/{id}/checkout", s.requireAuth(s.handlePaymentCheckout))
+				if s.stripeConnect != nil {
+					r.Post("/payments/stripe-connect/onboard", s.requireAuth(s.handleStripeConnectOnboard))
+					r.Post("/payments/stripe-connect/refresh", s.requireAuth(s.handleStripeConnectRefresh))
+					r.Get("/payments/stripe-connect/callback", s.requireAuth(s.handleStripeConnectCallback))
+				}
+			}
 			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
 			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))
 			r.Get("/email/delivery-mode", s.requireAuth(s.handleGetReminderDeliveryMode))

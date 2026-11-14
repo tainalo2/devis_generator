@@ -8,7 +8,7 @@ import { useToast } from "@/components/toast-provider"
 import { Button } from "@/components/ui/button"
 import { getAdminPaymentFeatures, updateAdminPaymentFeatures, type PaymentFeatures } from "@/lib/api"
 
-const modes: { key: keyof PaymentFeatures; title: string; description: string }[] = [
+const modes: { key: Extract<keyof PaymentFeatures, string>; title: string; description: string }[] = [
   { key: "rib", title: "RIB / IBAN", description: "Affiche les coordonnées bancaires pour le virement." },
   { key: "byo_provider", title: "Prestataire du propriétaire", description: "Autorise un compte Stripe, Mollie ou PayPal propre au propriétaire." },
   { key: "stripe_connect", title: "Stripe Connect plateforme", description: "Autorise les paiements traités par la plateforme via Stripe Connect." },

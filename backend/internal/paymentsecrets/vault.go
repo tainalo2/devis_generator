@@ -18,11 +18,18 @@ type Kind string
 const (
 	KindIBAN                    Kind = "iban"
 	KindBIC                     Kind = "bic"
-	KindBYOProviderAPIKey       Kind = "byo_provider_api_key"
-	KindStripeConnectCredential Kind = "stripe_connect_credential"
-	KindOAuthGmailToken         Kind = "oauth_gmail_token"
-	KindOAuthMicrosoftToken     Kind = "oauth_microsoft_token"
-	KindSMTPPassword            Kind = "smtp_password"
+	KindBYOProviderAPIKey       Kind = "byo_provider_api_key" // legacy
+	KindStripeAPIKey            Kind = "stripe_api_key"
+	KindStripeWebhookSecret     Kind = "stripe_webhook_secret"
+	KindMollieAPIKey            Kind = "mollie_api_key"
+	KindPayPalClientID          Kind = "paypal_client_id"
+	KindPayPalClientSecret      Kind = "paypal_client_secret"
+	KindPayPalWebhookID         Kind = "paypal_webhook_id"
+	KindStripeConnectCredential Kind = "stripe_connect_credential" // legacy
+
+	KindOAuthGmailToken     Kind = "oauth_gmail_token"
+	KindOAuthMicrosoftToken Kind = "oauth_microsoft_token"
+	KindSMTPPassword        Kind = "smtp_password"
 )
 
 var (
@@ -148,7 +155,9 @@ func validateAccess(actor Actor, ownerID uuid.UUID, kind Kind, reference string)
 
 func (k Kind) Valid() bool {
 	switch k {
-	case KindIBAN, KindBIC, KindBYOProviderAPIKey, KindStripeConnectCredential,
+	case KindIBAN, KindBIC, KindBYOProviderAPIKey, KindStripeAPIKey,
+		KindStripeWebhookSecret, KindMollieAPIKey, KindPayPalClientID,
+		KindPayPalClientSecret, KindPayPalWebhookID, KindStripeConnectCredential,
 		KindOAuthGmailToken, KindOAuthMicrosoftToken, KindSMTPPassword:
 		return true
 	default:
