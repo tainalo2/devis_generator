@@ -4,6 +4,7 @@
 #   POSTGRES_PASSWORD   mot de passe de la base
 #   ENCRYPTION_KEY      openssl rand -base64 32  (à conserver : sans elle, IBAN et adresses sont illisibles)
 #   SESSION_SECRET      openssl rand -base64 48
+#   DOC_LINK_SECRET     openssl rand -base64 48  (au premier déploiement : copier la valeur actuelle de SESSION_SECRET, ne pas régénérer, sinon les liens de documents déjà émis seront invalidés)
 # Recommandées : TRUSTED_PROXIES (réseau du reverse proxy), LEGAL_PUBLISHER_*,
 # LEGAL_HOST_*, DONATE_URL. Liste complète : .env.example du dépôt.
 #
@@ -29,9 +30,10 @@ services:
     image: ${VIBED_IMAGE:-ghcr.io/tainalo2/devisgenerator-vibed:latest}
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://devis:${POSTGRES_PASSWORD}@db:5432/devis?sslmode=disable
+      DATABASE_URL: postgres://devis:***@db:5432/devis?sslmode=disable
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY manquante (openssl rand -base64 32)}
       SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET manquant (openssl rand -base64 48)}
+      DOC_LINK_SECRET: ${DOC_LINK_SECRET:-}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
       DONATE_URL: ${DONATE_URL:-}
       LEGAL_PUBLISHER_NAME: ${LEGAL_PUBLISHER_NAME:-}

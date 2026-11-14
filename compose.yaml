@@ -23,11 +23,12 @@ services:
     environment:
       ADDR: "0.0.0.0:8080"
       SHUTDOWN_TIMEOUT: "10s"
-      DATABASE_URL: postgres://devis:devis@db:5432/devis?sslmode=disable
+      DATABASE_URL: postgres://devis:***@db:5432/devis?sslmode=disable
       STATIC_DIR: /app/frontend/dist
       APP_ENV: development
       # Défauts de développement uniquement — remplacer en prod / staging.
       SESSION_SECRET: "dev-only-session-secret-change-me-32b"
+      DOC_LINK_SECRET: "dev-only-doclink-secret-change-me-32b"
       ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 
     ports:

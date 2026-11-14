@@ -164,7 +164,7 @@ func main() {
 		SessionTTL:        cfg.SessionTTL,
 		TrustedProxies:    cfg.TrustedProxies,
 		Argon2:            cfg.Argon2,
-		DocLinkSecret:     []byte(cfg.SessionSecret),
+		DocLinkSecret:     []byte(cfg.DocLinkSecret),
 		BankCoordRepo:     bankCoordRepo,
 		PaymentFlagsStore: paymentFlagsStore,
 		Payments:          paymentSvc,
