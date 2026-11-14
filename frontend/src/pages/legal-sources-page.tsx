@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 
 /** Sources officielles : interrogées à la demande ou rafraîchies en cache (clé legal_values). */
 const SOURCES = [
-  { id: "recherche-entreprises", name: "Recherche d’entreprises", role: "Identité, SIREN et adresse des entreprises", key: null },
+  { id: "recherche-entreprises", name: "Recherche d'entreprises", role: "Identité, SIREN et adresse des entreprises", key: null },
   { id: "vies", name: "VIES", role: "Validité des n° de TVA intracommunautaires", key: null },
   { id: "tedb", name: "TEDB", role: "Taux de TVA des États membres", key: "tedb.vat_rates.fr" },
   { id: "bce", name: "BCE", role: "Taux directeur pour les pénalités de retard", key: "bce.key_rate" },
@@ -38,13 +38,13 @@ const CALENDAR = [
     date: "2026-09-01",
     label: "1er septembre 2026",
     text: "Toutes les entreprises doivent pouvoir recevoir des factures électroniques. Les grandes entreprises et les ETI doivent les émettre.",
-    tool: "L’outil produit des PDF, toujours acceptés entre particuliers et pour vos clients qui ne sont pas concernés.",
+    tool: "L'outil produit des PDF, toujours acceptés entre particuliers et pour vos clients qui ne sont pas concernés.",
   },
   {
     date: "2027-09-01",
     label: "1er septembre 2027",
     text: "Les PME et les micro-entrepreneurs doivent émettre leurs factures en format électronique.",
-    tool: "Factur-X n’est pas encore inclus. Il est prévu avant cette date.",
+    tool: "Factur-X n'est pas encore inclus. Il est prévu avant cette date.",
   },
 ]
 
@@ -53,7 +53,7 @@ const MENTIONS = [
     title: "Devis",
     items: [
       "Date et durée de validité",
-      "Identité complète de l’émetteur et du client",
+      "Identité complète de l'émetteur et du client",
       "Détail des prestations : quantités, prix unitaires",
       "Totaux HT et TTC, ou mention de franchise de TVA",
       "Zone « Bon pour accord » : date et signature du client",
@@ -62,15 +62,15 @@ const MENTIONS = [
   {
     title: "Facture",
     items: [
-      "Numéro unique et continu, date d’émission",
+      "Numéro unique et continu, date d'émission",
       "Date de la vente ou de la prestation",
       "SIREN, adresse et n° de TVA si assujetti",
-      "Date d’échéance et pénalités de retard",
+      "Date d'échéance et pénalités de retard",
       "Indemnité forfaitaire de 40 € pour frais de recouvrement (clients professionnels)",
-      "Conditions d’escompte, ou leur absence",
+      "Conditions d'escompte, ou leur absence",
     ],
   },
-  { title: "Facture d’acompte", items: ["Toutes les mentions d’une facture", "Référence du devis ou de la commande", "Montant de l’acompte et part du total"] },
+  { title: "Facture d'acompte", items: ["Toutes les mentions d'une facture", "Référence du devis ou de la commande", "Montant de l'acompte et part du total"] },
   { title: "Avoir", items: ["Numéro propre dans la série des avoirs", "Référence de la facture corrigée", "Montant remboursé ou déduit, et motif"] },
 ]
 
@@ -80,14 +80,13 @@ const summaryClass =
 export function LegalSourcesPage() {
   const [data, setData] = useState<LegalStatusResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [today] = useState(() => new Date().toISOString().slice(0, 10))
 
   useEffect(() => {
     void fetchLegalStatus()
       .then(setData)
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Erreur"))
   }, [])
-
-  const today = new Date().toISOString().slice(0, 10)
 
   return (
     <div className="flex flex-col gap-8 md:pt-2">
@@ -100,8 +99,8 @@ export function LegalSourcesPage() {
         title="Sources légales"
         description={
           <span className="block max-w-160 text-[15px] leading-[22px]">
-            D’où viennent les contrôles d’entreprise, les taux de TVA et les mentions que l’outil ajoute à vos documents. Les réponses
-            sont mises en cache ; si une source ne répond pas, l’outil utilise la dernière valeur connue et vous le signale.
+            D'où viennent les contrôles d'entreprise, les taux de TVA et les mentions que l'outil ajoute à vos documents. Les réponses
+            sont mises en cache ; si une source ne répond pas, l'outil utilise la dernière valeur connue et vous le signale.
           </span>
         }
       />
@@ -109,7 +108,7 @@ export function LegalSourcesPage() {
       <section aria-labelledby="t-src" className="flex flex-col gap-3.5">
         <CardTitle id="t-src">État des sources</CardTitle>
         {error && <p className="text-sm text-destructive">{error}</p>}
-        {!data && !error && <Spinner label="Chargement de l’état des sources" />}
+        {!data && !error && <Spinner label="Chargement de l'état des sources" />}
         {data && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {SOURCES.map((s) => {
@@ -137,7 +136,7 @@ export function LegalSourcesPage() {
               <tr>
                 <th className={cn(table.th, "w-22")}>Taux</th>
                 <th className={cn(table.th, "w-40")}>Nom</th>
-                <th className={table.th}>Exemples d’usage</th>
+                <th className={table.th}>Exemples d'usage</th>
               </tr>
             </thead>
             <tbody>
@@ -163,8 +162,8 @@ export function LegalSourcesPage() {
           ))}
         </div>
         <div className="rounded-lg bg-[color-mix(in_oklab,var(--accent)_60%,var(--card))] px-4 py-3 text-sm">
-          <strong className="font-semibold">Franchise en base :</strong> sous les seuils de chiffre d’affaires, vous ne facturez pas la TVA.
-          L’outil ajoute alors la mention « TVA non applicable, art. 293 B du CGI ».
+          <strong className="font-semibold">Franchise en base :</strong> sous les seuils de chiffre d'affaires, vous ne facturez pas la TVA.
+          L'outil ajoute alors la mention « TVA non applicable, art. 293 B du CGI ».
         </div>
       </section>
 
@@ -187,7 +186,7 @@ export function LegalSourcesPage() {
                 <Card
                   className={cn(
                     "mb-3 flex flex-1 flex-col gap-1 px-4 py-3.5",
-                    !past && "border-[color-mix(in_oklab,oklch(0.7_0.14_70)_50%,var(--border))]",
+                    !past && "border-[color-mix(in_oklab,oklch(0.7_0.14_70)_50%,var(--border))]\n",
                   )}
                 >
                   <span className="flex flex-wrap items-center gap-2">

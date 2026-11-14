@@ -78,21 +78,23 @@ const paidCents = (docs: Document[], range: Date[]) =>
 
 function compactEUR(cents: number) {
   const v = cents / 100
-  if (v >= 1000) return `${(v / 1000).toFixed(1).replace(".", ",")} k`
+  if (v >= 1000) return `${(v / 1000).toFixed(1).replace(".", ",")}`
   return `${Math.round(v)}`
 }
 
-function StatCard({
-  label,
-  value,
-  sub,
-  badge,
-}: {
-  label: string
-  value: string
-  sub: string
-  badge?: { text: string; variant: "success" | "warning" | "muted" }
-}) {
+function StatCard(
+  {
+    label,
+    value,
+    sub,
+    badge,
+  }: {
+    label: string
+    value: string
+    sub: string
+    badge?: { text: string; variant: "success" | "warning" | "muted" }
+  }
+) {
   return (
     <Card className="flex flex-col gap-1.5 p-4">
       <Overline>{label}</Overline>
@@ -107,21 +109,26 @@ function StatCard({
   )
 }
 
-function RevenueChart({ docs }: { docs: Document[] }) {
+function RevenueChart({ docs, renderedDate }: { docs: Document[]; renderedDate: string }) {
   const data = useMemo(() => {
-    const now = new Date()
-    const months = Array.from({ length: 6 }, (_, i) => new Date(now.getFullYear(), now.getMonth() - 5 + i, 1))
+    const [year, month] = renderedDate.split("-").map(Number)
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const m = month - 5 + i
+      const y = year + Math.floor(m / 12)
+      const finalMonth = m % 12
+      return new Date(y, finalMonth < 0 ? finalMonth + 12 : finalMonth, 1)
+    })
     return months.map((m) => ({
       month: m,
       cents: paidCents(docs, [m, new Date(m.getFullYear(), m.getMonth() + 1, 1)]),
     }))
-  }, [docs])
+  }, [docs, renderedDate])
   const max = Math.max(...data.map((d) => d.cents), 1)
 
   return (
     <CardSection aria-labelledby="ca-titre" className="flex flex-col gap-4 p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <CardTitle id="ca-titre">Chiffre d’affaires encaissé</CardTitle>
+        <CardTitle id="ca-titre">Chiffre d'affaires encaissé</CardTitle>
         <span className="text-xs text-muted-foreground">6 derniers mois, en euros</span>
       </div>
       <div aria-hidden className="flex h-50 items-end gap-2 border-b border-border pt-2 md:gap-4">
@@ -156,7 +163,7 @@ function RevenueChart({ docs }: { docs: Document[] }) {
         ))}
       </div>
       <table className="sr-only">
-        <caption>Chiffre d’affaires encaissé par mois</caption>
+        <caption>Chiffre d'affaires encaissé par mois</caption>
         <tbody>
           {data.map((d) => (
             <tr key={d.month.toISOString()}>
@@ -172,7 +179,7 @@ function RevenueChart({ docs }: { docs: Document[] }) {
 
 function relanceHref(doc: Document, client: Client | undefined) {
   const subject = `Relance : facture ${doc.number ?? ""}`
-  const body = `Bonjour,\n\nSauf erreur de notre part, la facture ${doc.number ?? ""} d’un montant de ${formatEUR(doc.total_cents)}, échue le ${formatDate(doc.due_date)}, reste impayée.\n\nMerci de procéder à son règlement.\n\nCordialement,`
+  const body = `Bonjour,\n\nSauf erreur de notre part, la facture ${doc.number ?? ""} d'un montant de ${formatEUR(doc.total_cents)}, échue le ${formatDate(doc.due_date)}, reste impayée.\n\nMerci de procéder à son règlement.\n\nCordialement,`
   return `mailto:${client?.email ?? ""}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 
@@ -183,6 +190,10 @@ export function DashboardPage() {
   const [issuer, setIssuer] = useState<IssuerProfile | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [period, setPeriod] = useState<DashPeriod>("month")
+  const [renderedDate] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${d.getMonth()}`
+  })
 
   useEffect(() => {
     if (!user) return
@@ -238,7 +249,7 @@ export function DashboardPage() {
       title: "Ajouter un premier client",
       sub: clients.length
         ? `${clients.length} client${clients.length > 1 ? "s" : ""} enregistré${clients.length > 1 ? "s" : ""}`
-        : "Aucun client pour l’instant",
+        : "Aucun client pour l'instant",
       done: clients.length > 0,
       to: "/clients/nouveau",
     },
@@ -311,7 +322,7 @@ export function DashboardPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <RevenueChart docs={docs} />
+            <RevenueChart docs={docs} renderedDate={renderedDate} />
             <CardSection aria-labelledby="retard-titre" className="flex flex-col gap-3 p-5">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle id="retard-titre">Factures en retard</CardTitle>
@@ -356,7 +367,7 @@ export function DashboardPage() {
               {s.recent.length === 0 ? (
                 <div className="flex flex-col items-start gap-3 p-5">
                   <p className="text-sm text-muted-foreground">
-                    Créez un devis ou une facture : vous pourrez l’émettre et télécharger le PDF.
+                    Créez un devis ou une facture : vous pourrez l'émettre et télécharger le PDF.
                   </p>
                   <Button render={<Link to="/documents/nouveau" />}>Créer un document</Button>
                 </div>

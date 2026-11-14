@@ -1,13 +1,12 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useMemo,
   useState,
   type ReactNode,
 } from "react"
 
 import { cn } from "@/lib/utils"
+import { ToastContext, type ToastContextValue } from "./use-toast"
 
 type ToastKind = "info" | "success" | "error"
 
@@ -16,12 +15,6 @@ type Toast = {
   message: string
   kind: ToastKind
 }
-
-type ToastContextValue = {
-  push: (message: string, kind?: ToastKind) => void
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
 
 let seq = 0
 
@@ -36,7 +29,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, 4200)
   }, [])
 
-  const value = useMemo(() => ({ push }), [push])
+  const value: ToastContextValue = useMemo(() => ({ push }), [push])
 
   return (
     <ToastContext.Provider value={value}>
@@ -63,10 +56,4 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
     </ToastContext.Provider>
   )
-}
-
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error("useToast hors ToastProvider")
-  return ctx
 }

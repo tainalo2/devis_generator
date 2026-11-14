@@ -1,8 +1,7 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react"
@@ -16,23 +15,12 @@ import {
   register as apiRegister,
   type User,
 } from "@/lib/api"
-
-type AuthContextValue = {
-  user: User | null
-  loading: boolean
-  refresh: () => Promise<void>
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, displayName: string) => Promise<void>
-  logout: () => Promise<void>
-  exportData: () => Promise<void>
-  removeAccount: (password: string) => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+import { AuthContext, type AuthContextValue } from "./use-auth"
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const initRef = useRef(false)
 
   const refresh = useCallback(async () => {
     try {
@@ -46,45 +34,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    void refresh()
+    if (!initRef.current) {
+      initRef.current = true
+      void refresh()
+    }
   }, [refresh])
+
+  const login = useCallback(async (email: string, password: string) => {
+    const u = await apiLogin(email, password)
+    setUser(u)
+  }, [])
+
+  const register = useCallback(async (email: string, password: string, displayName: string) => {
+    const u = await apiRegister(email, password, displayName)
+    setUser(u)
+  }, [])
+
+  const logout = useCallback(async () => {
+    await apiLogout()
+    setUser(null)
+  }, [])
+
+  const exportData = useCallback(async () => {
+    const blob = await exportAccount()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "devisgenerator-vibed-export.json"
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [])
+
+  const removeAccount = useCallback(async (password: string) => {
+    await deleteAccount(password)
+    setUser(null)
+  }, [])
 
   const value: AuthContextValue = {
     user,
     loading,
     refresh,
-    login: async (email, password) => {
-      const u = await apiLogin(email, password)
-      setUser(u)
-    },
-    register: async (email, password, displayName) => {
-      const u = await apiRegister(email, password, displayName)
-      setUser(u)
-    },
-    logout: async () => {
-      await apiLogout()
-      setUser(null)
-    },
-    exportData: async () => {
-      const blob = await exportAccount()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = "devisgenerator-vibed-export.json"
-      a.click()
-      URL.revokeObjectURL(url)
-    },
-    removeAccount: async (password) => {
-      await deleteAccount(password)
-      setUser(null)
-    },
+    login,
+    register,
+    logout,
+    exportData,
+    removeAccount,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useAuth doit être utilisé dans AuthProvider")
-  return ctx
 }
