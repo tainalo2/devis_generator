@@ -151,7 +151,7 @@ func New(opts Options) *Server {
 		s.version = "dev"
 	}
 	if len(s.docLinkSecret) == 0 {
-		slog.Error("DOC_LINK_SECRET environment variable is required but not set", "component", "httpapi")
+		slog.Error("SESSION_SECRET environment variable is required but not set", "component", "httpapi")
 		os.Exit(1)
 	}
 	if s.sessionTTL <= 0 {
