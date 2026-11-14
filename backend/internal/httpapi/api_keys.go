@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
@@ -11,12 +12,13 @@ import (
 )
 
 type apiKeyDTO struct {
-	ID        string   `json:"id"`
-	Name      string   `json:"name"`
-	Prefix    string   `json:"prefix"`
-	Scopes    []string `json:"scopes"`
-	CreatedAt string   `json:"created_at"`
-	RevokedAt *string  `json:"revoked_at,omitempty"`
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Prefix     string   `json:"prefix"`
+	Scopes     []string `json:"scopes"`
+	CreatedAt  string   `json:"created_at"`
+	LastUsedAt *string  `json:"last_used_at,omitempty"`
+	RevokedAt  *string  `json:"revoked_at,omitempty"`
 }
 
 func apiKeyToDTO(k authstore.APIKey) apiKeyDTO {
@@ -25,10 +27,14 @@ func apiKeyToDTO(k authstore.APIKey) apiKeyDTO {
 		Name:      k.Name,
 		Prefix:    k.KeyPrefix,
 		Scopes:    k.Scopes,
-		CreatedAt: k.CreatedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt: k.CreatedAt.UTC().Format(time.RFC3339),
+	}
+	if k.LastUsed != nil {
+		s := k.LastUsed.UTC().Format(time.RFC3339)
+		dto.LastUsedAt = &s
 	}
 	if k.RevokedAt != nil {
-		s := k.RevokedAt.UTC().Format("2006-01-02T15:04:05Z07:00")
+		s := k.RevokedAt.UTC().Format(time.RFC3339)
 		dto.RevokedAt = &s
 	}
 	return dto

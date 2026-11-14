@@ -350,6 +350,20 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func (s *Server) requireSession(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := UserFromContext(r.Context()); !ok {
+			writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+			return
+		}
+		if _, ok := SessionFromContext(r.Context()); !ok {
+			writeAPIError(w, http.StatusUnauthorized, "Session requise.")
+			return
+		}
+		next(w, r)
+	}
+}
+
 func hasScope(scopes []string, required string) bool {
 	for _, scope := range scopes {
 		if scope == required {

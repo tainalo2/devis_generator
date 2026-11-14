@@ -109,6 +109,41 @@ export async function deleteAccount(password: string): Promise<void> {
   if (!res.ok) throw new Error(await readError(res, "Suppression impossible."))
 }
 
+export type APIKey = {
+  id: string
+  name: string
+  prefix: string
+  scopes: string[]
+  created_at: string
+  last_used_at?: string
+  revoked_at?: string
+}
+
+export type CreatedAPIKey = {
+  api_key: APIKey
+  key: string
+}
+
+export async function listAPIKeys(): Promise<APIKey[]> {
+  const res = await apiFetch("/api/v1/auth/api-keys")
+  if (!res.ok) throw new Error(await readError(res, "Chargement des clés API impossible."))
+  return ((await res.json()) as { api_keys: APIKey[] }).api_keys
+}
+
+export async function createAPIKey(name: string): Promise<CreatedAPIKey> {
+  const res = await apiFetch("/api/v1/auth/api-keys", {
+    method: "POST",
+    body: JSON.stringify({ name, scopes: ["read", "write"] }),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Création de la clé API impossible."))
+  return (await res.json()) as CreatedAPIKey
+}
+
+export async function revokeAPIKey(id: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/auth/api-keys/${encodeURIComponent(id)}`, { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Révocation de la clé API impossible."))
+}
+
 export async function listClients(): Promise<Client[]> {
   const res = await apiFetch("/api/v1/clients")
   if (!res.ok) throw new Error(await readError(res, "Chargement clients impossible."))

@@ -1,18 +1,19 @@
-import { Download } from "lucide-react"
+import { Copy, Download, ExternalLink, KeyRound, Plus } from "lucide-react"
 import { useTheme } from "next-themes"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
 
-import { useAuth } from "@/components/use-auth"
 import { PasswordInput } from "@/components/auth-ui"
 import { PageHeader } from "@/components/page"
 import { Seo } from "@/components/seo"
-import { useToast } from "@/components/use-toast"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Segmented } from "@/components/ui/segmented"
+import { useAuth } from "@/components/use-auth"
+import { useToast } from "@/components/use-toast"
+import { createAPIKey, listAPIKeys, revokeAPIKey, type APIKey } from "@/lib/api"
 import { formatDate } from "@/lib/documents"
 import { textLinkClass } from "@/lib/styles"
 import { cn } from "@/lib/utils"
@@ -32,6 +33,12 @@ function Row({ id, title, description, danger, children, boxClassName }: { id: s
 }
 
 const CONFIRM_WORD = "SUPPRIMER"
+const MCP_DOCS_URL = "https://github.com/tainalo2/devis_generator/blob/main/docs/mcp.md"
+const apiKeyDate = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long" })
+
+function formatAPIKeyDate(value: string) {
+  return apiKeyDate.format(new Date(value))
+}
 
 export function AccountPage() {
   const { user, loading, logout, exportData, removeAccount } = useAuth()
@@ -42,6 +49,30 @@ export function AccountPage() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const [password, setPassword] = useState("")
+  const [apiKeys, setAPIKeys] = useState<APIKey[]>([])
+  const [apiKeysLoading, setAPIKeysLoading] = useState(true)
+  const [keyDialogOpen, setKeyDialogOpen] = useState(false)
+  const [keyName, setKeyName] = useState("")
+  const [createdKey, setCreatedKey] = useState("")
+  const [keyPending, setKeyPending] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    void listAPIKeys()
+      .then((keys) => {
+        if (active) setAPIKeys(keys)
+      })
+      .catch((err: unknown) => {
+        if (active) toast.push(err instanceof Error ? err.message : "Chargement des clés API impossible.", "error")
+      })
+      .finally(() => {
+        if (active) setAPIKeysLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [toast, user])
 
   if (!loading && !user) return <Navigate to="/connexion" replace />
 
@@ -67,6 +98,50 @@ export function AccountPage() {
       toast.push(err instanceof Error ? err.message : "Suppression impossible.", "error")
       setPending(false)
     }
+  }
+
+  async function onCreateAPIKey() {
+    const name = keyName.trim()
+    if (!name) return
+    setKeyPending(true)
+    try {
+      const created = await createAPIKey(name)
+      setAPIKeys((keys) => [created.api_key, ...keys])
+      setCreatedKey(created.key)
+      setKeyName("")
+    } catch (err) {
+      toast.push(err instanceof Error ? err.message : "Création de la clé API impossible.", "error")
+    } finally {
+      setKeyPending(false)
+    }
+  }
+
+  async function onRevokeAPIKey(id: string) {
+    setKeyPending(true)
+    try {
+      await revokeAPIKey(id)
+      setAPIKeys((keys) => keys.map((key) => (key.id === id ? { ...key, revoked_at: new Date().toISOString() } : key)))
+      toast.push("Clé API révoquée.", "success")
+    } catch (err) {
+      toast.push(err instanceof Error ? err.message : "Révocation de la clé API impossible.", "error")
+    } finally {
+      setKeyPending(false)
+    }
+  }
+
+  async function copyCreatedKey() {
+    try {
+      await navigator.clipboard.writeText(createdKey)
+      toast.push("Clé copiée.", "success")
+    } catch {
+      toast.push("Copie impossible. Sélectionnez la clé manuellement.", "error")
+    }
+  }
+
+  function closeKeyDialog() {
+    setKeyDialogOpen(false)
+    setKeyName("")
+    setCreatedKey("")
   }
 
   return (
@@ -127,6 +202,54 @@ export function AccountPage() {
         />
       </Row>
 
+      <Row id="s-api-keys" title="Clés API" description="Connectez l’API publique et le serveur MCP à votre compte.">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex max-w-xl flex-col gap-1 text-sm">
+            <p>Les clés sont masquées après leur création. Révoquez immédiatement toute clé qui ne doit plus être utilisée.</p>
+            <a className={cn(textLinkClass, "inline-flex w-fit items-center gap-1 text-[13px]")} href={MCP_DOCS_URL} target="_blank" rel="noreferrer">
+              Installer le serveur MCP avec VIBED_API_URL et VIBED_API_KEY
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
+          <Button onClick={() => setKeyDialogOpen(true)} disabled={keyPending}>
+            <Plus />
+            Créer une nouvelle clé
+          </Button>
+        </div>
+
+        {apiKeysLoading ? (
+          <p className="text-sm text-muted-foreground">Chargement des clés…</p>
+        ) : apiKeys.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Aucune clé API créée.</p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {apiKeys.map((key) => {
+              const revoked = Boolean(key.revoked_at)
+              return (
+                <li key={key.id} className="flex flex-wrap items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong className="text-sm">{key.name}</strong>
+                      {revoked && <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Révoquée</span>}
+                    </div>
+                    <code className="text-xs text-muted-foreground">{key.prefix}••••••••</code>
+                    <p className="text-xs text-muted-foreground">
+                      Créée le {formatAPIKeyDate(key.created_at)}
+                      {key.last_used_at ? ` · Dernière utilisation le ${formatAPIKeyDate(key.last_used_at)}` : " · Jamais utilisée"}
+                    </p>
+                  </div>
+                  {!revoked && (
+                    <Button variant="outline" disabled={keyPending} onClick={() => void onRevokeAPIKey(key.id)}>
+                      Révoquer
+                    </Button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Row>
+
       <Row id="s-data" title="Mes données" description="Vos données vous appartiennent (RGPD).">
         <p className="text-sm">Téléchargez en un fichier JSON votre profil, la fiche Entreprise, vos clients et tous vos documents.</p>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -157,9 +280,54 @@ export function AccountPage() {
       </Row>
 
       <Dialog
+        open={keyDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && keyPending) return
+          if (open) setKeyDialogOpen(true)
+          else closeKeyDialog()
+        }}
+        title={createdKey ? "Votre nouvelle clé API" : "Créer une clé API"}
+        description={
+          createdKey
+            ? "Copiez cette clé maintenant : elle ne sera plus jamais affichée."
+            : "Donnez-lui un nom qui permet d’identifier son usage."
+        }
+        icon={<KeyRound />}
+      >
+        {createdKey ? (
+          <>
+            <div className="rounded-lg border border-brand/30 bg-brand/5 p-3">
+              <code className="block break-all text-sm font-semibold">{createdKey}</code>
+            </div>
+            <p className="text-sm font-medium text-destructive">Cette clé ne sera plus jamais affichée après la fermeture de cette fenêtre.</p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="outline" onClick={() => void copyCreatedKey()}>
+                <Copy />
+                Copier
+              </Button>
+              <Button onClick={closeKeyDialog}>J’ai copié la clé</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Label>
+              <span>Nom de la clé</span>
+              <Input autoFocus value={keyName} maxLength={100} placeholder="Ex. MCP préproduction" onChange={(event) => setKeyName(event.target.value)} />
+            </Label>
+            <p className="text-xs text-muted-foreground">La clé autorisera la lecture et l’écriture via l’API publique.</p>
+            <div className="flex justify-end">
+              <Button disabled={keyPending || !keyName.trim()} onClick={() => void onCreateAPIKey()}>
+                Créer la clé
+              </Button>
+            </div>
+          </>
+        )}
+      </Dialog>
+
+      <Dialog
         open={confirmOpen}
-        onOpenChange={(o) => {
-          setConfirmOpen(o)
+        onOpenChange={(open) => {
+          setConfirmOpen(open)
           setConfirmText("")
           setPassword("")
         }}
@@ -170,11 +338,11 @@ export function AccountPage() {
           <span>
             Saisissez <strong>{CONFIRM_WORD}</strong> pour confirmer
           </span>
-          <Input autoComplete="off" value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
+          <Input autoComplete="off" value={confirmText} onChange={(event) => setConfirmText(event.target.value)} />
         </Label>
         <Label>
           <span>Mot de passe</span>
-          <PasswordInput autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
         </Label>
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" size="lg" disabled={pending} onClick={() => void onExport()}>
