@@ -140,11 +140,11 @@ func TestCSRFRejectedWhenSessionPresent(t *testing.T) {
 }
 
 func TestPasswordResetStubNoEnumeration(t *testing.T) {
-	s := New(Options{
-		Version:    "test",
-		SessionTTL: time.Hour,
-		Argon2:     auth.Argon2Params{Time: 1, Memory: 8 * 1024, Threads: 1, KeyLen: 16},
-	})
+	opts := testOptions()
+	opts.Version = "test"
+	opts.SessionTTL = time.Hour
+	opts.Argon2 = auth.Argon2Params{Time: 1, Memory: 8 * 1024, Threads: 1, KeyLen: 16}
+	s := New(opts)
 	body := bytes.NewBufferString(`{"email":"inconnu@example.com"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/password-reset/request", body)
 	req.Header.Set("Content-Type", "application/json")
@@ -159,11 +159,11 @@ func TestPasswordResetStubNoEnumeration(t *testing.T) {
 }
 
 func TestRegisterValidationWithoutStore(t *testing.T) {
-	s := New(Options{
-		Version:    "test",
-		SessionTTL: time.Hour,
-		Argon2:     auth.Argon2Params{Time: 1, Memory: 8 * 1024, Threads: 1, KeyLen: 16},
-	})
+	opts := testOptions()
+	opts.Version = "test"
+	opts.SessionTTL = time.Hour
+	opts.Argon2 = auth.Argon2Params{Time: 1, Memory: 8 * 1024, Threads: 1, KeyLen: 16}
+	s := New(opts)
 	body, _ := json.Marshal(map[string]string{"email": "bad", "password": "x"})
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")

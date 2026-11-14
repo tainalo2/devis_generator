@@ -92,7 +92,9 @@ func TestGmailOAuthHandlers(t *testing.T) {
 }
 
 func TestGmailRoutesRequireAuthentication(t *testing.T) {
-	s := New(Options{GmailMail: &fakeGmailMail{authorizationURL: "https://example.test"}})
+	opts := testOptions()
+	opts.GmailMail = &fakeGmailMail{authorizationURL: "https://example.test"}
+	s := New(opts)
 	for _, tc := range []struct{ method, path string }{
 		{http.MethodGet, "/api/v1/email/gmail/authorize"},
 		{http.MethodGet, "/api/v1/email/gmail/callback?state=x&code=y"},

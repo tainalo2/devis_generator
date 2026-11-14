@@ -88,7 +88,9 @@ func TestMicrosoftOAuthHandlers(t *testing.T) {
 }
 
 func TestMicrosoftRoutesRequireAuthentication(t *testing.T) {
-	s := New(Options{MicrosoftMail: &fakeMicrosoftMail{authorizationURL: "https://example.test"}})
+	opts := testOptions()
+	opts.MicrosoftMail = &fakeMicrosoftMail{authorizationURL: "https://example.test"}
+	s := New(opts)
 	for _, tc := range []struct{ method, path string }{
 		{http.MethodGet, "/api/v1/email/microsoft/authorize"},
 		{http.MethodGet, "/api/v1/email/microsoft/callback?state=x&code=y"},

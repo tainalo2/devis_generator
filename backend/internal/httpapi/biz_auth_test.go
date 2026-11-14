@@ -7,7 +7,9 @@ import (
 )
 
 func TestBusinessRoutesRequireAuth(t *testing.T) {
-	s := New(Options{Version: "test"})
+	opts := testOptions()
+	opts.Version = "test"
+	s := New(opts)
 	paths := []string{
 		"/api/v1/clients",
 		"/api/v1/documents",
@@ -24,7 +26,9 @@ func TestBusinessRoutesRequireAuth(t *testing.T) {
 }
 
 func TestGuestPDFRejectsBadPayload(t *testing.T) {
-	s := New(Options{Version: "test"})
+	opts := testOptions()
+	opts.Version = "test"
+	s := New(opts)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/guest/pdf", nil)
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, req)

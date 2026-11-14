@@ -8,8 +8,10 @@ import (
 	"testing"
 )
 
-func TestGuestPDF(t *testing.T) {
-	s := New(Options{Version: "test"})
+func TestPDFGuest(t *testing.T) {
+	opts := testOptions()
+	opts.Version = "test"
+	s := New(opts)
 	const body = `{
 		"kind": "invoice",
 		"vat_regime": "franchise_293b",

@@ -13,7 +13,9 @@ import (
 )
 
 func TestLegalStatusWithoutService(t *testing.T) {
-	s := New(Options{Version: "test"})
+	opts := testOptions()
+	opts.Version = "test"
+	s := New(opts)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/legal/status", nil)
 	rec := httptest.NewRecorder()
 	s.Handler().ServeHTTP(rec, req)
@@ -49,7 +51,10 @@ func TestLegalStatusAndSearchGuest(t *testing.T) {
 	vies.Retry = legal.RetryPolicy{MaxAttempts: 1}
 
 	svc := &legal.Service{Store: store, Recherche: recherche, VIES: vies}
-	s := New(Options{Version: "test", Legal: svc})
+	opts := testOptions()
+	opts.Version = "test"
+	opts.Legal = svc
+	s := New(opts)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/legal/status", nil)
 	rec := httptest.NewRecorder()
@@ -95,7 +100,10 @@ func TestCompanySearchRateLimit(t *testing.T) {
 			Retry:   legal.RetryPolicy{MaxAttempts: 1},
 		},
 	}
-	s := New(Options{Version: "test", Legal: svc})
+	opts := testOptions()
+	opts.Version = "test"
+	opts.Legal = svc
+	s := New(opts)
 	s.legalGuestLimiter = NewRateLimiter(2, time.Hour)
 
 	for i := 0; i < 2; i++ {
