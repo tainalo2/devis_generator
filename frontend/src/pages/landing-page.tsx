@@ -72,7 +72,7 @@ function HeroSection() {
         <div className="animate-fade-up flex min-w-0 flex-col gap-6">
           <div className="flex flex-wrap gap-2">
             <Badge variant="success">Conformité légale</Badge>
-            <Badge variant="muted">Factur-X/PDP 2026</Badge>
+            <Badge variant="muted">Factur-X • réforme 2026</Badge>
             <Badge variant="muted">Français</Badge>
           </div>
           <h1 className="font-heading text-[clamp(36px,4.4vw,56px)] leading-[1.05] font-semibold tracking-tight">
@@ -82,7 +82,7 @@ function HeroSection() {
             À partir de 2026-2027, la facture électronique devient obligatoire en France. Devis Generator vous aide à respecter cette obligation sans changement d'outil.
           </p>
           <p className="max-w-lg text-muted-foreground">
-            Créez des devis et factures conformes au format Factur-X/PDP. Numérotation continue, traçabilité, chiffrement : tous les critères légaux sont inclus. Gratuit en self-hosted, cloud optionnel.
+            Créez des devis et factures électroniques au format Factur-X. Numérotation continue, traçabilité, chiffrement : tous les critères légaux sont inclus. Gratuit en self-hosted, cloud optionnel.
           </p>
           <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap">
             <Button size="lg" className="h-11 sm:h-9" render={<Link to="#demo" />}>
@@ -127,8 +127,8 @@ function DemoSection() {
 const features = [
   {
     icon: Lock,
-    title: "Conformité Factur-X/PDP",
-    text: "Factures électroniques au format structuré Factur-X/PDP, avec numérotation continue et immuabilité. Prêt pour l'obligation légale 2026-2027.",
+    title: "Conformité Factur-X",
+    text: "Factures électroniques au format structuré Factur-X, avec numérotation continue et immuabilité. Prêt pour l'obligation légale 2026-2027 et la transmission via une PDP.",
   },
   {
     icon: RefreshCw,
@@ -180,7 +180,7 @@ const pricingTiers = [
     period: "à vie",
     description: "Installez Devis Generator sur votre propre serveur",
     features: [
-      "Tous les formats de conformité légale inclus (Factur-X/PDP)",
+      "Format de facturation électronique Factur-X inclus",
       "Numérotation continue et immuabilité",
       "IBAN et adresses chiffrés",
       "Pas d'artificiel sur les limites légales",
@@ -197,7 +197,7 @@ const pricingTiers = [
     period: "/mois",
     description: "Hébergement géré avec les fonctionnalités professionnelles",
     features: [
-      "Tous les formats conformes (Factur-X/PDP)",
+      "Format de facturation électronique Factur-X inclus",
       "Relances automatiques incluses",
       "Paiement en ligne activé (3 modes)",
       "Hébergement sécurisé et maintenance",
@@ -317,7 +317,7 @@ function SelfHostingSection() {
               <span>Conforme RGPD : export et suppression totale</span>
             </li>
           </ul>
-          <Button variant="outline" render={<a href="https://github.com/devis-generator" target="_blank" rel="noopener noreferrer" />}>
+          <Button variant="outline" render={<a href="https://github.com/tainalo2/devis_generator" target="_blank" rel="noopener noreferrer" />}>
             Voir le code sur GitHub
           </Button>
         </div>
@@ -345,8 +345,8 @@ function SelfHostingSection() {
 /** FAQ focused on legal compliance concerns. */
 const faqItems = [
   {
-    q: "Qu'est-ce que la conformité Factur-X/PDP ?",
-    a: "Factur-X et PDP (Portail de Déclaration des Paiements) sont les nouveaux standards français de facturation électronique. À partir de 2026-2027, ils deviennent obligatoires pour respecter la loi. Devis Generator génère nativement ces formats.",
+    q: "Quelle est la différence entre Factur-X et une PDP ?",
+    a: "Factur-X est un format de facture électronique. Une PDP (Plateforme de Dématérialisation Partenaire) est un intermédiaire qui transmet les factures et les données réglementaires. Devis Generator génère nativement le format Factur-X, destiné à être transmis par l'intermédiaire d'une PDP dans le cadre de la réforme 2026-2027.",
   },
   {
     q: "Qui est concerné par cette obligation ?",
@@ -354,7 +354,7 @@ const faqItems = [
   },
   {
     q: "Dois-je migrer mes anciens documents ?",
-    a: "Non. Seuls les nouveaux documents doivent être en Factur-X/PDP. Vos archives restent telles qu'elles sont. Devis Generator les conserve, et vous pouvez les exporter.",
+    a: "Non. Seuls les nouveaux documents concernés doivent suivre les règles de facturation électronique, par exemple au format Factur-X et avec une transmission via une PDP. Vos archives restent telles qu'elles sont. Devis Generator les conserve, et vous pouvez les exporter.",
   },
   {
     q: "Le self-hosted ou cloud : lequel choisir ?",
