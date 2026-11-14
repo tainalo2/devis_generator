@@ -197,6 +197,15 @@ export async function downloadDocumentPDF(id: string): Promise<Blob> {
   return res.blob()
 }
 
+export async function fetchPublicDocumentPDF(token: string): Promise<Blob> {
+  const res = await apiFetch(`/api/v1/public/documents/${encodeURIComponent(token)}/pdf`)
+  if (!res.ok) {
+    const fallback = res.status === 404 || res.status === 410 ? "Ce lien est invalide ou a expiré." : "Document indisponible."
+    throw new Error(await readError(res, fallback))
+  }
+  return res.blob()
+}
+
 export async function previewTotals(vatRegime: string, lines: DocLine[]): Promise<TotalsPreview> {
   const res = await apiFetch("/api/v1/billing/preview", {
     method: "POST",
