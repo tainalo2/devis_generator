@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/tainalo2/devis_generator/backend/internal/billing"
 )
 
 func TestInitializeAndToolsList(t *testing.T) {
@@ -34,6 +36,7 @@ func TestInitializeAndToolsList(t *testing.T) {
 }
 
 func TestCreateDevisCallsPublicAPIContract(t *testing.T) {
+	var createdLines []any
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodGet && r.URL.Path == "/documents/quote-id/link" {
@@ -53,18 +56,83 @@ func TestCreateDevisCallsPublicAPIContract(t *testing.T) {
 		if _, leaked := body["client"]; leaked {
 			t.Fatalf("MCP-only client field leaked to API: %#v", body)
 		}
+		createdLines = body["lines"].([]any)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"document":{"id":"quote-id","kind":"quote"}}`))
 	}))
 	defer api.Close()
 
 	s := &Server{APIURL: api.URL, APIKey: "k", Client: api.Client()}
-	res, err := s.callTool("create_devis", json.RawMessage(`{"client":"client-id","lignes":[{"description":"Conseil","quantity_milli":1000,"unit_price_cents":50000,"tax_rate_bps":2000}],"devise":"EUR","delai_validite_jours":"30"}`))
+	res, err := s.callTool("create_devis", json.RawMessage(`{"client":"client-id","lignes":[{"description":"Conseil","quantite":"2.5","prix_unitaire_ht":"49.90","tax_rate_bps":2000}],"devise":"EUR","delai_validite_jours":"30"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if res["status"] != "created" || res["id"] != "quote-id" || res["link"] != "https://example.test/d/stable" {
 		t.Fatalf("unexpected result: %#v", res)
+	}
+	line := createdLines[0].(map[string]any)
+	if line["quantity_milli"] != float64(2500) || line["unit_price_cents"] != float64(4990) {
+		t.Fatalf("unexpected converted line: %#v", line)
+	}
+	if _, leaked := line["quantite"]; leaked {
+		t.Fatalf("MCP quantity leaked to API: %#v", line)
+	}
+	if _, leaked := line["prix_unitaire_ht"]; leaked {
+		t.Fatalf("MCP unit price leaked to API: %#v", line)
+	}
+	calc, err := billing.Compute(billing.RegimeStandard, []billing.LineInput{{
+		Description: "Conseil", QuantityMilli: int64(line["quantity_milli"].(float64)),
+		UnitPriceCents: int64(line["unit_price_cents"].(float64)), TaxRateBps: 2000,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if calc.SubtotalCents != 12475 || calc.TaxCents != 2495 || calc.TotalCents != 14970 {
+		t.Fatalf("billing regression: %#v", calc)
+	}
+}
+
+func TestConvertDocumentedLinesRoundsHalfAwayFromZero(t *testing.T) {
+	lines, err := convertMCPLines([]any{
+		map[string]any{"description": "integer", "quantite": "2", "prix_unitaire_ht": "10"},
+		map[string]any{"description": "exact documented precision", "quantite": "12.345", "prix_unitaire_ht": "0.1"},
+		map[string]any{"description": "quantity rounding", "quantite": "1.2345", "prix_unitaire_ht": "1.005"},
+		map[string]any{"description": "negative price rounding", "quantite": "1", "prix_unitaire_ht": "-1.005"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := [][2]int64{{2000, 1000}, {12345, 10}, {1235, 101}, {1000, -101}}
+	for i, line := range lines {
+		if line["quantity_milli"] != want[i][0] || line["unit_price_cents"] != want[i][1] {
+			t.Fatalf("line %d: got quantity=%v price=%v, want %v", i+1, line["quantity_milli"], line["unit_price_cents"], want[i])
+		}
+	}
+}
+
+func TestConvertDocumentedLinesRejectsInvalidValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		line  any
+		match string
+	}{
+		{name: "line type", line: "invalid", match: "ligne 1: objet attendu"},
+		{name: "quantity type", line: map[string]any{"quantite": 2, "prix_unitaire_ht": "10"}, match: "ligne 1: quantite doit être une chaîne décimale"},
+		{name: "quantity format", line: map[string]any{"quantite": "2,5", "prix_unitaire_ht": "10"}, match: "ligne 1: quantite invalide"},
+		{name: "zero quantity", line: map[string]any{"quantite": "0.0004", "prix_unitaire_ht": "10"}, match: "ligne 1: quantite arrondie à zéro"},
+		{name: "price type", line: map[string]any{"quantite": "1", "prix_unitaire_ht": 10}, match: "ligne 1: prix_unitaire_ht doit être une chaîne décimale"},
+		{name: "price format", line: map[string]any{"quantite": "1", "prix_unitaire_ht": "NaN"}, match: "ligne 1: prix_unitaire_ht invalide"},
+		{name: "quantity too long", line: map[string]any{"quantite": "0." + strings.Repeat("0", 200) + "1", "prix_unitaire_ht": "10"}, match: "ligne 1: quantite trop longue"},
+		{name: "quantity overflow", line: map[string]any{"quantite": "999999999999999999999", "prix_unitaire_ht": "10"}, match: "ligne 1: quantite hors limites"},
+		{name: "price overflow", line: map[string]any{"quantite": "1", "prix_unitaire_ht": "999999999999999999999"}, match: "ligne 1: prix_unitaire_ht hors limites"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := convertMCPLines([]any{tt.line})
+			if err == nil || !strings.Contains(err.Error(), tt.match) {
+				t.Fatalf("error=%v, want containing %q", err, tt.match)
+			}
+		})
 	}
 }
 
