@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -36,16 +37,24 @@ func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request
 		writeAPIError(w, http.StatusInternalServerError, "Lien indisponible.")
 		return
 	}
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
+	scheme := requestScheme(r)
 	link := (&url.URL{Scheme: scheme, Host: r.Host, Path: "/d/" + token}).String()
 	response := map[string]any{"link": link, "permanent": document.Kind == doclink.KindInvoice || document.Kind == doclink.KindDeposit}
 	if document.Kind == doclink.KindQuote {
 		response["expires_at"] = document.CreatedAt.Add(doclink.QuoteTTL).UTC().Format(time.RFC3339)
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func requestScheme(r *http.Request) string {
+	forwardedProto := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0]))
+	if forwardedProto == "http" || forwardedProto == "https" {
+		return forwardedProto
+	}
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
 }
 
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
