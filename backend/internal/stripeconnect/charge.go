@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	stripe "github.com/stripe/stripe-go/v81"
-	"github.com/stripe/stripe-go/v81/checkout/session"
+	stripeclient "github.com/stripe/stripe-go/v81/client"
 )
 
 // CreateDirectChargeCheckout creates a Checkout Session as a direct charge on the
 // connected account, with application_fee_amount computed server-side.
 func CreateDirectChargeCheckout(cfg Config, connectedAccountID string, amountCents, feeAmount int64, currency, successURL, cancelURL string) (*stripe.CheckoutSession, error) {
-	Init(cfg)
+	client := stripeclient.New(cfg.PlatformSecretKey, nil)
 	params := &stripe.CheckoutSessionParams{
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),
 		SuccessURL: stripe.String(successURL),
@@ -33,7 +33,7 @@ func CreateDirectChargeCheckout(cfg Config, connectedAccountID string, amountCen
 	}
 	// run in connected account context
 	params.SetStripeAccount(connectedAccountID)
-	s, err := session.New(params)
+	s, err := client.CheckoutSessions.New(params)
 	if err != nil {
 		return nil, fmt.Errorf("create checkout session: %w", err)
 	}

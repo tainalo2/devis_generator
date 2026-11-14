@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	stripe "github.com/stripe/stripe-go/v81"
-	"github.com/stripe/stripe-go/v81/account"
-	"github.com/stripe/stripe-go/v81/accountlink"
+	stripeclient "github.com/stripe/stripe-go/v81/client"
 )
 
 type ConnectedAccount struct {
@@ -17,12 +16,8 @@ type ConnectedAccount struct {
 	Capabilities     map[string]string
 }
 
-func Init(cfg Config) {
-	stripe.Key = cfg.PlatformSecretKey
-}
-
 func CreateExpressAccount(cfg Config, email string) (*ConnectedAccount, error) {
-	Init(cfg)
+	client := stripeclient.New(cfg.PlatformSecretKey, nil)
 	params := &stripe.AccountParams{
 		Type:    stripe.String("express"),
 		Country: stripe.String("FR"),
@@ -32,7 +27,7 @@ func CreateExpressAccount(cfg Config, email string) (*ConnectedAccount, error) {
 			Transfers:    &stripe.AccountCapabilitiesTransfersParams{Requested: stripe.Bool(true)},
 		},
 	}
-	a, err := account.New(params)
+	a, err := client.Accounts.New(params)
 	if err != nil {
 		return nil, fmt.Errorf("create account: %w", err)
 	}
@@ -40,14 +35,14 @@ func CreateExpressAccount(cfg Config, email string) (*ConnectedAccount, error) {
 }
 
 func CreateAccountLink(cfg Config, accountID, refreshURL, returnURL string) (string, error) {
-	Init(cfg)
+	client := stripeclient.New(cfg.PlatformSecretKey, nil)
 	params := &stripe.AccountLinkParams{
 		Account:    stripe.String(accountID),
 		RefreshURL: stripe.String(refreshURL),
 		ReturnURL:  stripe.String(returnURL),
 		Type:       stripe.String("account_onboarding"),
 	}
-	l, err := accountlink.New(params)
+	l, err := client.AccountLinks.New(params)
 	if err != nil {
 		return "", fmt.Errorf("create account link: %w", err)
 	}
@@ -55,8 +50,8 @@ func CreateAccountLink(cfg Config, accountID, refreshURL, returnURL string) (str
 }
 
 func RetrieveAccount(cfg Config, accountID string) (*ConnectedAccount, error) {
-	Init(cfg)
-	a, err := account.GetByID(accountID, nil)
+	client := stripeclient.New(cfg.PlatformSecretKey, nil)
+	a, err := client.Accounts.GetByID(accountID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve account: %w", err)
 	}

@@ -16,12 +16,20 @@ func TestContract(t *testing.T) {
 	defer stripeSrv.Close()
 	sa := &StripeAdapter{HTTP: NewHTTPClient(stripeSrv.URL)}
 	cfg := Config{Provider: ProviderStripe, Env: EnvSandbox, StripeSecretKey: "sk_test_abc1234", StripeWebhookSecret: "whsec_test"}
-	if err := sa.ValidateConfig(cfg); err != nil { t.Fatal(err) }
+	if err := sa.ValidateConfig(cfg); err != nil {
+		t.Fatal(err)
+	}
 	sess, err := sa.CreatePayment(t.Context(), cfg, PaymentRequest{Amount: 1000, Currency: "EUR", ReturnURL: "https://r"})
-	if err != nil { t.Fatal(err) }
-	if sess.CheckoutURL == "" { t.Fatal("no url") }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sess.CheckoutURL == "" {
+		t.Fatal("no url")
+	}
 	// invalid env mix
-	if err := sa.ValidateConfig(Config{Provider: ProviderStripe, Env: EnvLive, StripeSecretKey: "sk_test_x", StripeWebhookSecret: "w"}); err == nil { t.Fatal("expected error") }
+	if err := sa.ValidateConfig(Config{Provider: ProviderStripe, Env: EnvLive, StripeSecretKey: "sk_test_x", StripeWebhookSecret: "w"}); err == nil {
+		t.Fatal("expected error")
+	}
 
 	// Mollie
 	mollieSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,10 +39,16 @@ func TestContract(t *testing.T) {
 	defer mollieSrv.Close()
 	ma := &MollieAdapter{HTTP: NewHTTPClient(mollieSrv.URL)}
 	mcfg := Config{Provider: ProviderMollie, Env: EnvSandbox, MollieAPIKey: "test_key1234"}
-	if err := ma.ValidateConfig(mcfg); err != nil { t.Fatal(err) }
+	if err := ma.ValidateConfig(mcfg); err != nil {
+		t.Fatal(err)
+	}
 	msess, err := ma.CreatePayment(t.Context(), mcfg, PaymentRequest{Amount: 1000, Currency: "EUR"})
-	if err != nil { t.Fatal(err) }
-	if msess.ExternalID != "tr_1" { t.Fatal("id") }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msess.ExternalID != "tr_1" {
+		t.Fatal("id")
+	}
 
 	// PayPal
 	paypalSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -48,8 +62,14 @@ func TestContract(t *testing.T) {
 	defer paypalSrv.Close()
 	pa := &PayPalAdapter{HTTP: NewHTTPClient(paypalSrv.URL)}
 	pcfg := Config{Provider: ProviderPayPal, Env: EnvSandbox, PayPalClientID: "cid", PayPalClientSecret: "csec", PayPalWebhookID: "wh"}
-	if err := pa.ValidateConfig(pcfg); err != nil { t.Fatal(err) }
+	if err := pa.ValidateConfig(pcfg); err != nil {
+		t.Fatal(err)
+	}
 	psess, err := pa.CreatePayment(t.Context(), pcfg, PaymentRequest{Amount: 1000, Currency: "USD"})
-	if err != nil { t.Fatal(err) }
-	if psess.CheckoutURL != "https://paypal/approve" { t.Fatal("url") }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if psess.CheckoutURL != "https://paypal/approve" {
+		t.Fatal("url")
+	}
 }

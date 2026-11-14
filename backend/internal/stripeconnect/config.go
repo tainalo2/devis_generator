@@ -8,15 +8,15 @@ import (
 
 // Config holds Stripe Connect (platform) runtime configuration.
 type Config struct {
-	PlatformSecretKey    string
+	PlatformSecretKey      string
 	PlatformPublishableKey string
-	WebhookSecret        string
-	PublicURL            string // HTTPS public URL
-	ComplianceAck        bool   // operator acknowledged facilitator role
-	FeeBPS               int64  // basis points
-	FeeFixedCents        int64
-	FeeCapCents          int64  // 0 = no cap
-	Currency             string
+	WebhookSecret          string
+	PublicURL              string // HTTPS public URL
+	ComplianceAck          bool   // operator acknowledged facilitator role
+	FeeBPS                 int64  // basis points
+	FeeFixedCents          int64
+	FeeCapCents            int64 // 0 = no cap
+	Currency               string
 }
 
 func ConfigFromEnv() Config {
@@ -25,15 +25,15 @@ func ConfigFromEnv() Config {
 	capC, _ := strconv.ParseInt(os.Getenv("STRIPE_CONNECT_FEE_CAP_CENTS"), 10, 64)
 	ack := os.Getenv("STRIPE_CONNECT_COMPLIANCE_ACK") == "true"
 	return Config{
-		PlatformSecretKey:     os.Getenv("STRIPE_PLATFORM_SECRET_KEY"),
+		PlatformSecretKey:      os.Getenv("STRIPE_PLATFORM_SECRET_KEY"),
 		PlatformPublishableKey: os.Getenv("STRIPE_PLATFORM_PUBLISHABLE_KEY"),
-		WebhookSecret:         os.Getenv("STRIPE_CONNECT_WEBHOOK_SECRET"),
-		PublicURL:             os.Getenv("STRIPE_PUBLIC_URL"),
-		ComplianceAck:         ack,
-		FeeBPS:                bps,
-		FeeFixedCents:         fixed,
-		FeeCapCents:           capC,
-		Currency:              os.Getenv("STRIPE_CONNECT_CURRENCY"),
+		WebhookSecret:          os.Getenv("STRIPE_CONNECT_WEBHOOK_SECRET"),
+		PublicURL:              os.Getenv("STRIPE_PUBLIC_URL"),
+		ComplianceAck:          ack,
+		FeeBPS:                 bps,
+		FeeFixedCents:          fixed,
+		FeeCapCents:            capC,
+		Currency:               os.Getenv("STRIPE_CONNECT_CURRENCY"),
 	}
 }
 
@@ -51,7 +51,7 @@ func (c Config) Enabled() (bool, string) {
 	if c.WebhookSecret == "" {
 		return false, "missing_webhook_secret"
 	}
-	if c.PublicURL == "" || !(len(c.PublicURL) > 5 && (c.PublicURL[:5] == "https" )) {
+	if c.PublicURL == "" || !(len(c.PublicURL) > 5 && (c.PublicURL[:5] == "https")) {
 		return false, "missing_public_https_url"
 	}
 	if !c.ComplianceAck {

@@ -12,16 +12,16 @@ const (
 type Provider string
 
 const (
-	ProviderStripe  Provider = "stripe"
-	ProviderMollie  Provider = "mollie"
-	ProviderPayPal  Provider = "paypal"
+	ProviderStripe Provider = "stripe"
+	ProviderMollie Provider = "mollie"
+	ProviderPayPal Provider = "paypal"
 )
 
 type Config struct {
 	Provider Provider
 	Env      Env
 	// Stripe
-	StripeSecretKey   string
+	StripeSecretKey     string
 	StripeWebhookSecret string
 	// Mollie
 	MollieAPIKey string
@@ -40,9 +40,9 @@ type PaymentRequest struct {
 }
 
 type PaymentSession struct {
-	Provider  Provider
-	Env       Env
-	ExternalID string
+	Provider    Provider
+	Env         Env
+	ExternalID  string
 	CheckoutURL string
 }
 
