@@ -6,7 +6,9 @@ import {
 } from "react"
 
 import { cn } from "@/lib/utils"
-import { ToastContext, type ToastContextValue } from "./use-toast"
+import { ToastContext, type ToastContextValue, useToast } from "./use-toast"
+
+export { useToast }
 
 type ToastKind = "info" | "success" | "error"
 
