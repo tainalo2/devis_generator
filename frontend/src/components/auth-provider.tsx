@@ -15,9 +15,7 @@ import {
   register as apiRegister,
   type User,
 } from "@/lib/api"
-import { AuthContext, type AuthContextValue, useAuth } from "./use-auth"
-
-export { useAuth }
+import { AuthContext, type AuthContextValue } from "./use-auth"
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)

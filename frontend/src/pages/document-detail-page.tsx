@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, Navigate, useParams } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { DocumentView } from "@/components/document-view"
 import { DocumentEditor } from "@/components/editor/document-editor"
 import { DashedEmpty } from "@/components/page"

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { Navigate } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { PageHeader } from "@/components/page"
 import { Seo } from "@/components/seo"
-import { useToast } from "@/components/toast-provider"
+import { useToast } from "@/components/use-toast"
 import { Button } from "@/components/ui/button"
 import { getAdminPaymentFeatures, updateAdminPaymentFeatures, type PaymentFeatures } from "@/lib/api"
 

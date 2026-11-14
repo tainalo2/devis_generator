@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight, Download, Ellipsis, Send } from "luci
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
-import { useToast } from "@/components/toast-provider"
+import { useToast } from "@/components/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"

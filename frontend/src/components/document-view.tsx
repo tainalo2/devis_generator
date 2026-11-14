@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { DocumentPreview, type PreviewData } from "@/components/editor/preview"
 import { docHT, emptyIssuer, type EditorKind } from "@/components/editor/model"
 import { CardSection, CardTitle } from "@/components/page"
-import { useToast } from "@/components/toast-provider"
+import { useToast } from "@/components/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {

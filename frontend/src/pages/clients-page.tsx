@@ -2,7 +2,7 @@ import { Plus, Search } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { ClientDialog } from "@/components/editor/dialogs"
 import { emptyClient } from "@/components/editor/model"
 import { EmptyState } from "@/components/empty-state"

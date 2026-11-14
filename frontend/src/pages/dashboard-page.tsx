@@ -2,7 +2,7 @@ import { Check, Plus } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { Link, Navigate } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { Card, CardSection, CardTitle, Overline, PageHeader } from "@/components/page"
 import { Seo } from "@/components/seo"
 import { Badge } from "@/components/ui/badge"

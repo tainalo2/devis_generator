@@ -16,7 +16,7 @@ import {
 import { useEffect, useState } from "react"
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { LogoMark } from "@/components/logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"

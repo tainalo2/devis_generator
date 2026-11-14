@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router-dom"
 
-import { useAuth } from "@/components/auth-provider"
+import { useAuth } from "@/components/use-auth"
 import { DocumentEditor } from "@/components/editor/document-editor"
 import type { EditorKind } from "@/components/editor/model"
 import { Seo } from "@/components/seo"
