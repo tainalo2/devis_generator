@@ -15,8 +15,9 @@ import (
 
 // Dev defaults — intentionally weak; never use in production.
 const (
-	devSessionSecret    = "dev-only-session-secret-change-me-32b"
-	devEncryptionKeyB64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32 zero bytes
+	devSessionSecret      = "dev-only-session-secret-change-me-32b"
+	devDocLinkSecret      = "dev-only-doclink-secret-change-me-32b"
+	devEncryptionKeyB64   = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32 zero bytes
 )
 
 // Config holds runtime configuration loaded from the environment.
@@ -30,6 +31,7 @@ type Config struct {
 	Environment     string
 
 	SessionSecret string
+	DocLinkSecret string
 	EncryptionKey []byte // 32 raw bytes
 	CookieSecure  bool
 	SessionTTL    time.Duration
@@ -141,6 +143,7 @@ func Load() (Config, error) {
 	cfg.TrustedProxies = proxies
 
 	sessionSecret := strings.TrimSpace(os.Getenv("SESSION_SECRET"))
+	docLinkSecret := strings.TrimSpace(os.Getenv("DOC_LINK_SECRET"))
 	encKeyB64 := strings.TrimSpace(os.Getenv("ENCRYPTION_KEY"))
 
 	if cfg.IsProduction() {
@@ -148,6 +151,10 @@ func Load() (Config, error) {
 			return Config{}, err
 		}
 		cfg.SessionSecret = sessionSecret
+		if docLinkSecret == "" {
+			return Config{}, fmt.Errorf("DOC_LINK_SECRET is required in production")
+		}
+		cfg.DocLinkSecret = docLinkSecret
 		key, err := decodeEncryptionKey(encKeyB64)
 		if err != nil {
 			return Config{}, err
@@ -162,6 +169,13 @@ func Load() (Config, error) {
 			slog.Warn("SESSION_SECRET is shorter than 32 characters (ok in development only)")
 		}
 		cfg.SessionSecret = sessionSecret
+
+		if docLinkSecret == "" {
+			slog.Warn("DOC_LINK_SECRET unset; falling back to SESSION_SECRET (deprecated — rotating SESSION_SECRET will then invalidate permanent document links). Set DOC_LINK_SECRET explicitly to decouple.")
+			cfg.DocLinkSecret = sessionSecret
+		} else {
+			cfg.DocLinkSecret = docLinkSecret
+		}
 
 		if encKeyB64 == "" {
 			slog.Warn("ENCRYPTION_KEY unset; using insecure development default (32 zero bytes)")

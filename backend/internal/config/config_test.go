@@ -15,13 +15,14 @@ func TestLoadRequiresDatabaseURL(t *testing.T) {
 }
 
 func TestLoadDefaultsDev(t *testing.T) {
-	t.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/devis?sslmode=disable")
+	t.Setenv("DATABASE_URL", "postgres://user:***@localhost:5432/devis?sslmode=disable")
 	t.Setenv("ADDR", "")
 	t.Setenv("STATIC_DIR", "")
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("SHUTDOWN_TIMEOUT", "")
 	t.Setenv("STARTUP_TIMEOUT", "")
 	t.Setenv("SESSION_SECRET", "")
+	t.Setenv("DOC_LINK_SECRET", "")
 	t.Setenv("ENCRYPTION_KEY", "")
 
 	cfg, err := Load()
@@ -34,6 +35,9 @@ func TestLoadDefaultsDev(t *testing.T) {
 	}
 	if cfg.SessionSecret != devSessionSecret {
 		t.Fatalf("expected dev session secret")
+	}
+	if cfg.DocLinkSecret != devSessionSecret {
+		t.Fatalf("expected DocLinkSecret to fall back to SessionSecret")
 	}
 	if len(cfg.EncryptionKey) != 32 {
 		t.Fatalf("encryption key len = %d", len(cfg.EncryptionKey))
@@ -64,6 +68,7 @@ func TestLoadProductionOK(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://db")
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("SESSION_SECRET", "production-session-secret-value-32ch")
+	t.Setenv("DOC_LINK_SECRET", "production-doclink-secret-value-32ch-")
 	t.Setenv("ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(key))
 
 	cfg, err := Load()
@@ -75,6 +80,22 @@ func TestLoadProductionOK(t *testing.T) {
 	}
 	if len(cfg.EncryptionKey) != 32 {
 		t.Fatal("bad key length")
+	}
+	if cfg.DocLinkSecret != "production-doclink-secret-value-32ch-" {
+		t.Fatalf("DocLinkSecret not set in production")
+	}
+}
+
+func TestLoadProductionRequiresDocLinkSecret(t *testing.T) {
+	key := make([]byte, 32)
+	t.Setenv("DATABASE_URL", "postgres://db")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("SESSION_SECRET", "production-session-secret-value-32ch")
+	t.Setenv("DOC_LINK_SECRET", "")
+	t.Setenv("ENCRYPTION_KEY", base64.StdEncoding.EncodeToString(key))
+
+	if _, err := Load(); err == nil {
+		t.Fatal("expected error when DOC_LINK_SECRET is missing in production")
 	}
 }
 
@@ -156,5 +177,38 @@ func TestLoadRejectsPartialGoogleOAuthConfiguration(t *testing.T) {
 
 	if _, err := Load(); err == nil {
 		t.Fatal("expected partial Google OAuth configuration error")
+	}
+}
+
+func TestLoadDocLinkSecretFallback(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://user:***@localhost:5432/devis?sslmode=disable")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("SESSION_SECRET", "my-custom-session-secret-32ch-x")
+	t.Setenv("DOC_LINK_SECRET", "")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.DocLinkSecret != cfg.SessionSecret {
+		t.Fatalf("DocLinkSecret = %q, want %q (fallback to SessionSecret)", cfg.DocLinkSecret, cfg.SessionSecret)
+	}
+}
+
+func TestLoadDocLinkSecretExplicit(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://user:***@localhost:5432/devis?sslmode=disable")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("SESSION_SECRET", "my-custom-session-secret-32ch-x")
+	t.Setenv("DOC_LINK_SECRET", "different-doc-link-secret-32ch-y")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.DocLinkSecret != "different-doc-link-secret-32ch-y" {
+		t.Fatalf("DocLinkSecret = %q, want explicit value", cfg.DocLinkSecret)
+	}
+	if cfg.DocLinkSecret == cfg.SessionSecret {
+		t.Fatal("DocLinkSecret should be different from SessionSecret when explicitly set")
 	}
 }
