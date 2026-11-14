@@ -16,4 +16,3 @@ CREATE TABLE relance_log (
 );
 CREATE INDEX relance_log_document_idx ON relance_log(document_id);
 CREATE INDEX relance_log_user_idx ON relance_log(user_id);
-EOF
