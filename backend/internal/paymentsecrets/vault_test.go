@@ -162,6 +162,17 @@ func TestEmailSecretsKindsAccepted(t *testing.T) {
 	}
 }
 
+func TestProviderCredentialKindsAreExplicitAndValid(t *testing.T) {
+	kinds := []Kind{KindStripeAPIKey, KindStripeWebhookSecret, KindMollieAPIKey,
+		KindPayPalClientID, KindPayPalClientSecret, KindPayPalWebhookID,
+		KindStripeConnectSecret, KindStripeConnectWebhookSecret}
+	for _, kind := range kinds {
+		if !kind.Valid() {
+			t.Fatalf("kind %q must be valid", kind)
+		}
+	}
+}
+
 func TestDeleteForwardsAuditActor(t *testing.T) {
 	box, err := appcrypto.NewBox(bytes.Repeat([]byte{11}, 32))
 	if err != nil {

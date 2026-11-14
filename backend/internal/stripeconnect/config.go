@@ -17,6 +17,7 @@ type Config struct {
 	FeeFixedCents          int64
 	FeeCapCents            int64 // 0 = no cap
 	Currency               string
+	Country                string
 }
 
 func ConfigFromEnv() Config {
@@ -34,6 +35,7 @@ func ConfigFromEnv() Config {
 		FeeFixedCents:          fixed,
 		FeeCapCents:            capC,
 		Currency:               os.Getenv("STRIPE_CONNECT_CURRENCY"),
+		Country:                os.Getenv("STRIPE_CONNECT_COUNTRY"),
 	}
 }
 
@@ -61,6 +63,32 @@ func (c Config) Enabled() (bool, string) {
 		return false, "missing_currency"
 	}
 	return true, ""
+}
+
+func (c Config) ValidateOnboarding() error {
+	if !c.ComplianceAck {
+		return fmt.Errorf("compliance acknowledgement required")
+	}
+	if c.Country != "FR" && c.Country != "BE" && c.Country != "LU" {
+		return fmt.Errorf("unsupported country")
+	}
+	if c.Currency != "EUR" {
+		return fmt.Errorf("unsupported currency")
+	}
+	if c.FeeBPS < 0 || c.FeeBPS > 2500 || c.FeeFixedCents < 0 || c.FeeCapCents < 0 {
+		return fmt.Errorf("unsafe platform fee")
+	}
+	return nil
+}
+
+func (c Config) ValidateCharge(acc *ConnectedAccount, amount int64, currency string) (int64, error) {
+	if err := c.ValidateOnboarding(); err != nil {
+		return 0, err
+	}
+	if !ReadyForPayments(acc) {
+		return 0, fmt.Errorf("connected account capabilities inactive")
+	}
+	return c.ComputeFee(amount, currency)
 }
 
 // ComputeFee returns application_fee_amount in cents. Server-authoritative.

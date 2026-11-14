@@ -3,6 +3,9 @@ package paymentbyo
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -63,8 +66,8 @@ func (s *StripeAdapter) CreatePayment(ctx context.Context, cfg Config, req Payme
 	if err := s.ValidateConfig(cfg); err != nil {
 		return PaymentSession{}, err
 	}
-	b, _ := json.Marshal(map[string]any{"amount": req.Amount, "currency": req.Currency, "success_url": req.ReturnURL, "cancel_url": req.CancelURL})
-	resp, code, err := s.HTTP.do(ctx, "POST", "/v1/checkout/sessions", b, map[string]string{"Authorization": "Bearer " + cfg.StripeSecretKey})
+	b, _ := json.Marshal(map[string]any{"amount": req.Amount, "currency": req.Currency, "success_url": req.ReturnURL, "cancel_url": req.CancelURL, "metadata": map[string]string{"tenant_id": req.TenantID, "document_id": req.DocumentID}})
+	resp, code, err := s.HTTP.do(ctx, "POST", "/v1/checkout/sessions", b, map[string]string{"Authorization": "Bearer " + cfg.StripeSecretKey, "Idempotency-Key": req.IdempotencyKey})
 	if err != nil {
 		return PaymentSession{}, err
 	}
@@ -76,13 +79,28 @@ func (s *StripeAdapter) CreatePayment(ctx context.Context, cfg Config, req Payme
 	return PaymentSession{Provider: ProviderStripe, Env: cfg.Env, ExternalID: r.ID, CheckoutURL: r.URL}, nil
 }
 func (s *StripeAdapter) VerifyWebhook(cfg Config, headers map[string]string, body []byte) (WebhookEvent, error) {
-	// simplified signature check: header "Stripe-Signature" must contain "v1=" + hmac not computed here; require non-empty and match secret prefix
 	sig := headers["Stripe-Signature"]
 	if sig == "" || cfg.StripeWebhookSecret == "" {
 		return WebhookEvent{}, fmt.Errorf("invalid signature")
 	}
-	if !strings.Contains(sig, cfg.StripeWebhookSecret) { // fake verification for tests; real impl would HMAC
-		// allow test signature format "t=...,v1=<secret>"
+	parts := strings.Split(sig, ",")
+	var timestamp, provided string
+	for _, p := range parts {
+		kv := strings.SplitN(p, "=", 2)
+		if len(kv) == 2 {
+			if kv[0] == "t" {
+				timestamp = kv[1]
+			}
+			if kv[0] == "v1" {
+				provided = kv[1]
+			}
+		}
+	}
+	mac := hmac.New(sha256.New, []byte(cfg.StripeWebhookSecret))
+	mac.Write([]byte(timestamp + "." + string(body)))
+	expected := hex.EncodeToString(mac.Sum(nil))
+	if timestamp == "" || !hmac.Equal([]byte(expected), []byte(provided)) {
+		return WebhookEvent{}, fmt.Errorf("invalid signature")
 	}
 	// parse body
 	var ev struct {
@@ -111,7 +129,10 @@ func (s *StripeAdapter) Revoke(cfg Config) error       { return nil }
 func (s *StripeAdapter) Fingerprint(cfg Config) string { return "stripe:" + last4(cfg.StripeSecretKey) }
 
 // Mollie
-type MollieAdapter struct{ HTTP *HTTPClient }
+type MollieAdapter struct {
+	HTTP            *HTTPClient
+	WebhookVerifier func(Config, map[string]string, []byte) (WebhookEvent, error)
+}
 
 func (m *MollieAdapter) ValidateConfig(cfg Config) error {
 	if cfg.Env != EnvSandbox && cfg.Env != EnvLive {
@@ -152,21 +173,21 @@ func (m *MollieAdapter) CreatePayment(ctx context.Context, cfg Config, req Payme
 	return PaymentSession{Provider: ProviderMollie, Env: cfg.Env, ExternalID: r.ID, CheckoutURL: r.Links.Checkout.Href}, nil
 }
 func (m *MollieAdapter) VerifyWebhook(cfg Config, headers map[string]string, body []byte) (WebhookEvent, error) {
-	// Mollie webhooks contain only id; fetch payment. We accept body with id.
-	var r struct {
-		ID string `json:"id"`
+	// Mollie authenticity requires retrieving the payment with the tenant API
+	// key. Inject that verifier so tests never make real network calls.
+	if m.WebhookVerifier == nil {
+		return WebhookEvent{}, fmt.Errorf("mollie webhook verifier unavailable")
 	}
-	json.Unmarshal(body, &r)
-	if r.ID == "" {
-		return WebhookEvent{}, fmt.Errorf("missing id")
-	}
-	return WebhookEvent{Provider: ProviderMollie, ExternalID: r.ID, Status: "pending", Raw: body}, nil
+	return m.WebhookVerifier(cfg, headers, body)
 }
 func (m *MollieAdapter) Revoke(cfg Config) error       { return nil }
 func (m *MollieAdapter) Fingerprint(cfg Config) string { return "mollie:" + last4(cfg.MollieAPIKey) }
 
 // PayPal
-type PayPalAdapter struct{ HTTP *HTTPClient }
+type PayPalAdapter struct {
+	HTTP            *HTTPClient
+	WebhookVerifier func(Config, map[string]string, []byte) (WebhookEvent, error)
+}
 
 func (p *PayPalAdapter) ValidateConfig(cfg Config) error {
 	if cfg.Env != EnvSandbox && cfg.Env != EnvLive {
@@ -221,10 +242,12 @@ func (p *PayPalAdapter) CreatePayment(ctx context.Context, cfg Config, req Payme
 	return PaymentSession{Provider: ProviderPayPal, Env: cfg.Env, ExternalID: r.ID, CheckoutURL: url}, nil
 }
 func (p *PayPalAdapter) VerifyWebhook(cfg Config, headers map[string]string, body []byte) (WebhookEvent, error) {
-	if headers["Paypal-Transmission-Id"] == "" {
-		return WebhookEvent{}, fmt.Errorf("missing transmission")
+	// PayPal's verify-webhook-signature API validates its certificate-backed
+	// transmission headers. Keep the network verifier injected and fail closed.
+	if p.WebhookVerifier == nil {
+		return WebhookEvent{}, fmt.Errorf("paypal webhook verifier unavailable")
 	}
-	return WebhookEvent{Provider: ProviderPayPal, Status: "pending", Raw: body}, nil
+	return p.WebhookVerifier(cfg, headers, body)
 }
 func (p *PayPalAdapter) Revoke(cfg Config) error       { return nil }
 func (p *PayPalAdapter) Fingerprint(cfg Config) string { return "paypal:" + last4(cfg.PayPalClientID) }

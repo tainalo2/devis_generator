@@ -10,6 +10,16 @@ import (
 // CreateDirectChargeCheckout creates a Checkout Session as a direct charge on the
 // connected account, with application_fee_amount computed server-side.
 func CreateDirectChargeCheckout(cfg Config, connectedAccountID string, amountCents, feeAmount int64, currency, successURL, cancelURL string) (*stripe.CheckoutSession, error) {
+	if err := cfg.ValidateOnboarding(); err != nil {
+		return nil, err
+	}
+	computed, err := cfg.ComputeFee(amountCents, currency)
+	if err != nil {
+		return nil, err
+	}
+	if feeAmount != computed {
+		return nil, fmt.Errorf("fee must be server-authoritative")
+	}
 	client := stripeclient.New(cfg.PlatformSecretKey, nil)
 	params := &stripe.CheckoutSessionParams{
 		Mode:       stripe.String(string(stripe.CheckoutSessionModePayment)),

@@ -15,15 +15,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/auth"
 	"github.com/tainalo2/devis_generator/backend/internal/authstore"
+	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/crypto"
 	"github.com/tainalo2/devis_generator/backend/internal/gmailmail"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
 	"github.com/tainalo2/devis_generator/backend/internal/microsoftmail"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
+	"github.com/tainalo2/devis_generator/backend/internal/payments"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
-	"github.com/tainalo2/devis_generator/backend/internal/bankcoordsvault"
-	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 )
 
@@ -53,6 +54,7 @@ type Server struct {
 	trustedProxies    []*net.IPNet
 	bankCoordRepo     *bankcoordsvault.Repository
 	paymentFlags      *paymentflags.Store
+	payments          *payments.Service
 	docLinkSecret     []byte
 }
 
@@ -74,24 +76,25 @@ type gmailMailer interface {
 }
 
 type Options struct {
-	DB            Pinger
-	Store         *authstore.Store
-	Biz           *biz.Store
-	Box           *crypto.Box
-	Legal         *legal.Service
-	GmailMail     gmailMailer
-	MicrosoftMail microsoftMailer
-	SMTP          *smtpconfig.Service
-	Reminders     *reminders.Service
-	PublicConfig  *PublicSiteConfig
-	StaticDir     string
-	Version       string
-	CookieSecure  bool
-	SessionTTL    time.Duration
+	DB                Pinger
+	Store             *authstore.Store
+	Biz               *biz.Store
+	Box               *crypto.Box
+	Legal             *legal.Service
+	GmailMail         gmailMailer
+	MicrosoftMail     microsoftMailer
+	SMTP              *smtpconfig.Service
+	Reminders         *reminders.Service
+	PublicConfig      *PublicSiteConfig
+	StaticDir         string
+	Version           string
+	CookieSecure      bool
+	SessionTTL        time.Duration
 	BankCoordRepo     *bankcoordsvault.Repository
 	PaymentFlagsStore *paymentflags.Store
+	Payments          *payments.Service
 	DocLinkSecret     []byte
-	Argon2        auth.Argon2Params
+	Argon2            auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
 	TrustedProxies []*net.IPNet
 }
@@ -120,6 +123,10 @@ func New(opts Options) *Server {
 		guestLimiter:      NewRateLimiter(20, time.Minute),
 		previewLimiter:    NewRateLimiter(120, time.Minute),
 		trustedProxies:    opts.TrustedProxies,
+		bankCoordRepo:     opts.BankCoordRepo,
+		paymentFlags:      opts.PaymentFlagsStore,
+		payments:          opts.Payments,
+		docLinkSecret:     opts.DocLinkSecret,
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -145,6 +152,9 @@ func New(opts Options) *Server {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)
+		if s.payments != nil {
+			r.Post("/payments/webhooks/{provider}", s.handlePaymentWebhook)
+		}
 
 		r.Group(func(r chi.Router) {
 			r.Use(s.withOptionalSession)
@@ -189,6 +199,12 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+			if s.payments != nil {
+				r.Get("/payments/config/{provider}", s.requireAuth(s.handleGetPaymentConfig))
+				r.Put("/payments/config/{provider}", s.requireAuth(s.handlePutPaymentConfig))
+				r.Delete("/payments/config/{provider}", s.requireAuth(s.handleDeletePaymentConfig))
+				r.Post("/documents/{id}/checkout", s.requireAuth(s.handlePaymentCheckout))
+			}
 			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
 			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))
 			r.Get("/email/delivery-mode", s.requireAuth(s.handleGetReminderDeliveryMode))

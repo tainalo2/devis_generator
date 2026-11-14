@@ -20,7 +20,9 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/db"
 	"github.com/tainalo2/devis_generator/backend/internal/httpapi"
 	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/paymentbyo"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentflags"
+	"github.com/tainalo2/devis_generator/backend/internal/payments"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 )
 
@@ -127,6 +129,11 @@ func main() {
 	paymentSecretsVault := paymentsecrets.NewVault(pgRepo, box)
 	paymentFlagsStore := paymentflags.NewStore(pool)
 	bankCoordRepo := bankcoordsvault.NewRepository(pool, paymentSecretsVault)
+	paymentSvc := payments.New(pool, paymentSecretsVault, bizStore, map[paymentbyo.Provider]paymentbyo.ProviderAdapter{
+		paymentbyo.ProviderStripe: &paymentbyo.StripeAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.stripe.com")},
+		paymentbyo.ProviderMollie: &paymentbyo.MollieAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.mollie.com")},
+		paymentbyo.ProviderPayPal: &paymentbyo.PayPalAdapter{HTTP: paymentbyo.NewHTTPClient("https://api-m.paypal.com")},
+	})
 
 	api := httpapi.New(httpapi.Options{
 		DB:    pool,
@@ -153,6 +160,7 @@ func main() {
 		DocLinkSecret:     []byte(cfg.SessionSecret),
 		BankCoordRepo:     bankCoordRepo,
 		PaymentFlagsStore: paymentFlagsStore,
+		Payments:          paymentSvc,
 	})
 
 	srv := &http.Server{

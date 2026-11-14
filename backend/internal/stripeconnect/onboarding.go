@@ -17,10 +17,13 @@ type ConnectedAccount struct {
 }
 
 func CreateExpressAccount(cfg Config, email string) (*ConnectedAccount, error) {
+	if err := cfg.ValidateOnboarding(); err != nil {
+		return nil, err
+	}
 	client := stripeclient.New(cfg.PlatformSecretKey, nil)
 	params := &stripe.AccountParams{
 		Type:    stripe.String("express"),
-		Country: stripe.String("FR"),
+		Country: stripe.String(cfg.Country),
 		Email:   stripe.String(email),
 		Capabilities: &stripe.AccountCapabilitiesParams{
 			CardPayments: &stripe.AccountCapabilitiesCardPaymentsParams{Requested: stripe.Bool(true)},

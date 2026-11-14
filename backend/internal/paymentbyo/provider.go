@@ -12,9 +12,10 @@ const (
 type Provider string
 
 const (
-	ProviderStripe Provider = "stripe"
-	ProviderMollie Provider = "mollie"
-	ProviderPayPal Provider = "paypal"
+	ProviderStripe        Provider = "stripe"
+	ProviderMollie        Provider = "mollie"
+	ProviderPayPal        Provider = "paypal"
+	ProviderStripeConnect Provider = "stripe_connect"
 )
 
 type Config struct {
@@ -26,17 +27,21 @@ type Config struct {
 	// Mollie
 	MollieAPIKey string
 	// PayPal
-	PayPalClientID     string
-	PayPalClientSecret string
-	PayPalWebhookID    string
+	PayPalClientID             string
+	PayPalClientSecret         string
+	PayPalWebhookID            string
+	StripeConnectSecret        string
+	StripeConnectWebhookSecret string
 }
 
 type PaymentRequest struct {
-	DocumentID string
-	Amount     int64 // minor units
-	Currency   string
-	ReturnURL  string
-	CancelURL  string
+	DocumentID     string
+	TenantID       string
+	Amount         int64 // minor units
+	Currency       string
+	ReturnURL      string
+	CancelURL      string
+	IdempotencyKey string
 }
 
 type PaymentSession struct {
@@ -62,4 +67,6 @@ type ProviderAdapter interface {
 	Fingerprint(cfg Config) string
 }
 
-func AllProviders() []Provider { return []Provider{ProviderStripe, ProviderMollie, ProviderPayPal} }
+func AllProviders() []Provider {
+	return []Provider{ProviderStripe, ProviderMollie, ProviderPayPal, ProviderStripeConnect}
+}
