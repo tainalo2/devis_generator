@@ -27,11 +27,9 @@ type Config struct {
 	// Mollie
 	MollieAPIKey string
 	// PayPal
-	PayPalClientID             string
-	PayPalClientSecret         string
-	PayPalWebhookID            string
-	StripeConnectSecret        string
-	StripeConnectWebhookSecret string
+	PayPalClientID     string
+	PayPalClientSecret string
+	PayPalWebhookID    string
 }
 
 type PaymentRequest struct {

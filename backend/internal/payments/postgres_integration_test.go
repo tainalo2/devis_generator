@@ -90,6 +90,53 @@ func TestPostgresCheckoutReservationSerializesConcurrency(t *testing.T) {
 	}
 }
 
+func TestPostgresCreatingLeaseActiveAndExpiredReclaim(t *testing.T) {
+	pool, ctx, owner, doc := paymentTestDB(t)
+	key := uuid.NewString()
+	if _, err := pool.Exec(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,idempotency_key,status,reserved_at,lease_expires_at) VALUES($1,$2,'stripe',$3,'creating',NOW(),NOW()+interval '5 minutes')`, owner, doc, key); err != nil {
+		t.Fatal(err)
+	}
+	claim := func() int64 {
+		tag, err := pool.Exec(ctx, `UPDATE payment_attempts SET reserved_at=NOW(),lease_expires_at=NOW()+interval '5 minutes' WHERE provider='stripe' AND idempotency_key=$1 AND status='creating' AND lease_expires_at<=NOW()`, key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return tag.RowsAffected()
+	}
+	if got := claim(); got != 0 {
+		t.Fatalf("active lease reclaimed: %d", got)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE payment_attempts SET lease_expires_at=NOW()-interval '1 second' WHERE provider='stripe' AND idempotency_key=$1`, key); err != nil {
+		t.Fatal(err)
+	}
+	if got := claim(); got != 1 {
+		t.Fatalf("expired lease claims=%d want 1", got)
+	}
+	var stored string
+	if err := pool.QueryRow(ctx, `SELECT idempotency_key FROM payment_attempts WHERE provider='stripe' AND idempotency_key=$1`, key).Scan(&stored); err != nil || stored != key {
+		t.Fatalf("stable key=%q err=%v", stored, err)
+	}
+}
+
+func TestPostgresFinalizationFailureRemainsRecoverable(t *testing.T) {
+	pool, ctx, owner, doc := paymentTestDB(t)
+	key := uuid.NewString()
+	if _, err := pool.Exec(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,idempotency_key,status,reserved_at,lease_expires_at) VALUES($1,$2,'stripe',$3,'creating',NOW(),NOW()-interval '1 second')`, owner, doc, key); err != nil {
+		t.Fatal(err)
+	}
+	tag, err := pool.Exec(ctx, `UPDATE payment_attempts SET reserved_at=NOW(),lease_expires_at=NOW()+interval '5 minutes' WHERE provider='stripe' AND idempotency_key=$1 AND status='creating' AND lease_expires_at<=NOW()`, key)
+	if err != nil || tag.RowsAffected() != 1 {
+		t.Fatalf("recovery claim rows=%d err=%v", tag.RowsAffected(), err)
+	}
+	if _, err = pool.Exec(ctx, `UPDATE payment_attempts SET external_id='provider-stable',checkout_url='https://checkout',status='pending' WHERE provider='stripe' AND idempotency_key=$1 AND status='creating'`, key); err != nil {
+		t.Fatal(err)
+	}
+	var status string
+	if err = pool.QueryRow(ctx, `SELECT status FROM payment_attempts WHERE provider='stripe' AND idempotency_key=$1`, key).Scan(&status); err != nil || status != "pending" {
+		t.Fatalf("status=%q err=%v", status, err)
+	}
+}
+
 func TestPostgresWebhookDedupeAndTenantIsolation(t *testing.T) {
 	pool, ctx, owner, doc := paymentTestDB(t)
 	var attempt uuid.UUID

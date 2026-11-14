@@ -134,11 +134,12 @@ func main() {
 	stripeAdapter := &paymentbyo.StripeAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.stripe.com")}
 	publicBaseURL := strings.TrimRight(os.Getenv("PUBLIC_BASE_URL"), "/")
 	connectCfg := stripeconnect.ConfigFromEnv()
+	connectSvc := stripeconnect.NewService(pool, stripeconnect.StripeAccountClient{Config: connectCfg}, connectCfg)
 	paymentSvc := payments.New(pool, paymentSecretsVault, bizStore, map[paymentbyo.Provider]paymentbyo.ProviderAdapter{
 		paymentbyo.ProviderStripe:        stripeAdapter,
 		paymentbyo.ProviderMollie:        &paymentbyo.MollieAdapter{HTTP: paymentbyo.NewHTTPClient("https://api.mollie.com"), WebhookURL: publicBaseURL + "/api/v1/payments/webhooks/mollie"},
 		paymentbyo.ProviderPayPal:        paymentbyo.NewPayPalAdapter(paymentbyo.NewHTTPClient("https://api-m.sandbox.paypal.com"), paymentbyo.NewHTTPClient("https://api-m.paypal.com")),
-		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter, ComplianceAck: connectCfg.ComplianceAck, FeeBPS: connectCfg.FeeBPS, FeeFixedCents: connectCfg.FeeFixedCents, FeeCapCents: connectCfg.FeeCapCents},
+		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter, PlatformSecretKey: connectCfg.PlatformSecretKey, WebhookSecret: connectCfg.WebhookSecret, ComplianceAck: connectCfg.ComplianceAck, FeeBPS: connectCfg.FeeBPS, FeeFixedCents: connectCfg.FeeFixedCents, FeeCapCents: connectCfg.FeeCapCents},
 	})
 
 	api := httpapi.New(httpapi.Options{
@@ -167,6 +168,7 @@ func main() {
 		BankCoordRepo:     bankCoordRepo,
 		PaymentFlagsStore: paymentFlagsStore,
 		Payments:          paymentSvc,
+		StripeConnect:     connectSvc,
 	})
 
 	srv := &http.Server{

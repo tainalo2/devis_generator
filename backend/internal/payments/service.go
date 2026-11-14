@@ -21,16 +21,14 @@ import (
 var ErrNotFound = errors.New("payment configuration not found")
 
 type ConfigInput struct {
-	Provider                   paymentbyo.Provider `json:"provider"`
-	Env                        paymentbyo.Env      `json:"env"`
-	StripeSecretKey            string              `json:"stripe_secret_key,omitempty"`
-	StripeWebhookSecret        string              `json:"stripe_webhook_secret,omitempty"`
-	MollieAPIKey               string              `json:"mollie_api_key,omitempty"`
-	PayPalClientID             string              `json:"paypal_client_id,omitempty"`
-	PayPalClientSecret         string              `json:"paypal_client_secret,omitempty"`
-	PayPalWebhookID            string              `json:"paypal_webhook_id,omitempty"`
-	StripeConnectSecret        string              `json:"stripe_connect_secret,omitempty"`
-	StripeConnectWebhookSecret string              `json:"stripe_connect_webhook_secret,omitempty"`
+	Provider            paymentbyo.Provider `json:"provider"`
+	Env                 paymentbyo.Env      `json:"env"`
+	StripeSecretKey     string              `json:"stripe_secret_key,omitempty"`
+	StripeWebhookSecret string              `json:"stripe_webhook_secret,omitempty"`
+	MollieAPIKey        string              `json:"mollie_api_key,omitempty"`
+	PayPalClientID      string              `json:"paypal_client_id,omitempty"`
+	PayPalClientSecret  string              `json:"paypal_client_secret,omitempty"`
+	PayPalWebhookID     string              `json:"paypal_webhook_id,omitempty"`
 }
 
 type ConfigView struct {
@@ -69,7 +67,6 @@ func secretFields(in ConfigInput) map[paymentsecrets.Kind]string {
 		paymentsecrets.KindStripeAPIKey: in.StripeSecretKey, paymentsecrets.KindStripeWebhookSecret: in.StripeWebhookSecret,
 		paymentsecrets.KindMollieAPIKey: in.MollieAPIKey, paymentsecrets.KindPayPalClientID: in.PayPalClientID,
 		paymentsecrets.KindPayPalClientSecret: in.PayPalClientSecret, paymentsecrets.KindPayPalWebhookID: in.PayPalWebhookID,
-		paymentsecrets.KindStripeConnectSecret: in.StripeConnectSecret, paymentsecrets.KindStripeConnectWebhookSecret: in.StripeConnectWebhookSecret,
 	}
 }
 func kindsFor(p paymentbyo.Provider) []paymentsecrets.Kind {
@@ -81,7 +78,7 @@ func kindsFor(p paymentbyo.Provider) []paymentsecrets.Kind {
 	case paymentbyo.ProviderPayPal:
 		return []paymentsecrets.Kind{paymentsecrets.KindPayPalClientID, paymentsecrets.KindPayPalClientSecret, paymentsecrets.KindPayPalWebhookID}
 	case paymentbyo.ProviderStripeConnect:
-		return []paymentsecrets.Kind{paymentsecrets.KindStripeConnectSecret, paymentsecrets.KindStripeConnectWebhookSecret}
+		return []paymentsecrets.Kind{}
 	}
 	return nil
 }
@@ -90,7 +87,7 @@ func (s *Service) PutConfig(ctx context.Context, actor paymentsecrets.Actor, in 
 	if ad == nil {
 		return ConfigView{}, fmt.Errorf("unsupported provider")
 	}
-	cfg := paymentbyo.Config{Provider: in.Provider, Env: in.Env, StripeSecretKey: in.StripeSecretKey, StripeWebhookSecret: in.StripeWebhookSecret, MollieAPIKey: in.MollieAPIKey, PayPalClientID: in.PayPalClientID, PayPalClientSecret: in.PayPalClientSecret, PayPalWebhookID: in.PayPalWebhookID, StripeConnectSecret: in.StripeConnectSecret, StripeConnectWebhookSecret: in.StripeConnectWebhookSecret}
+	cfg := paymentbyo.Config{Provider: in.Provider, Env: in.Env, StripeSecretKey: in.StripeSecretKey, StripeWebhookSecret: in.StripeWebhookSecret, MollieAPIKey: in.MollieAPIKey, PayPalClientID: in.PayPalClientID, PayPalClientSecret: in.PayPalClientSecret, PayPalWebhookID: in.PayPalWebhookID}
 	if err := ad.ValidateConfig(cfg); err != nil {
 		return ConfigView{}, err
 	}
@@ -204,10 +201,7 @@ func (s *Service) load(ctx context.Context, actor paymentsecrets.Actor, p paymen
 			c.PayPalClientSecret = string(b)
 		case paymentsecrets.KindPayPalWebhookID:
 			c.PayPalWebhookID = string(b)
-		case paymentsecrets.KindStripeConnectSecret:
-			c.StripeConnectSecret = string(b)
-		case paymentsecrets.KindStripeConnectWebhookSecret:
-			c.StripeConnectWebhookSecret = string(b)
+
 		}
 	}
 	return c, nil
@@ -250,9 +244,9 @@ func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docI
 	var existingID, existingURL *string
 	var state string
 	var reserved bool
-	err = s.pool.QueryRow(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,idempotency_key,status) VALUES($1,$2,$3,$4,'creating') ON CONFLICT(provider,idempotency_key) DO NOTHING RETURNING true`, actor.UserID, doc.ID, in.Provider, req.IdempotencyKey).Scan(&reserved)
+	err = s.pool.QueryRow(ctx, `INSERT INTO payment_attempts(owner_id,document_id,provider,idempotency_key,status,reserved_at,lease_expires_at) VALUES($1,$2,$3,$4,'creating',NOW(),NOW()+interval '5 minutes') ON CONFLICT(provider,idempotency_key) DO NOTHING RETURNING true`, actor.UserID, doc.ID, in.Provider, req.IdempotencyKey).Scan(&reserved)
 	if errors.Is(err, pgx.ErrNoRows) {
-		err = s.pool.QueryRow(ctx, `UPDATE payment_attempts SET status='creating',last_error=NULL,updated_at=NOW() WHERE provider=$1 AND idempotency_key=$2 AND owner_id=$3 AND document_id=$4 AND status='failed' RETURNING true`, in.Provider, req.IdempotencyKey, actor.UserID, doc.ID).Scan(&reserved)
+		err = s.pool.QueryRow(ctx, `UPDATE payment_attempts SET status='creating',last_error=NULL,reserved_at=NOW(),lease_expires_at=NOW()+interval '5 minutes',updated_at=NOW() WHERE provider=$1 AND idempotency_key=$2 AND owner_id=$3 AND document_id=$4 AND (status='failed' OR (status='creating' AND lease_expires_at<=NOW())) RETURNING true`, in.Provider, req.IdempotencyKey, actor.UserID, doc.ID).Scan(&reserved)
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = s.pool.QueryRow(ctx, `SELECT external_id,checkout_url,status FROM payment_attempts WHERE provider=$1 AND idempotency_key=$2 AND owner_id=$3 AND document_id=$4`, in.Provider, req.IdempotencyKey, actor.UserID, doc.ID).Scan(&existingID, &existingURL, &state)
 		}
@@ -276,7 +270,8 @@ func (s *Service) Checkout(ctx context.Context, actor paymentsecrets.Actor, docI
 		if err == nil {
 			err = fmt.Errorf("payment attempt finalization lost")
 		}
-		_, _ = s.pool.Exec(ctx, `UPDATE payment_attempts SET status='failed',last_error=$1,updated_at=NOW() WHERE owner_id=$2 AND provider=$3 AND idempotency_key=$4 AND status='creating'`, err.Error(), actor.UserID, in.Provider, req.IdempotencyKey)
+		// Leave creating recoverable: after lease expiry a retry reuses the
+		// stable provider idempotency key and can finalize the accepted session.
 		return paymentbyo.PaymentSession{}, err
 	}
 	return session, nil

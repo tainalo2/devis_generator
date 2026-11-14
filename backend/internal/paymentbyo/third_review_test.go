@@ -40,8 +40,8 @@ func TestStripeConnectCheckoutUsesPlatformAccountAndBoundedFee(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]string{"id": "cs_connect", "url": "https://checkout"})
 	}))
 	defer srv.Close()
-	a := &StripeConnectAdapter{Stripe: &StripeAdapter{HTTP: NewHTTPClient(srv.URL)}, ComplianceAck: true, FeeBPS: 500, FeeFixedCents: 25, FeeCapCents: 100}
-	s, err := a.CreatePayment(t.Context(), Config{Env: EnvSandbox, StripeConnectSecret: "sk_test_platform", StripeConnectWebhookSecret: "whsec"}, PaymentRequest{Amount: 5000, Currency: "EUR", ConnectedAccountID: "acct_1"})
+	a := &StripeConnectAdapter{Stripe: &StripeAdapter{HTTP: NewHTTPClient(srv.URL)}, PlatformSecretKey: "sk_test_platform", WebhookSecret: "whsec", ComplianceAck: true, FeeBPS: 500, FeeFixedCents: 25, FeeCapCents: 100}
+	s, err := a.CreatePayment(t.Context(), Config{Env: EnvSandbox}, PaymentRequest{Amount: 5000, Currency: "EUR", ConnectedAccountID: "acct_1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,8 +51,8 @@ func TestStripeConnectCheckoutUsesPlatformAccountAndBoundedFee(t *testing.T) {
 }
 
 func TestStripeConnectCheckoutRejectsMissingAccountAndCompliance(t *testing.T) {
-	a := &StripeConnectAdapter{Stripe: &StripeAdapter{HTTP: NewHTTPClient("http://invalid")}}
-	_, err := a.CreatePayment(t.Context(), Config{Env: EnvSandbox, StripeConnectSecret: "sk_test_platform", StripeConnectWebhookSecret: "whsec"}, PaymentRequest{Amount: 100, Currency: "EUR"})
+	a := &StripeConnectAdapter{Stripe: &StripeAdapter{HTTP: NewHTTPClient("http://invalid")}, PlatformSecretKey: "sk_test_platform", WebhookSecret: "whsec"}
+	_, err := a.CreatePayment(t.Context(), Config{Env: EnvSandbox}, PaymentRequest{Amount: 100, Currency: "EUR"})
 	if err == nil {
 		t.Fatal("expected fail-closed rejection")
 	}

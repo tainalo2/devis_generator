@@ -1,5 +1,5 @@
 ALTER TABLE payment_secrets DROP CONSTRAINT IF EXISTS payment_secrets_kind_check;
-ALTER TABLE payment_secrets ADD CONSTRAINT payment_secrets_kind_check CHECK (kind IN ('iban','bic','byo_provider_api_key','stripe_connect_credential','oauth_gmail_token','oauth_microsoft_token','smtp_password','stripe_api_key','stripe_webhook_secret','mollie_api_key','paypal_client_id','paypal_client_secret','paypal_webhook_id','stripe_connect_secret','stripe_connect_webhook_secret'));
+ALTER TABLE payment_secrets ADD CONSTRAINT payment_secrets_kind_check CHECK (kind IN ('iban','bic','byo_provider_api_key','stripe_connect_credential','oauth_gmail_token','oauth_microsoft_token','smtp_password','stripe_api_key','stripe_webhook_secret','mollie_api_key','paypal_client_id','paypal_client_secret','paypal_webhook_id'));
 
 CREATE TABLE payment_provider_configs (
  owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -12,7 +12,8 @@ CREATE INDEX payment_provider_configs_owner_idx ON payment_provider_configs(owne
 
 CREATE TABLE stripe_connect_accounts (
  owner_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
- account_id TEXT NOT NULL UNIQUE, country CHAR(2) NOT NULL,
+ account_id TEXT NOT NULL UNIQUE, country CHAR(2) NOT NULL, default_currency CHAR(3) NOT NULL DEFAULT 'EUR',
+	capabilities JSONB NOT NULL DEFAULT '{}'::jsonb, compliance JSONB NOT NULL DEFAULT '{}'::jsonb,
  charges_enabled BOOLEAN NOT NULL DEFAULT FALSE, payouts_enabled BOOLEAN NOT NULL DEFAULT FALSE,
  card_payments_active BOOLEAN NOT NULL DEFAULT FALSE, transfers_active BOOLEAN NOT NULL DEFAULT FALSE,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -25,7 +26,8 @@ CREATE TABLE payment_attempts (
  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
  document_id UUID NOT NULL, provider TEXT NOT NULL, external_id TEXT, checkout_url TEXT, idempotency_key TEXT NOT NULL,
  status TEXT NOT NULL DEFAULT 'creating' CHECK(status IN ('creating','pending','paid','failed')), last_error TEXT,
- created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	reserved_at TIMESTAMPTZ, lease_expires_at TIMESTAMPTZ,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  UNIQUE(provider,idempotency_key), UNIQUE(owner_id,id),
  FOREIGN KEY(owner_id,document_id) REFERENCES documents(user_id,id) ON DELETE CASCADE
 );

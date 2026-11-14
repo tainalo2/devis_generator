@@ -16,21 +16,20 @@ import (
 type Kind string
 
 const (
-	KindIBAN                       Kind = "iban"
-	KindBIC                        Kind = "bic"
-	KindBYOProviderAPIKey          Kind = "byo_provider_api_key" // legacy
-	KindStripeAPIKey               Kind = "stripe_api_key"
-	KindStripeWebhookSecret        Kind = "stripe_webhook_secret"
-	KindMollieAPIKey               Kind = "mollie_api_key"
-	KindPayPalClientID             Kind = "paypal_client_id"
-	KindPayPalClientSecret         Kind = "paypal_client_secret"
-	KindPayPalWebhookID            Kind = "paypal_webhook_id"
-	KindStripeConnectCredential    Kind = "stripe_connect_credential" // legacy
-	KindStripeConnectSecret        Kind = "stripe_connect_secret"
-	KindStripeConnectWebhookSecret Kind = "stripe_connect_webhook_secret"
-	KindOAuthGmailToken            Kind = "oauth_gmail_token"
-	KindOAuthMicrosoftToken        Kind = "oauth_microsoft_token"
-	KindSMTPPassword               Kind = "smtp_password"
+	KindIBAN                    Kind = "iban"
+	KindBIC                     Kind = "bic"
+	KindBYOProviderAPIKey       Kind = "byo_provider_api_key" // legacy
+	KindStripeAPIKey            Kind = "stripe_api_key"
+	KindStripeWebhookSecret     Kind = "stripe_webhook_secret"
+	KindMollieAPIKey            Kind = "mollie_api_key"
+	KindPayPalClientID          Kind = "paypal_client_id"
+	KindPayPalClientSecret      Kind = "paypal_client_secret"
+	KindPayPalWebhookID         Kind = "paypal_webhook_id"
+	KindStripeConnectCredential Kind = "stripe_connect_credential" // legacy
+
+	KindOAuthGmailToken     Kind = "oauth_gmail_token"
+	KindOAuthMicrosoftToken Kind = "oauth_microsoft_token"
+	KindSMTPPassword        Kind = "smtp_password"
 )
 
 var (
@@ -159,7 +158,6 @@ func (k Kind) Valid() bool {
 	case KindIBAN, KindBIC, KindBYOProviderAPIKey, KindStripeAPIKey,
 		KindStripeWebhookSecret, KindMollieAPIKey, KindPayPalClientID,
 		KindPayPalClientSecret, KindPayPalWebhookID, KindStripeConnectCredential,
-		KindStripeConnectSecret, KindStripeConnectWebhookSecret,
 		KindOAuthGmailToken, KindOAuthMicrosoftToken, KindSMTPPassword:
 		return true
 	default:

@@ -13,12 +13,14 @@ import (
 // provider path while reusing Stripe's protocol implementation.
 type StripeConnectAdapter struct {
 	Stripe                             *StripeAdapter
+	PlatformSecretKey                  string
+	WebhookSecret                      string
 	ComplianceAck                      bool
 	FeeBPS, FeeFixedCents, FeeCapCents int64
 }
 
 func (a *StripeConnectAdapter) stripeConfig(c Config) Config {
-	return Config{Provider: ProviderStripe, Env: c.Env, StripeSecretKey: c.StripeConnectSecret, StripeWebhookSecret: c.StripeConnectWebhookSecret}
+	return Config{Provider: ProviderStripe, Env: c.Env, StripeSecretKey: a.PlatformSecretKey, StripeWebhookSecret: a.WebhookSecret}
 }
 func (a *StripeConnectAdapter) ValidateConfig(c Config) error {
 	if a == nil || a.Stripe == nil {
@@ -47,7 +49,7 @@ func (a *StripeConnectAdapter) CreatePayment(ctx context.Context, c Config, r Pa
 		fee = r.Amount
 	}
 	v := url.Values{"mode": {"payment"}, "success_url": {r.ReturnURL}, "cancel_url": {r.CancelURL}, "line_items[0][quantity]": {"1"}, "line_items[0][price_data][unit_amount]": {strconv.FormatInt(r.Amount, 10)}, "line_items[0][price_data][currency]": {strings.ToLower(r.Currency)}, "line_items[0][price_data][product_data][name]": {"Invoice " + r.DocumentID}, "metadata[tenant_id]": {r.TenantID}, "metadata[document_id]": {r.DocumentID}, "payment_intent_data[application_fee_amount]": {strconv.FormatInt(fee, 10)}}
-	b, code, err := a.Stripe.HTTP.do(ctx, "POST", "/v1/checkout/sessions", []byte(v.Encode()), map[string]string{"Authorization": "Bearer " + c.StripeConnectSecret, "Stripe-Account": r.ConnectedAccountID, "Content-Type": "application/x-www-form-urlencoded", "Idempotency-Key": r.IdempotencyKey})
+	b, code, err := a.Stripe.HTTP.do(ctx, "POST", "/v1/checkout/sessions", []byte(v.Encode()), map[string]string{"Authorization": "Bearer " + a.PlatformSecretKey, "Stripe-Account": r.ConnectedAccountID, "Content-Type": "application/x-www-form-urlencoded", "Idempotency-Key": r.IdempotencyKey})
 	if err != nil || code >= 400 {
 		if err == nil {
 			err = fmt.Errorf("stripe connect %d: %s", code, b)
@@ -70,5 +72,5 @@ func (a *StripeConnectAdapter) VerifyWebhook(c Config, h map[string]string, b []
 }
 func (a *StripeConnectAdapter) Revoke(Config) error { return nil }
 func (a *StripeConnectAdapter) Fingerprint(c Config) string {
-	return "stripe_connect:" + last4(c.StripeConnectSecret)
+	return "stripe_connect:" + last4(a.PlatformSecretKey)
 }

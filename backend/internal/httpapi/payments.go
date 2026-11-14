@@ -104,9 +104,15 @@ func (s *Server) handlePaymentCheckout(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, v)
 }
 func (s *Server) handlePaymentWebhook(w http.ResponseWriter, r *http.Request) {
+	// Admission happens before provider parsing, body parsing, candidate lookup,
+	// secret reads, signature verification, or any provider/OAuth traffic.
+	if !s.webhookIPLimiter.Allow(s.clientIP(r)) || !s.webhookGlobalLimiter.Allow("webhooks") {
+		writeAPIError(w, http.StatusTooManyRequests, "Webhook invalide.")
+		return
+	}
 	p, ok := providerParam(r)
 	if !ok {
-		writeAPIError(w, 404, "Fournisseur invalide.")
+		writeAPIError(w, 400, "Webhook invalide.")
 		return
 	}
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))

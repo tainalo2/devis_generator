@@ -164,8 +164,7 @@ func TestEmailSecretsKindsAccepted(t *testing.T) {
 
 func TestProviderCredentialKindsAreExplicitAndValid(t *testing.T) {
 	kinds := []Kind{KindStripeAPIKey, KindStripeWebhookSecret, KindMollieAPIKey,
-		KindPayPalClientID, KindPayPalClientSecret, KindPayPalWebhookID,
-		KindStripeConnectSecret, KindStripeConnectWebhookSecret}
+		KindPayPalClientID, KindPayPalClientSecret, KindPayPalWebhookID}
 	for _, kind := range kinds {
 		if !kind.Valid() {
 			t.Fatalf("kind %q must be valid", kind)

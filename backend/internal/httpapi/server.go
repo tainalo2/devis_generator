@@ -26,36 +26,40 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
+	"github.com/tainalo2/devis_generator/backend/internal/stripeconnect"
 )
 
 // Server is the HTTP API and static file server.
 type Server struct {
-	db                Pinger
-	store             *authstore.Store
-	biz               *biz.Store
-	box               *crypto.Box
-	legal             *legal.Service
-	gmailMail         gmailMailer
-	microsoftMail     microsoftMailer
-	smtp              *smtpconfig.Service
-	reminders         *reminders.Service
-	publicConfig      *PublicSiteConfig
-	staticDir         string
-	version           string
-	router            chi.Router
-	cookieSecure      bool
-	sessionTTL        time.Duration
-	argon2            auth.Argon2Params
-	authLimiter       *RateLimiter
-	accountLimiter    *RateLimiter
-	legalGuestLimiter *RateLimiter
-	guestLimiter      *RateLimiter
-	previewLimiter    *RateLimiter
-	trustedProxies    []*net.IPNet
-	bankCoordRepo     *bankcoordsvault.Repository
-	paymentFlags      *paymentflags.Store
-	payments          *payments.Service
-	docLinkSecret     []byte
+	db                   Pinger
+	store                *authstore.Store
+	biz                  *biz.Store
+	box                  *crypto.Box
+	legal                *legal.Service
+	gmailMail            gmailMailer
+	microsoftMail        microsoftMailer
+	smtp                 *smtpconfig.Service
+	reminders            *reminders.Service
+	publicConfig         *PublicSiteConfig
+	staticDir            string
+	version              string
+	router               chi.Router
+	cookieSecure         bool
+	sessionTTL           time.Duration
+	argon2               auth.Argon2Params
+	authLimiter          *RateLimiter
+	accountLimiter       *RateLimiter
+	legalGuestLimiter    *RateLimiter
+	guestLimiter         *RateLimiter
+	previewLimiter       *RateLimiter
+	webhookIPLimiter     *RateLimiter
+	webhookGlobalLimiter *RateLimiter
+	trustedProxies       []*net.IPNet
+	bankCoordRepo        *bankcoordsvault.Repository
+	paymentFlags         *paymentflags.Store
+	payments             *payments.Service
+	stripeConnect        *stripeconnect.Service
+	docLinkSecret        []byte
 }
 
 // Options configures the HTTP server.
@@ -93,6 +97,7 @@ type Options struct {
 	BankCoordRepo     *bankcoordsvault.Repository
 	PaymentFlagsStore *paymentflags.Store
 	Payments          *payments.Service
+	StripeConnect     *stripeconnect.Service
 	DocLinkSecret     []byte
 	Argon2            auth.Argon2Params
 	// TrustedProxies : seuls ces réseaux peuvent fournir X-Forwarded-For.
@@ -102,31 +107,34 @@ type Options struct {
 // New builds the chi router with health, auth, business API and SPA.
 func New(opts Options) *Server {
 	s := &Server{
-		db:                opts.DB,
-		store:             opts.Store,
-		biz:               opts.Biz,
-		box:               opts.Box,
-		legal:             opts.Legal,
-		gmailMail:         opts.GmailMail,
-		microsoftMail:     opts.MicrosoftMail,
-		smtp:              opts.SMTP,
-		reminders:         opts.Reminders,
-		publicConfig:      opts.PublicConfig,
-		staticDir:         opts.StaticDir,
-		version:           opts.Version,
-		cookieSecure:      opts.CookieSecure,
-		sessionTTL:        opts.SessionTTL,
-		argon2:            opts.Argon2,
-		authLimiter:       NewRateLimiter(20, time.Minute),
-		accountLimiter:    NewRateLimiter(10, 15*time.Minute),
-		legalGuestLimiter: NewRateLimiter(30, time.Minute),
-		guestLimiter:      NewRateLimiter(20, time.Minute),
-		previewLimiter:    NewRateLimiter(120, time.Minute),
-		trustedProxies:    opts.TrustedProxies,
-		bankCoordRepo:     opts.BankCoordRepo,
-		paymentFlags:      opts.PaymentFlagsStore,
-		payments:          opts.Payments,
-		docLinkSecret:     opts.DocLinkSecret,
+		db:                   opts.DB,
+		store:                opts.Store,
+		biz:                  opts.Biz,
+		box:                  opts.Box,
+		legal:                opts.Legal,
+		gmailMail:            opts.GmailMail,
+		microsoftMail:        opts.MicrosoftMail,
+		smtp:                 opts.SMTP,
+		reminders:            opts.Reminders,
+		publicConfig:         opts.PublicConfig,
+		staticDir:            opts.StaticDir,
+		version:              opts.Version,
+		cookieSecure:         opts.CookieSecure,
+		sessionTTL:           opts.SessionTTL,
+		argon2:               opts.Argon2,
+		authLimiter:          NewRateLimiter(20, time.Minute),
+		accountLimiter:       NewRateLimiter(10, 15*time.Minute),
+		legalGuestLimiter:    NewRateLimiter(30, time.Minute),
+		guestLimiter:         NewRateLimiter(20, time.Minute),
+		previewLimiter:       NewRateLimiter(120, time.Minute),
+		webhookIPLimiter:     NewRateLimiter(60, time.Minute),
+		webhookGlobalLimiter: NewRateLimiter(600, time.Minute),
+		trustedProxies:       opts.TrustedProxies,
+		bankCoordRepo:        opts.BankCoordRepo,
+		paymentFlags:         opts.PaymentFlagsStore,
+		payments:             opts.Payments,
+		stripeConnect:        opts.StripeConnect,
+		docLinkSecret:        opts.DocLinkSecret,
 	}
 	if s.version == "" {
 		s.version = "dev"
@@ -204,6 +212,11 @@ func New(opts Options) *Server {
 				r.Put("/payments/config/{provider}", s.requireAuth(s.handlePutPaymentConfig))
 				r.Delete("/payments/config/{provider}", s.requireAuth(s.handleDeletePaymentConfig))
 				r.Post("/documents/{id}/checkout", s.requireAuth(s.handlePaymentCheckout))
+				if s.stripeConnect != nil {
+					r.Post("/payments/stripe-connect/onboard", s.requireAuth(s.handleStripeConnectOnboard))
+					r.Post("/payments/stripe-connect/refresh", s.requireAuth(s.handleStripeConnectRefresh))
+					r.Get("/payments/stripe-connect/callback", s.requireAuth(s.handleStripeConnectCallback))
+				}
 			}
 			r.Post("/documents/{id}/reminders", s.requireAuth(s.handleSendReminder))
 			r.Get("/documents/{id}/reminders", s.requireAuth(s.handleListReminders))

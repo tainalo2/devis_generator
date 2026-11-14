@@ -1,6 +1,7 @@
 package stripeconnect
 
 import (
+	"context"
 	"fmt"
 
 	stripe "github.com/stripe/stripe-go/v81"
@@ -14,6 +15,8 @@ type ConnectedAccount struct {
 	PayoutsEnabled   bool
 	DetailsSubmitted bool
 	Capabilities     map[string]string
+	Country          string
+	DefaultCurrency  string
 }
 
 func CreateExpressAccount(cfg Config, email string) (*ConnectedAccount, error) {
@@ -78,7 +81,25 @@ func toConnected(a *stripe.Account) *ConnectedAccount {
 		PayoutsEnabled:   a.PayoutsEnabled,
 		DetailsSubmitted: a.DetailsSubmitted,
 		Capabilities:     caps,
+		Country:          a.Country,
+		DefaultCurrency:  string(a.DefaultCurrency),
 	}
+}
+
+// StripeAccountClient binds the operator-owned configuration once; tenant
+// input can never replace its platform credentials.
+type StripeAccountClient struct{ Config Config }
+
+func (c StripeAccountClient) CreateAccount(_ context.Context, email, country string) (*ConnectedAccount, error) {
+	cfg := c.Config
+	cfg.Country = country
+	return CreateExpressAccount(cfg, email)
+}
+func (c StripeAccountClient) CreateAccountLink(_ context.Context, accountID, refreshURL, returnURL string) (string, error) {
+	return CreateAccountLink(c.Config, accountID, refreshURL, returnURL)
+}
+func (c StripeAccountClient) RetrieveAccount(_ context.Context, accountID string) (*ConnectedAccount, error) {
+	return RetrieveAccount(c.Config, accountID)
 }
 
 func ReadyForPayments(acc *ConnectedAccount) bool {
