@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -150,7 +151,8 @@ func New(opts Options) *Server {
 		s.version = "dev"
 	}
 	if len(s.docLinkSecret) == 0 {
-		s.docLinkSecret = []byte("dev-doclink-secret")
+		slog.Error("DOC_LINK_SECRET environment variable is required but not set", "component", "httpapi")
+		os.Exit(1)
 	}
 	if s.sessionTTL <= 0 {
 		s.sessionTTL = 30 * 24 * time.Hour
