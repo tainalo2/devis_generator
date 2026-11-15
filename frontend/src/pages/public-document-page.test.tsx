@@ -41,13 +41,13 @@ describe("Public document page", () => {
     expect(api.fetchPublicDocumentPDF).toHaveBeenCalledWith("signed-token")
   })
 
-  it("shows a readable error when the token is invalid or expired", async () => {
-    vi.mocked(api.fetchPublicDocumentPDF).mockRejectedValue(new Error("Ce lien est invalide ou a expiré."))
+  it("shows a readable error with one generic message for invalid, expired or unknown links", async () => {
+    vi.mocked(api.fetchPublicDocumentPDF).mockRejectedValue(new Error(api.PUBLIC_LINK_UNAVAILABLE))
 
     renderPage()
 
     expect(await screen.findByRole("heading", { name: "Document indisponible" })).toBeInTheDocument()
-    expect(screen.getByText("Ce lien est invalide ou a expiré.")).toBeInTheDocument()
+    expect(screen.getByText(api.PUBLIC_LINK_UNAVAILABLE)).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByText("Chargement du document…")).not.toBeInTheDocument())
   })
 })

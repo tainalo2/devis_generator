@@ -36,6 +36,7 @@ type Server struct {
 	store                *authstore.Store
 	apiKeyLookup         func(context.Context, string) (authstore.APIKey, authstore.User, error)
 	biz                  *biz.Store
+	publicDocs           publicDocStore
 	box                  *crypto.Box
 	legal                *legal.Service
 	gmailMail            gmailMailer
@@ -82,9 +83,11 @@ type gmailMailer interface {
 }
 
 type Options struct {
-	DB                Pinger
-	Store             *authstore.Store
-	Biz               *biz.Store
+	DB    Pinger
+	Store *authstore.Store
+	Biz   *biz.Store
+	// PublicDocs overrides the data source of the public document link (tests); defaults to Biz.
+	PublicDocs        publicDocStore
 	Box               *crypto.Box
 	Legal             *legal.Service
 	GmailMail         gmailMailer
@@ -137,6 +140,11 @@ func New(opts Options) *Server {
 		payments:             opts.Payments,
 		stripeConnect:        opts.StripeConnect,
 		docLinkSecret:        opts.DocLinkSecret,
+	}
+	if opts.PublicDocs != nil {
+		s.publicDocs = opts.PublicDocs
+	} else if opts.Biz != nil {
+		s.publicDocs = opts.Biz
 	}
 	if s.store != nil {
 		s.apiKeyLookup = func(ctx context.Context, hash string) (authstore.APIKey, authstore.User, error) {

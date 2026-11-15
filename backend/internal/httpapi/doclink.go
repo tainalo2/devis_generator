@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -52,25 +53,49 @@ func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, response)
 }
 
+// publicDocStore is the read-only data access used by the public document link.
+type publicDocStore interface {
+	GetDocumentPublic(ctx context.Context, docID uuid.UUID) (biz.Document, uuid.UUID, error)
+	GetIssuer(ctx context.Context, userID uuid.UUID) (biz.IssuerProfile, error)
+	GetClient(ctx context.Context, userID, id uuid.UUID) (biz.Client, error)
+}
+
+// publicLinkUnavailable is the single response for every unusable link
+// (invalid, tampered, expired, unknown document, kind mismatch) so that the
+// status, body and headers reveal nothing about why the link failed.
+func publicLinkUnavailable(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "private, no-store")
+	writeJSON(w, http.StatusNotFound, map[string]string{"error": publicLinkUnavailableMessage})
+}
+
+const publicLinkUnavailableMessage = "Lien indisponible."
+
+// redactIssuerForPublic removes every bank coordinate from the issuer view used
+// for public rendering: a public link must never expose the RIB/IBAN.
+func redactIssuerForPublic(issuer biz.IssuerProfile) biz.IssuerProfile {
+	issuer.IBAN = ""
+	return issuer
+}
+
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
-	token := chi.URLParam(r, "token")
-	p, err := doclink.Verify(s.docLinkSecret, token)
-	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+	if s.publicDocs == nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
-	if doclink.Expired(p, time.Now()) {
-		writeJSON(w, http.StatusGone, map[string]string{"error": "lien expire"})
+	token := chi.URLParam(r, "token")
+	p, err := doclink.Verify(s.docLinkSecret, token)
+	if err != nil || doclink.Expired(p, time.Now()) {
+		publicLinkUnavailable(w)
 		return
 	}
 	docID, err := uuid.Parse(p.DocID)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+		publicLinkUnavailable(w)
 		return
 	}
-	document, ownerID, err := s.biz.GetDocumentPublic(r.Context(), docID)
+	document, ownerID, err := s.publicDocs.GetDocumentPublic(r.Context(), docID)
 	if errors.Is(err, biz.ErrNotFound) || (err == nil && document.Kind != p.Kind) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+		publicLinkUnavailable(w)
 		return
 	}
 	if err != nil {
@@ -78,7 +103,7 @@ func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	issuer, err := s.biz.GetIssuer(r.Context(), ownerID)
+	issuer, err := s.publicDocs.GetIssuer(r.Context(), ownerID)
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
@@ -86,11 +111,12 @@ func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
 	if len(document.IssuerSnapshot) > 0 {
 		_ = json.Unmarshal(document.IssuerSnapshot, &issuer)
 	}
+	issuer = redactIssuerForPublic(issuer)
 	client := biz.Client{Name: "Client"}
 	if document.ClientSnapshot != nil {
 		client = document.ClientSnapshot.AsClient()
 	} else if document.ClientID != nil {
-		if current, err := s.biz.GetClient(r.Context(), ownerID, *document.ClientID); err == nil {
+		if current, err := s.publicDocs.GetClient(r.Context(), ownerID, *document.ClientID); err == nil {
 			client = current
 		}
 	}

@@ -5,12 +5,12 @@ import { useParams } from "react-router-dom"
 import { LogoMark } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { fetchPublicDocumentPDF } from "@/lib/api"
+import { fetchPublicDocumentPDF, PUBLIC_LINK_UNAVAILABLE } from "@/lib/api"
 
 export function PublicDocumentPage() {
   const { token } = useParams()
   const [pdfURL, setPDFURL] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(token ? null : "Ce lien est invalide ou a expiré.")
+  const [error, setError] = useState<string | null>(token ? null : PUBLIC_LINK_UNAVAILABLE)
 
   useEffect(() => {
     if (!token) return

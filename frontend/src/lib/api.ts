@@ -197,11 +197,14 @@ export async function downloadDocumentPDF(id: string): Promise<Blob> {
   return res.blob()
 }
 
+export const PUBLIC_LINK_UNAVAILABLE = "Ce lien est indisponible."
+
 export async function fetchPublicDocumentPDF(token: string): Promise<Blob> {
   const res = await apiFetch(`/api/v1/public/documents/${encodeURIComponent(token)}/pdf`)
   if (!res.ok) {
-    const fallback = res.status === 404 || res.status === 410 ? "Ce lien est invalide ou a expiré." : "Document indisponible."
-    throw new Error(await readError(res, fallback))
+    // Same message whatever the cause (invalid, expired, unknown): never echo server detail.
+    if (res.status === 404 || res.status === 410) throw new Error(PUBLIC_LINK_UNAVAILABLE)
+    throw new Error("Document indisponible.")
   }
   return res.blob()
 }
