@@ -238,3 +238,113 @@ func TestPublicDocumentPDFIsolationAndFailuresAreIdentical(t *testing.T) {
 		}
 	}
 }
+
+func TestPublicDocumentPageCSPAllowsBlobObjectOnlyThere(t *testing.T) {
+	srv, _, _, _, _ := publicFixture(t)
+	get := func(path string) string {
+		rec := httptest.NewRecorder()
+		srv.Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		return rec.Header().Get("Content-Security-Policy")
+	}
+	page := get("/d/signed-token")
+	if !strings.Contains(page, "object-src blob:") || strings.Contains(page, "object-src 'none'") {
+		t.Fatalf("/d/{token} CSP = %q, want object-src blob:", page)
+	}
+	if want := strings.Replace(contentSecurityPolicy, "object-src 'none'", "object-src blob:; frame-src blob:", 1); page != want {
+		t.Fatalf("/d/{token} CSP differs beyond object-src: %q", page)
+	}
+	for _, p := range []string{"/", "/d", "/d/", "/d/a/b", "/login", "/api/v1/healthz", "/api/v1/public/documents/x/pdf"} {
+		if csp := get(p); !strings.Contains(csp, "object-src 'none'") || strings.Contains(csp, "blob:") && !strings.Contains(csp, "img-src 'self' data: blob:") {
+			t.Fatalf("%s CSP = %q, want object-src 'none'", p, csp)
+		}
+		if csp := get(p); csp != contentSecurityPolicy {
+			t.Fatalf("%s CSP = %q, want global policy", p, csp)
+		}
+	}
+}
+
+type countingPublicDocs struct {
+	*fakePublicDocs
+	docCalls, other int
+	failWith        error
+}
+
+func (c *countingPublicDocs) GetDocumentPublic(ctx context.Context, id uuid.UUID) (biz.Document, uuid.UUID, error) {
+	c.docCalls++
+	if c.failWith != nil {
+		return biz.Document{}, uuid.Nil, c.failWith
+	}
+	return c.fakePublicDocs.GetDocumentPublic(ctx, id)
+}
+
+func (c *countingPublicDocs) GetIssuer(ctx context.Context, id uuid.UUID) (biz.IssuerProfile, error) {
+	c.other++
+	return c.fakePublicDocs.GetIssuer(ctx, id)
+}
+
+func TestPublicDocumentLinkStoreWorkIsUniformForValidSignatures(t *testing.T) {
+	srv, opts, f, a, _ := publicFixture(t)
+	c := &countingPublicDocs{fakePublicDocs: f}
+	srv.publicDocs = c
+	expiredQuote := testInvoice(t, "D-1")
+	expiredQuote.Kind = doclink.KindQuote
+	f.docs[expiredQuote.ID] = expiredQuote
+
+	parts := strings.Split(tokenFor(t, opts, a.ID, a.Kind, a.CreatedAt), ".")
+	bad := map[string]string{
+		"garbage":    "not-a-token",
+		"forged sig": parts[0] + "." + base64.RawURLEncoding.EncodeToString([]byte("forged")),
+	}
+	for name, tok := range bad {
+		c.docCalls, c.other = 0, 0
+		if rec := getPDF(srv, tok); rec.Code != http.StatusNotFound {
+			t.Fatalf("%s: status %d", name, rec.Code)
+		}
+		if c.docCalls != 0 || c.other != 0 {
+			t.Fatalf("%s: store called (%d,%d), want none", name, c.docCalls, c.other)
+		}
+	}
+
+	failing := map[string]string{
+		"expired":       tokenFor(t, opts, expiredQuote.ID, doclink.KindQuote, time.Now().Add(-doclink.QuoteTTL-time.Minute)),
+		"absent":        tokenFor(t, opts, uuid.New(), doclink.KindInvoice, time.Now()),
+		"kind mismatch": tokenFor(t, opts, a.ID, doclink.KindQuote, a.CreatedAt),
+	}
+	for name, tok := range failing {
+		c.docCalls, c.other = 0, 0
+		if rec := getPDF(srv, tok); rec.Code != http.StatusNotFound {
+			t.Fatalf("%s: status %d", name, rec.Code)
+		}
+		if c.docCalls != 1 || c.other != 0 {
+			t.Fatalf("%s: store calls doc=%d other=%d, want doc=1 other=0", name, c.docCalls, c.other)
+		}
+	}
+	c.docCalls, c.other = 0, 0
+	if rec := getPDF(srv, tokenFor(t, opts, a.ID, a.Kind, a.CreatedAt)); rec.Code != http.StatusOK {
+		t.Fatalf("valid: status %d", rec.Code)
+	}
+	if c.docCalls != 1 {
+		t.Fatalf("valid: GetDocumentPublic calls = %d, want 1", c.docCalls)
+	}
+}
+
+func TestPublicDocumentLinkNoStoreOnInternalErrorsAndRateLimit(t *testing.T) {
+	srv, opts, f, a, _ := publicFixture(t)
+	srv.publicDocs = &countingPublicDocs{fakePublicDocs: f, failWith: context.DeadlineExceeded}
+	rec := getPDF(srv, tokenFor(t, opts, a.ID, a.Kind, a.CreatedAt))
+	if rec.Code != http.StatusInternalServerError || rec.Header().Get("Cache-Control") != "private, no-store" {
+		t.Fatalf("500 path: %d cache-control %q", rec.Code, rec.Header().Get("Cache-Control"))
+	}
+
+	srv.publicDocs = f
+	srv.publicLinkLimiter = NewRateLimiter(2, time.Hour)
+	for i := 0; i < 2; i++ {
+		if rec := getPDF(srv, "not-a-token"); rec.Code != http.StatusNotFound {
+			t.Fatalf("request %d: %d", i, rec.Code)
+		}
+	}
+	rec = getPDF(srv, "not-a-token")
+	if rec.Code != http.StatusTooManyRequests || rec.Header().Get("Cache-Control") != "private, no-store" {
+		t.Fatalf("limited: %d cache-control %q", rec.Code, rec.Header().Get("Cache-Control"))
+	}
+}

@@ -55,6 +55,7 @@ type Server struct {
 	legalGuestLimiter    *RateLimiter
 	guestLimiter         *RateLimiter
 	previewLimiter       *RateLimiter
+	publicLinkLimiter    *RateLimiter
 	webhookIPLimiter     *RateLimiter
 	webhookGlobalLimiter *RateLimiter
 	trustedProxies       []*net.IPNet
@@ -132,6 +133,7 @@ func New(opts Options) *Server {
 		legalGuestLimiter:    NewRateLimiter(30, time.Minute),
 		guestLimiter:         NewRateLimiter(20, time.Minute),
 		previewLimiter:       NewRateLimiter(120, time.Minute),
+		publicLinkLimiter:    NewRateLimiter(60, time.Minute),
 		webhookIPLimiter:     NewRateLimiter(60, time.Minute),
 		webhookGlobalLimiter: NewRateLimiter(600, time.Minute),
 		trustedProxies:       opts.TrustedProxies,

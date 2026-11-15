@@ -77,29 +77,47 @@ func redactIssuerForPublic(issuer biz.IssuerProfile) biz.IssuerProfile {
 	return issuer
 }
 
+// handleDocumentLink serves the PDF behind a public signed link.
+//
+// Oracle policy: a token whose HMAC signature is invalid cannot be forged
+// without the server secret, so rejecting it early reveals nothing to an
+// attacker who holds no valid token (the early path is also rate limited per
+// IP, see publicLinkLimiter). For every token with a VALID signature the
+// observable work is identical: GetDocumentPublic is always called first, then
+// expiry, presence and kind are evaluated after the load and mapped to the one
+// unavailable response, so path, store access and body do not distinguish
+// expired / unknown document / kind mismatch.
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
+	// Set first so that every response, including internal errors, is private.
+	w.Header().Set("Cache-Control", "private, no-store")
+	if s.publicLinkLimiter != nil && !s.publicLinkLimiter.Allow("doclink:"+s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de requêtes. Réessayez plus tard.")
+		return
+	}
 	if s.publicDocs == nil {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
 	token := chi.URLParam(r, "token")
 	p, err := doclink.Verify(s.docLinkSecret, token)
-	if err != nil || doclink.Expired(p, time.Now()) {
-		publicLinkUnavailable(w)
-		return
-	}
-	docID, err := uuid.Parse(p.DocID)
 	if err != nil {
 		publicLinkUnavailable(w)
 		return
+	}
+	// A validly signed token always has a UUID; fall back to uuid.Nil so the
+	// store is still queried identically if it somehow does not.
+	docID, perr := uuid.Parse(p.DocID)
+	if perr != nil {
+		docID = uuid.Nil
 	}
 	document, ownerID, err := s.publicDocs.GetDocumentPublic(r.Context(), docID)
-	if errors.Is(err, biz.ErrNotFound) || (err == nil && document.Kind != p.Kind) {
-		publicLinkUnavailable(w)
+	notFound := errors.Is(err, biz.ErrNotFound)
+	if err != nil && !notFound {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
-	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+	if notFound || perr != nil || document.Kind != p.Kind || doclink.Expired(p, time.Now()) {
+		publicLinkUnavailable(w)
 		return
 	}
 
