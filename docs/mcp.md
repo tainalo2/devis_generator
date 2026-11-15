@@ -35,7 +35,9 @@ Exemple de configuration client MCP (Claude Desktop / compatible) :
 4. `get_document_link` — lien public stable d'un document.
 5. `list_documents` — recherche paginée par curseur.
 
-Montants en chaînes décimales + devise ISO 4217. Totaux calculés serveur. `idempotency_key` obligatoire pour toute création. Voir `docs/` contrat T1 et `mcp-tools-v1.md` pour les signatures complètes.
+Montants en chaînes décimales + devise ISO 4217. Totaux calculés serveur. Voir `docs/` contrat T1 et `mcp-tools-v1.md` pour les signatures complètes.
+
+Le schéma `inputSchema` renvoyé par `tools/list` décrit précisément les arguments (lignes, `idempotency_key`) et reflète la validation réellement appliquée.
 
 ### Format des lignes de création
 
@@ -64,6 +66,51 @@ lignes dans le format MCP public suivant :
 Les champs internes `quantity_milli` et `unit_price_cents` ne font pas partie
 du contrat MCP public.
 
+Schéma d'une ligne (`additionalProperties: false`, toute autre propriété est
+refusée, y compris `quantity_milli` et `unit_price_cents`) :
+
+| Champ | Type | Obligatoire | Contrainte |
+|---|---|---|---|
+| `description` | chaîne | oui | 1 à 2000 caractères, non vide |
+| `quantite` | chaîne décimale | oui | **strictement positive** ; une quantité négative ou nulle, ou arrondie à zéro, est refusée |
+| `prix_unitaire_ht` | chaîne décimale | oui | prix négatif autorisé (ligne de crédit) |
+| `tax_rate_bps` | entier | non (défaut 0) | `0`, `210`, `550`, `1000` ou `2000` ; forcé à 0 en régime `franchise_293b` |
+| `discount_bps` | entier | non (défaut 0) | de 0 à 10000 |
+
+`lignes` contient au plus 500 lignes. Une ligne invalide est rejetée par le
+serveur MCP (`status: "error"`) avant tout appel à l'API.
+
+## Idempotence des créations
+
+`idempotency_key` est **obligatoire** pour `create_devis`, `create_facture` et
+`create_acompte` (1 à 255 caractères parmi `A-Z a-z 0-9 . _ : / -`, par exemple
+un UUID). Sans clé, le serveur renvoie
+`{"status":"clarification","missing":["idempotency_key"]}` et rien n'est créé ;
+une clé au format invalide donne `status: "error"`.
+
+- Le serveur MCP transmet la clé à l'API dans l'en-tête `Idempotency-Key` de la
+  requête de création (`POST /documents`, `POST /documents/{id}/convert-to-invoice`
+  ou `POST /documents/{id}/deposit-invoice`).
+- L'API la rend durable en PostgreSQL (table `document_idempotency_keys`,
+  migration `000022`), pour la portée **(compte propriétaire, opération, clé)**.
+  La clé est insérée dans la même transaction que la création du document ; la
+  clé primaire sérialise les requêtes concurrentes.
+- **Même clé + même requête** : aucun nouveau document ; l'API renvoie le
+  document déjà créé (HTTP 200 + `Idempotent-Replayed: true`, au lieu de 201).
+  Le document renvoyé est son état courant.
+- **Même clé + requête différente** : HTTP 409 (le tool renvoie `status: "error"`).
+  La requête comparée est un hash SHA-256 de la requête normalisée (pour
+  `create_acompte`, les lignes d'acompte calculées à partir du devis).
+- Une création en échec (rollback) ne consomme pas la clé : elle peut être retentée.
+- **Expiration : 24 h** après la création. Les clés expirées sont purgées
+  opportunément à chaque création du même compte et par
+  `Store.PurgeExpiredIdempotency` ; passé ce délai, la clé peut servir à une
+  nouvelle création.
+- Hors MCP, l'en-tête `Idempotency-Key` est facultatif sur ces endpoints (sans
+  lui, chaque appel crée un document, comportement historique) ; s'il est
+  présent, il doit respecter le même format, sinon HTTP 400.
+- Les outils de lecture (`get_document_link`, `list_documents`) n'ont pas de clé.
+
 ## Retour standardisé
 
 Chaque création renvoie un identifiant opaque et un lien direct stable (HTTPS). Pour les devis remplacés, `get_document_link` renvoie la version courante et peut signaler le remplacement. Liens de facture/acompte permanents et non révocables.
@@ -72,6 +119,7 @@ Chaque création renvoie un identifiant opaque et un lien direct stable (HTTPS).
 
 En cas d'ambiguïté, le serveur renvoie un JSON structuré `{status, missing, alternatives}` plutôt qu'une création partielle :
 
+- création sans `idempotency_key` : `missing: ["idempotency_key"]` (vérifié après les ambiguïtés ci-dessous)
 - devis : `valide_jusqu_au` XOR `delai_validite_jours`
 - facture : `depuis_devis_id` XOR (`client`+`lignes`) ; `date_echeance` XOR `delai_paiement_jours`
 - acompte : `devis_id` + exactement un de `pourcentage`/`montant_ht`

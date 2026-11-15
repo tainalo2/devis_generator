@@ -63,12 +63,29 @@ func (s *Server) handleCreateDocument(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, "Requête invalide.")
 		return
 	}
-	d, err := s.biz.CreateDocument(r.Context(), u.ID, in)
+	var (
+		d        biz.Document
+		replayed bool
+		err      error
+	)
+	if key, present, kerr := idempotencyKeyFromRequest(r); kerr != nil {
+		writeAPIError(w, http.StatusBadRequest, kerr.Error())
+		return
+	} else if present {
+		idem, herr := biz.NewIdempotency(biz.OpCreateDocument, key, in)
+		if herr != nil {
+			s.writeBizError(w, r, herr)
+			return
+		}
+		d, replayed, err = s.biz.CreateDocumentIdempotent(r.Context(), u.ID, in, idem)
+	} else {
+		d, err = s.biz.CreateDocument(r.Context(), u.ID, in)
+	}
 	if err != nil {
 		s.writeBizError(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
+	writeCreated(w, d, replayed)
 }
 
 func (s *Server) handleUpdateDocument(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +219,23 @@ func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, "Identifiant invalide.")
 		return
 	}
-	d, err := s.biz.ConvertQuoteToInvoice(r.Context(), u.ID, id)
+	var (
+		d        biz.Document
+		replayed bool
+	)
+	if key, present, kerr := idempotencyKeyFromRequest(r); kerr != nil {
+		writeAPIError(w, http.StatusBadRequest, kerr.Error())
+		return
+	} else if present {
+		idem, herr := biz.NewIdempotency(biz.OpConvertQuote, key, map[string]any{"quote_id": id})
+		if herr != nil {
+			s.writeBizError(w, r, herr)
+			return
+		}
+		d, replayed, err = s.biz.ConvertQuoteToInvoiceIdempotent(r.Context(), u.ID, id, idem)
+	} else {
+		d, err = s.biz.ConvertQuoteToInvoice(r.Context(), u.ID, id)
+	}
 	if errors.Is(err, biz.ErrNotFound) {
 		writeAPIError(w, http.StatusNotFound, "Document introuvable.")
 		return
@@ -211,7 +244,7 @@ func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 		s.writeBizError(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
+	writeCreated(w, d, replayed)
 }
 
 func (s *Server) handleCreateDeposit(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +270,27 @@ func (s *Server) createLinked(w http.ResponseWriter, r *http.Request, kind strin
 		Lines []biz.DocLine `json:"lines"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
-	d, err := s.biz.CreateLinkedDocument(r.Context(), u.ID, id, kind, body.Lines)
+	var (
+		d        biz.Document
+		replayed bool
+	)
+	if key, present, kerr := idempotencyKeyFromRequest(r); kerr != nil {
+		writeAPIError(w, http.StatusBadRequest, kerr.Error())
+		return
+	} else if present {
+		operation := biz.OpCreateDeposit
+		if kind == "credit_note" {
+			operation = biz.OpCreateCredit
+		}
+		idem, herr := biz.NewIdempotency(operation, key, map[string]any{"origin_id": id, "lines": body.Lines})
+		if herr != nil {
+			s.writeBizError(w, r, herr)
+			return
+		}
+		d, replayed, err = s.biz.CreateLinkedDocumentIdempotent(r.Context(), u.ID, id, kind, body.Lines, idem)
+	} else {
+		d, err = s.biz.CreateLinkedDocument(r.Context(), u.ID, id, kind, body.Lines)
+	}
 	if errors.Is(err, biz.ErrNotFound) {
 		writeAPIError(w, http.StatusNotFound, "Document introuvable.")
 		return
@@ -246,7 +299,7 @@ func (s *Server) createLinked(w http.ResponseWriter, r *http.Request, kind strin
 		s.writeBizError(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{"document": d})
+	writeCreated(w, d, replayed)
 }
 
 func (s *Server) handleDocumentPDF(w http.ResponseWriter, r *http.Request) {
@@ -467,6 +520,10 @@ func (s *Server) writeBizError(w http.ResponseWriter, r *http.Request, err error
 			msg = "Données invalides."
 		}
 		writeAPIError(w, http.StatusBadRequest, msg)
+		return
+	}
+	if errors.Is(err, biz.ErrIdempotencyConflict) {
+		writeAPIError(w, http.StatusConflict, "Idempotency-Key déjà utilisée avec une requête différente.")
 		return
 	}
 	slog.Error("erreur métier", "path", r.URL.Path, "error", err)
