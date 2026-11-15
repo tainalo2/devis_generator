@@ -152,6 +152,13 @@ func (s *Store) loadLines(ctx context.Context, docID uuid.UUID) ([]DocLine, erro
 // GetDocumentPublic retrieves a document for public display (no auth required).
 // Used by the public /d/{token} endpoint for stable document links.
 // Returns the document and its owning user ID for coordinate access.
+//
+// SQL work is uniform: exactly two statements (documents, then document_lines)
+// whether the document exists or not; kind and expiry are judged by the caller
+// after the load. Residual, deliberately not equalised: for an existing
+// document the issuer/client snapshots are decrypted (AES-GCM on a few hundred
+// bytes, microseconds), which an absent ID skips. That CPU difference is below
+// network/DB jitter and only reachable with a server-signed token.
 func (s *Store) GetDocumentPublic(ctx context.Context, docID uuid.UUID) (Document, uuid.UUID, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, user_id, client_id, kind::text, status::text, number, COALESCE(title,''),
@@ -174,6 +181,12 @@ func (s *Store) GetDocumentPublic(ctx context.Context, docID uuid.UUID) (Documen
 		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
+		// Oracle policy (see handleDocumentLink): run the lines query too, on
+		// the requested ID, so an absent document costs the same two SQL
+		// statements as an existing one. It returns no rows and is discarded.
+		if _, lerr := s.loadLines(ctx, docID); lerr != nil {
+			return Document{}, uuid.UUID{}, lerr
+		}
 		return Document{}, uuid.UUID{}, ErrNotFound
 	}
 	if err != nil {

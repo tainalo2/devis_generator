@@ -79,14 +79,24 @@ func redactIssuerForPublic(issuer biz.IssuerProfile) biz.IssuerProfile {
 
 // handleDocumentLink serves the PDF behind a public signed link.
 //
-// Oracle policy: a token whose HMAC signature is invalid cannot be forged
-// without the server secret, so rejecting it early reveals nothing to an
-// attacker who holds no valid token (the early path is also rate limited per
-// IP, see publicLinkLimiter). For every token with a VALID signature the
-// observable work is identical: GetDocumentPublic is always called first, then
-// expiry, presence and kind are evaluated after the load and mapped to the one
-// unavailable response, so path, store access and body do not distinguish
-// expired / unknown document / kind mismatch.
+// Threat model: only a holder of a token signed by this server can get past
+// doclink.Verify (HMAC, unforgeable without the secret). Such a holder already
+// has the link, so the only thing a difference between the 404 cases could
+// reveal is the state (expired / deleted / wrong kind) of a document whose link
+// they already hold. Tokens with a bad signature are rejected early, which is
+// safe for the same reason and is rate limited per IP (publicLinkLimiter).
+//
+// For a VALID signature the response is one identical 404 (status, body,
+// headers) for expired, unknown document and kind mismatch, and the store work
+// is made comparable: GetDocumentPublic is always called once, and at
+// repository level it always runs the same two SQL statements (documents then
+// document_lines; pinned by TestGetDocumentPublicRunsSameSQLForEveryOutcome).
+// Expiry and kind are evaluated only after that load.
+//
+// NOT uniform, by design: (1) an existing document also has its issuer/client
+// snapshots decrypted, a few microseconds of CPU an absent ID skips;
+// (2) the success path is necessarily distinguishable (extra queries, PDF
+// rendering). No dummy PDF is rendered for failures.
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
 	// Set first so that every response, including internal errors, is private.
 	w.Header().Set("Cache-Control", "private, no-store")
