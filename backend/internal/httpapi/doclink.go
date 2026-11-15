@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -41,10 +42,7 @@ func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request
 		writeAPIError(w, http.StatusInternalServerError, "Lien indisponible.")
 		return
 	}
-	scheme := "http"
-	if r.TLS != nil {
-		scheme = "https"
-	}
+	scheme := requestScheme(r)
 	link := (&url.URL{Scheme: scheme, Host: r.Host, Path: "/d/" + token}).String()
 	response := map[string]any{"link": link, "permanent": document.Kind == doclink.KindInvoice || document.Kind == doclink.KindDeposit}
 	if document.Kind == doclink.KindQuote {
@@ -97,6 +95,17 @@ func redactIssuerForPublic(issuer biz.IssuerProfile) biz.IssuerProfile {
 // snapshots decrypted, a few microseconds of CPU an absent ID skips;
 // (2) the success path is necessarily distinguishable (extra queries, PDF
 // rendering). No dummy PDF is rendered for failures.
+func requestScheme(r *http.Request) string {
+	forwardedProto := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0]))
+	if forwardedProto == "http" || forwardedProto == "https" {
+		return forwardedProto
+	}
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
+}
+
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
 	// Set first so that every response, including internal errors, is private.
 	w.Header().Set("Cache-Control", "private, no-store")
