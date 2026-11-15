@@ -125,9 +125,13 @@ func (s *Server) handle(req rpcReq) (any, *rpcErr) {
 }
 
 const (
-	decimalSchemaPattern        = `^[+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)$`
-	maxDecimalLength            = 128
-	idempotencyKeySchemaPattern = `^[A-Za-z0-9._:/-]{1,255}$`
+	decimalSchemaPattern = `^[+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)$`
+	// positiveDecimalSchemaPattern : quantite n'accepte aucun signe négatif ;
+	// un « + » explicite reste toléré comme par la conversion. Zéro est
+	// syntaxiquement valide mais refusé à l'exécution (strictement positive).
+	positiveDecimalSchemaPattern = `^\+?([0-9]+(\.[0-9]*)?|\.[0-9]+)$`
+	maxDecimalLength             = 128
+	idempotencyKeySchemaPattern  = `^[A-Za-z0-9._:/-]{1,255}$`
 )
 
 var idempotencyKeyPattern = regexp.MustCompile(idempotencyKeySchemaPattern)
@@ -162,8 +166,8 @@ func linesSchema() map[string]any {
 					"description": "Désignation de la ligne (1 à 2000 caractères).",
 				},
 				"quantite": map[string]any{
-					"type": "string", "pattern": decimalSchemaPattern, "maxLength": maxDecimalLength,
-					"description": "Quantité en unités, chaîne décimale STRICTEMENT positive (ex. \"2.5\"). Arrondie au millième, demis éloignés de zéro ; une valeur arrondie à zéro est refusée.",
+					"type": "string", "pattern": positiveDecimalSchemaPattern, "maxLength": maxDecimalLength,
+					"description": "Quantité en unités, chaîne décimale STRICTEMENT positive, sans signe négatif (ex. \"2.5\"). Le motif accepte \"0\" syntaxiquement mais la valeur est refusée à l'exécution. Arrondie au millième, demis éloignés de zéro ; une valeur arrondie à zéro est refusée.",
 				},
 				"prix_unitaire_ht": map[string]any{
 					"type": "string", "pattern": decimalSchemaPattern, "maxLength": maxDecimalLength,

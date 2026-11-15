@@ -3,13 +3,17 @@
 -- du document, dans la même transaction : la contrainte PRIMARY KEY sérialise
 -- les requêtes concurrentes portant la même clé. request_hash est le SHA-256
 -- de la requête normalisée : même clé + hash différent => conflit (409).
--- Les lignes expirées (expires_at, 24 h après création) sont purgées.
+-- Les lignes expirées (expires_at, 24 h après création) sont purgées (purge
+-- opportuniste du compte + tâche périodique globale).
+-- document_id n'a volontairement AUCUNE clé étrangère : supprimer un brouillon
+-- ne doit pas supprimer la clé (tombstone conservé jusqu'à expiration). Le rejeu
+-- d'une clé dont le document a disparu répond 409 au lieu de recréer un document.
 CREATE TABLE document_idempotency_keys (
     user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     operation       TEXT        NOT NULL CHECK (char_length(operation) BETWEEN 1 AND 64),
     idempotency_key TEXT        NOT NULL CHECK (char_length(idempotency_key) BETWEEN 1 AND 255),
     request_hash    TEXT        NOT NULL CHECK (request_hash ~ '^[0-9a-f]{64}$'),
-    document_id     UUID        REFERENCES documents(id) ON DELETE CASCADE,
+    document_id     UUID,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at      TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (user_id, operation, idempotency_key)

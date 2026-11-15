@@ -244,6 +244,10 @@ func (s *Store) createDocument(ctx context.Context, userID uuid.UUID, in Documen
 				return Document{}, false, err
 			}
 			d, err := s.GetDocument(ctx, userID, existing)
+			if errors.Is(err, ErrNotFound) {
+				// Tombstone : la clé survit à la suppression du brouillon.
+				return Document{}, false, ErrIdempotencyDocumentDeleted
+			}
 			return d, true, err
 		}
 	}

@@ -260,3 +260,34 @@ func TestConvertAndDepositHTTPIdempotency(t *testing.T) {
 		t.Fatalf("documents=%d err=%v", docs, err)
 	}
 }
+
+func TestCreateDocumentHTTPCanonicalReplayAndDeletedTombstone(t *testing.T) {
+	s, pool := newIdempotencyHTTPServer(t)
+	user := idempotencyUser(t, pool)
+	withEUR := fmt.Sprintf(quoteBody, 10000)
+	// Même document métier : devise omise, ordre de clés différent, champs dérivés présents.
+	omitted := `{"lines":[{"total_cents":1,"position":9,"tax_rate_bps":2000,"unit_price_cents":10000,"quantity_milli":1000,"description":"Conseil"}],"vat_regime":"standard","title":"Devis","kind":"quote"}`
+
+	first := postJSON(t, s.handleCreateDocument, user, "/documents", "canon", withEUR, nil)
+	if first.Code != http.StatusCreated {
+		t.Fatalf("first: %d %s", first.Code, first.Body)
+	}
+	retry := postJSON(t, s.handleCreateDocument, user, "/documents", "canon", omitted, nil)
+	if retry.Code != http.StatusOK || retry.Header().Get("Idempotent-Replayed") != "true" || docID(t, retry) != docID(t, first) {
+		t.Fatalf("devise omise == EUR doit rejouer: %d %s", retry.Code, retry.Body)
+	}
+
+	id := docID(t, first)
+	del := postJSON(t, s.handleDeleteDocument, user, "/documents/"+id, "", "", map[string]string{"id": id})
+	if del.Code >= 300 {
+		t.Fatalf("delete: %d %s", del.Code, del.Body)
+	}
+	replay := postJSON(t, s.handleCreateDocument, user, "/documents", "canon", withEUR, nil)
+	if replay.Code != http.StatusConflict || !strings.Contains(replay.Body.String(), "nouvelle Idempotency-Key") {
+		t.Fatalf("rejeu après suppression: %d %s", replay.Code, replay.Body)
+	}
+	var docs int
+	if err := pool.QueryRow(context.Background(), `SELECT count(*) FROM documents`).Scan(&docs); err != nil || docs != 0 {
+		t.Fatalf("aucun document recréé: documents=%d err=%v", docs, err)
+	}
+}

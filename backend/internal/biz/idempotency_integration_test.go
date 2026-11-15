@@ -72,7 +72,7 @@ func quoteInput(price int64) DocumentInput {
 
 func idem(t *testing.T, op, key string, in DocumentInput) Idempotency {
 	t.Helper()
-	i, err := NewIdempotency(op, key, in)
+	i, err := NewDocumentIdempotency(op, key, in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +297,7 @@ func TestIdempotentConvertAndLinkedCreationsAreReplayed(t *testing.T) {
 		t.Fatal(err)
 	}
 	conv := func(key string) (Document, bool, error) {
-		i, err := NewIdempotency(OpConvertQuote, key, map[string]any{"quote_id": quote.ID})
+		i, err := NewConvertIdempotency(key, quote.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -313,7 +313,7 @@ func TestIdempotentConvertAndLinkedCreationsAreReplayed(t *testing.T) {
 	}
 	lines := []DocLine{{Description: "Acompte", QuantityMilli: 1000, UnitPriceCents: 3000, TaxRateBps: 2000}}
 	dep := func(key string, l []DocLine) (Document, bool, error) {
-		i, err := NewIdempotency(OpCreateDeposit, key, map[string]any{"origin": quote.ID, "lines": l})
+		i, err := NewLinkedIdempotency(OpCreateDeposit, key, quote.ID, l)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -357,5 +357,107 @@ func TestIdempotencyMigrationDownThenUp(t *testing.T) {
 	var exists bool
 	if err := pool.QueryRow(ctx, `SELECT to_regclass('document_idempotency_keys') IS NOT NULL`).Scan(&exists); err != nil || !exists {
 		t.Fatalf("table missing after up: %v", err)
+	}
+}
+
+// Tombstone : supprimer le brouillon créé de façon idempotente ne libère pas
+// la clé. Le rejeu avant expiration doit échouer (409 côté API), jamais
+// recréer silencieusement un document.
+func TestIdempotentReplayAfterDocumentDeletionIsConflictNotRecreation(t *testing.T) {
+	store, pool, ctx := newIdempotencyStore(t)
+	owner := seedIdempotencyUser(t, ctx, pool)
+	in := quoteInput(10000)
+	first, _, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "del", in))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteDocument(ctx, owner, first.ID); err != nil {
+		t.Fatal(err)
+	}
+	if n := countDocuments(t, ctx, pool); n != 0 {
+		t.Fatalf("documents=%d after delete, want 0", n)
+	}
+	var keys int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM document_idempotency_keys`).Scan(&keys); err != nil || keys != 1 {
+		t.Fatalf("la clé doit survivre à la suppression du document (tombstone): keys=%d err=%v", keys, err)
+	}
+	_, replayed, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "del", in))
+	if !errors.Is(err, ErrIdempotencyDocumentDeleted) || replayed {
+		t.Fatalf("replay: replayed=%v err=%v, want ErrIdempotencyDocumentDeleted", replayed, err)
+	}
+	if errors.Is(err, ErrNotFound) {
+		t.Fatal("l'erreur ne doit pas être confondue avec ErrNotFound (404)")
+	}
+	if n := countDocuments(t, ctx, pool); n != 0 {
+		t.Fatalf("aucun nouveau document ne doit être créé: documents=%d", n)
+	}
+	// Une clé neuve crée normalement un nouveau document.
+	if _, replayed, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "del2", in)); err != nil || replayed {
+		t.Fatalf("new key: replayed=%v err=%v", replayed, err)
+	}
+	// Après expiration, la clé tombstone est libérée et peut resservir.
+	if _, err := pool.Exec(ctx, `UPDATE document_idempotency_keys SET expires_at = NOW() - INTERVAL '1 second' WHERE idempotency_key = 'del'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, replayed, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "del", in)); err != nil || replayed {
+		t.Fatalf("expired tombstone must be reusable: replayed=%v err=%v", replayed, err)
+	}
+}
+
+func TestIdempotencyKeyColumnHasNoCascadeFromDocuments(t *testing.T) {
+	_, pool, ctx := newIdempotencyStore(t)
+	var n int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(*) FROM pg_constraint
+		WHERE conrelid = 'document_idempotency_keys'::regclass AND contype = 'f'
+		  AND confrelid = 'documents'::regclass AND confdeltype = 'c'`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("FK ON DELETE CASCADE vers documents interdite: n=%d err=%v", n, err)
+	}
+}
+
+func expireAllKeys(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
+	t.Helper()
+	if _, err := pool.Exec(ctx, `UPDATE document_idempotency_keys SET expires_at = NOW() - INTERVAL '1 hour'`); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Purge globale : tous les comptes (y compris inactifs), par lots bornés.
+func TestPurgeExpiredIdempotencyGlobalAcrossAccountsInBatches(t *testing.T) {
+	store, pool, ctx := newIdempotencyStore(t)
+	inactive, active := seedIdempotencyUser(t, ctx, pool), seedIdempotencyUser(t, ctx, pool)
+	for _, owner := range []uuid.UUID{inactive, active} {
+		for i := 0; i < 12; i++ {
+			in := quoteInput(int64(100 + i))
+			if _, _, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, fmt.Sprintf("k%d", i), in)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	// Clés non expirées d'un troisième compte : doivent survivre.
+	third := seedIdempotencyUser(t, ctx, pool)
+	in := quoteInput(1)
+	if _, _, err := store.CreateDocumentIdempotent(ctx, third, in, idem(t, OpCreateDocument, "fresh", in)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE document_idempotency_keys SET expires_at = NOW() - INTERVAL '1 hour' WHERE user_id <> $1`, third); err != nil {
+		t.Fatal(err)
+	}
+	// Lots de 5, au plus 3 lots par appel : 15 lignes purgées sur 24.
+	n, err := store.purgeExpiredIdempotency(ctx, 5, 3)
+	if err != nil || n != 15 {
+		t.Fatalf("bounded purge: n=%d err=%v, want 15", n, err)
+	}
+	// Appel complet : le reste (9 lignes), sans toucher la clé valide.
+	n, err = store.purgeExpiredIdempotency(ctx, 5, 100)
+	if err != nil || n != 9 {
+		t.Fatalf("full purge: n=%d err=%v, want 9", n, err)
+	}
+	var left int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM document_idempotency_keys`).Scan(&left); err != nil || left != 1 {
+		t.Fatalf("left=%d err=%v, want 1", left, err)
+	}
+	if n, err := store.PurgeExpiredIdempotency(ctx); err != nil || n != 0 {
+		t.Fatalf("PurgeExpiredIdempotency idempotent: n=%d err=%v", n, err)
 	}
 }

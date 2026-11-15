@@ -72,8 +72,8 @@ refusée, y compris `quantity_milli` et `unit_price_cents`) :
 | Champ | Type | Obligatoire | Contrainte |
 |---|---|---|---|
 | `description` | chaîne | oui | 1 à 2000 caractères, non vide |
-| `quantite` | chaîne décimale | oui | **strictement positive** ; une quantité négative ou nulle, ou arrondie à zéro, est refusée |
-| `prix_unitaire_ht` | chaîne décimale | oui | prix négatif autorisé (ligne de crédit) |
+| `quantite` | chaîne décimale | oui | **strictement positive**. Motif du schéma non signé : `^\+?([0-9]+(\.[0-9]*)?\|\.[0-9]+)$` (le `\|` est une alternation) (« + » optionnel, pas de `-`, pas de virgule). `0`/`0.0` satisfont le motif mais sont refusés à l'exécution, comme toute valeur arrondie à zéro au millième |
+| `prix_unitaire_ht` | chaîne décimale | oui | prix négatif autorisé (ligne de crédit) ; motif signé `^[+-]?…$` |
 | `tax_rate_bps` | entier | non (défaut 0) | `0`, `210`, `550`, `1000` ou `2000` ; forcé à 0 en régime `franchise_293b` |
 | `discount_bps` | entier | non (défaut 0) | de 0 à 10000 |
 
@@ -99,13 +99,30 @@ une clé au format invalide donne `status: "error"`.
   document déjà créé (HTTP 200 + `Idempotent-Replayed: true`, au lieu de 201).
   Le document renvoyé est son état courant.
 - **Même clé + requête différente** : HTTP 409 (le tool renvoie `status: "error"`).
-  La requête comparée est un hash SHA-256 de la requête normalisée (pour
-  `create_acompte`, les lignes d'acompte calculées à partir du devis).
+  La requête comparée est le SHA-256 d'une **représentation canonique** construite
+  APRÈS application des défauts métier : devise omise ou vide = `EUR` (même hash,
+  le rejeu réussit) ; seuls les champs d'entrée métier comptent (type, titre,
+  dates, client, régime TVA, notes, conditions, document lié et, par ligne :
+  description, quantité, prix unitaire, remise, taux de TVA, dans l'ordre des
+  lignes). Les champs dérivés ou sans effet (`id`, `position`, `tax_cents`,
+  `total_cents`) et l'ordre des clés JSON sont ignorés. Une vraie différence
+  (quantité, prix, description…) donne un hash différent, donc HTTP 409. Pour
+  `create_acompte`, la requête comparée est (devis d'origine, lignes fournies).
 - Une création en échec (rollback) ne consomme pas la clé : elle peut être retentée.
-- **Expiration : 24 h** après la création. Les clés expirées sont purgées
-  opportunément à chaque création du même compte et par
-  `Store.PurgeExpiredIdempotency` ; passé ce délai, la clé peut servir à une
-  nouvelle création.
+- **Suppression du document = tombstone** : supprimer un brouillon créé avec une
+  clé ne supprime pas la clé (`document_id` n'a aucune clé étrangère). Rejouer la
+  même clé avant expiration renvoie **HTTP 409** (« Le document créé avec cette
+  Idempotency-Key a été supprimé : utilisez une nouvelle Idempotency-Key… ») et
+  ne recrée jamais le document ; une clé neuve en crée un nouveau.
+- **Expiration : 24 h** après la création (tombstones compris) ; passé ce délai,
+  la clé peut servir à une nouvelle création.
+- **Purge** : (1) opportuniste, par lots de 100, des clés expirées du compte qui
+  crée ; (2) **tâche périodique globale** démarrée par `cmd/server` : une purge
+  au démarrage puis toutes les heures, tous comptes confondus (y compris
+  inactifs), par lots de 1000 et au plus 50 lots par passage (le reliquat est
+  repris au passage suivant). Elle s'arrête avec l'arrêt du serveur, journalise
+  `clés d'idempotence expirées purgées` avec le nombre de lignes (`purged`) et
+  journalise sans s'arrêter les erreurs (`purge des clés d'idempotence`).
 - Hors MCP, l'en-tête `Idempotency-Key` est facultatif sur ces endpoints (sans
   lui, chaque appel crée un document, comportement historique) ; s'il est
   présent, il doit respecter le même format, sinon HTTP 400.

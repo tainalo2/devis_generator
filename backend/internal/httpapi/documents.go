@@ -72,7 +72,7 @@ func (s *Server) handleCreateDocument(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, kerr.Error())
 		return
 	} else if present {
-		idem, herr := biz.NewIdempotency(biz.OpCreateDocument, key, in)
+		idem, herr := biz.NewDocumentIdempotency(biz.OpCreateDocument, key, in)
 		if herr != nil {
 			s.writeBizError(w, r, herr)
 			return
@@ -227,7 +227,7 @@ func (s *Server) handleConvertQuote(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, kerr.Error())
 		return
 	} else if present {
-		idem, herr := biz.NewIdempotency(biz.OpConvertQuote, key, map[string]any{"quote_id": id})
+		idem, herr := biz.NewConvertIdempotency(key, id)
 		if herr != nil {
 			s.writeBizError(w, r, herr)
 			return
@@ -282,7 +282,7 @@ func (s *Server) createLinked(w http.ResponseWriter, r *http.Request, kind strin
 		if kind == "credit_note" {
 			operation = biz.OpCreateCredit
 		}
-		idem, herr := biz.NewIdempotency(operation, key, map[string]any{"origin_id": id, "lines": body.Lines})
+		idem, herr := biz.NewLinkedIdempotency(operation, key, id, body.Lines)
 		if herr != nil {
 			s.writeBizError(w, r, herr)
 			return
@@ -524,6 +524,10 @@ func (s *Server) writeBizError(w http.ResponseWriter, r *http.Request, err error
 	}
 	if errors.Is(err, biz.ErrIdempotencyConflict) {
 		writeAPIError(w, http.StatusConflict, "Idempotency-Key déjà utilisée avec une requête différente.")
+		return
+	}
+	if errors.Is(err, biz.ErrIdempotencyDocumentDeleted) {
+		writeAPIError(w, http.StatusConflict, "Le document créé avec cette Idempotency-Key a été supprimé : utilisez une nouvelle Idempotency-Key pour créer un nouveau document.")
 		return
 	}
 	slog.Error("erreur métier", "path", r.URL.Path, "error", err)

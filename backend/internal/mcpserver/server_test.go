@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -464,5 +465,64 @@ func TestRetryReusesSameIdempotencyKey(t *testing.T) {
 	}
 	if len(keys) != 2 || keys[0] != "retry-1" || keys[1] != "retry-1" {
 		t.Fatalf("keys=%v", keys)
+	}
+}
+
+// TestQuantitySchemaPatternMatchesExecution vérifie, sur une table de cas
+// communs, que le pattern annoncé par tools/list pour `quantite` est cohérent
+// avec la validation réellement exécutée par convertMCPLines.
+func TestQuantitySchemaPatternMatchesExecution(t *testing.T) {
+	lines := toolSchema(t, "create_devis")["properties"].(map[string]any)["lignes"].(map[string]any)["items"].(map[string]any)["properties"].(map[string]any)
+	qtyPattern := regexp.MustCompile(lines["quantite"].(map[string]any)["pattern"].(string))
+	pricePattern := regexp.MustCompile(lines["prix_unitaire_ht"].(map[string]any)["pattern"].(string))
+	if qtyPattern.String() == pricePattern.String() {
+		t.Fatal("quantite doit avoir un pattern dédié (non signé), distinct de celui du prix")
+	}
+	cases := []struct {
+		value     string
+		schemaOK  bool // le schéma accepte syntaxiquement
+		executeOK bool // convertMCPLines accepte
+		why       string
+	}{
+		{"1", true, true, "entier"},
+		{"0.5", true, true, "décimal"},
+		{"1.", true, true, "point final accepté par la conversion"},
+		{".5", true, true, "partie entière omise"},
+		{"+1", true, true, "signe + explicitement accepté"},
+		{"12.345", true, true, "précision au millième"},
+		{"1,5", false, false, "virgule refusée par la conversion"},
+		{"-1", false, false, "négative"},
+		{"-0.5", false, false, "négative"},
+		{"-0", false, false, "zéro signé"},
+		{"abc", false, false, "non numérique"},
+		{"", false, false, "vide"},
+		{"1e3", false, false, "notation scientifique"},
+		{"0", true, false, "zéro : syntaxiquement valide, refusé à l'exécution (strictement positive)"},
+		{"0.0", true, false, "zéro : syntaxiquement valide, refusé à l'exécution"},
+		{"0.0004", true, false, "arrondi à zéro : refusé à l'exécution"},
+	}
+	for _, c := range cases {
+		t.Run(c.value, func(t *testing.T) {
+			if got := qtyPattern.MatchString(c.value); got != c.schemaOK {
+				t.Fatalf("schéma: %q accepté=%v, attendu %v (%s)", c.value, got, c.schemaOK, c.why)
+			}
+			_, err := convertMCPLines([]any{map[string]any{"description": "x", "quantite": c.value, "prix_unitaire_ht": "10"}})
+			if (err == nil) != c.executeOK {
+				t.Fatalf("exécution: %q err=%v, accepté attendu=%v (%s)", c.value, err, c.executeOK, c.why)
+			}
+			// Invariant : ce que l'exécution accepte est toujours conforme au schéma.
+			if err == nil && !qtyPattern.MatchString(c.value) {
+				t.Fatalf("%q accepté à l'exécution mais non conforme au schéma", c.value)
+			}
+		})
+	}
+	// Le prix garde son pattern signé : un prix négatif reste valide (ligne de crédit).
+	for _, v := range []string{"-1", "+1", "10", "-0.5"} {
+		if !pricePattern.MatchString(v) {
+			t.Fatalf("prix %q devrait conformer au schéma signé", v)
+		}
+	}
+	if _, err := convertMCPLines([]any{map[string]any{"description": "x", "quantite": "1", "prix_unitaire_ht": "-1"}}); err != nil {
+		t.Fatalf("prix négatif doit rester accepté: %v", err)
 	}
 }
