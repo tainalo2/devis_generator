@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -8,8 +10,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/tainalo2/devis_generator/backend/internal/biz"
 	"github.com/tainalo2/devis_generator/backend/internal/doclink"
+	"github.com/tainalo2/devis_generator/backend/internal/legal"
+	"github.com/tainalo2/devis_generator/backend/internal/pdfgen"
 )
 
 func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +51,50 @@ func (s *Server) handleCreateDocumentLink(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, response)
 }
 
+// publicDocStore is the read-only data access used by the public document link.
+type publicDocStore interface {
+	GetDocumentPublic(ctx context.Context, docID uuid.UUID) (biz.Document, uuid.UUID, error)
+	GetIssuer(ctx context.Context, userID uuid.UUID) (biz.IssuerProfile, error)
+	GetClient(ctx context.Context, userID, id uuid.UUID) (biz.Client, error)
+}
+
+// publicLinkUnavailable is the single response for every unusable link
+// (invalid, tampered, expired, unknown document, kind mismatch) so that the
+// status, body and headers reveal nothing about why the link failed.
+func publicLinkUnavailable(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "private, no-store")
+	writeJSON(w, http.StatusNotFound, map[string]string{"error": publicLinkUnavailableMessage})
+}
+
+const publicLinkUnavailableMessage = "Lien indisponible."
+
+// redactIssuerForPublic removes every bank coordinate from the issuer view used
+// for public rendering: a public link must never expose the RIB/IBAN.
+func redactIssuerForPublic(issuer biz.IssuerProfile) biz.IssuerProfile {
+	issuer.IBAN = ""
+	return issuer
+}
+
+// handleDocumentLink serves the PDF behind a public signed link.
+//
+// Threat model: only a holder of a token signed by this server can get past
+// doclink.Verify (HMAC, unforgeable without the secret). Such a holder already
+// has the link, so the only thing a difference between the 404 cases could
+// reveal is the state (expired / deleted / wrong kind) of a document whose link
+// they already hold. Tokens with a bad signature are rejected early, which is
+// safe for the same reason and is rate limited per IP (publicLinkLimiter).
+//
+// For a VALID signature the response is one identical 404 (status, body,
+// headers) for expired, unknown document and kind mismatch, and the store work
+// is made comparable: GetDocumentPublic is always called once, and at
+// repository level it always runs the same two SQL statements (documents then
+// document_lines; pinned by TestGetDocumentPublicRunsSameSQLForEveryOutcome).
+// Expiry and kind are evaluated only after that load.
+//
+// NOT uniform, by design: (1) an existing document also has its issuer/client
+// snapshots decrypted, a few microseconds of CPU an absent ID skips;
+// (2) the success path is necessarily distinguishable (extra queries, PDF
+// rendering). No dummy PDF is rendered for failures.
 func requestScheme(r *http.Request) string {
 	forwardedProto := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0]))
 	if forwardedProto == "http" || forwardedProto == "https" {
@@ -58,24 +107,77 @@ func requestScheme(r *http.Request) string {
 }
 
 func (s *Server) handleDocumentLink(w http.ResponseWriter, r *http.Request) {
+	// Set first so that every response, including internal errors, is private.
+	w.Header().Set("Cache-Control", "private, no-store")
+	if s.publicLinkLimiter != nil && !s.publicLinkLimiter.Allow("doclink:"+s.clientIP(r)) {
+		writeAPIError(w, http.StatusTooManyRequests, "Trop de requêtes. Réessayez plus tard.")
+		return
+	}
+	if s.publicDocs == nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
 	token := chi.URLParam(r, "token")
 	p, err := doclink.Verify(s.docLinkSecret, token)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lien invalide"})
+		publicLinkUnavailable(w)
 		return
 	}
-	if doclink.Expired(p, time.Now()) {
-		writeJSON(w, http.StatusGone, map[string]string{"error": "lien expire"})
+	// A validly signed token always has a UUID; fall back to uuid.Nil so the
+	// store is still queried identically if it somehow does not.
+	docID, perr := uuid.Parse(p.DocID)
+	if perr != nil {
+		docID = uuid.Nil
+	}
+	document, ownerID, err := s.publicDocs.GetDocumentPublic(r.Context(), docID)
+	notFound := errors.Is(err, biz.ErrNotFound)
+	if err != nil && !notFound {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
 		return
 	}
-	msg := ""
+	if notFound || perr != nil || document.Kind != p.Kind || doclink.Expired(p, time.Now()) {
+		publicLinkUnavailable(w)
+		return
+	}
+
+	issuer, err := s.publicDocs.GetIssuer(r.Context(), ownerID)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
+		return
+	}
+	if len(document.IssuerSnapshot) > 0 {
+		_ = json.Unmarshal(document.IssuerSnapshot, &issuer)
+	}
+	issuer = redactIssuerForPublic(issuer)
+	client := biz.Client{Name: "Client"}
+	if document.ClientSnapshot != nil {
+		client = document.ClientSnapshot.AsClient()
+	} else if document.ClientID != nil {
+		if current, err := s.publicDocs.GetClient(r.Context(), ownerID, *document.ClientID); err == nil {
+			client = current
+		}
+	}
+	mentions := legal.DefaultMentions()
+	if len(document.LegalSnapshot) > 0 {
+		_ = json.Unmarshal(document.LegalSnapshot, &mentions)
+	} else if s.legal != nil {
+		mentions = s.legal.MentionsForIssue(r.Context())
+	}
+	pdf, err := pdfgen.Render(document, issuer, client, mentions)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Génération PDF impossible.")
+		return
+	}
+	filename := "document.pdf"
+	if document.Number != nil {
+		filename = *document.Number + ".pdf"
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", `inline; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "private, no-store")
 	if r.URL.Query().Get("replaced") == "1" {
-		msg = doclink.ReplacedMessage
+		w.Header().Set("X-Document-Link-Message", doclink.ReplacedMessage)
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"document_id": p.DocID,
-		"kind":        p.Kind,
-		"version":     p.Version,
-		"message":     msg,
-	})
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(pdf)
 }

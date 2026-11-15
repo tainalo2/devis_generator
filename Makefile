@@ -1,5 +1,5 @@
 .PHONY: help dev-deps frontend-install frontend-dev frontend-build frontend-lint \
-	backend-run backend-test backend-build test build compose-up compose-down compose-build image lint
+	backend-run backend-test backend-vet backend-build test build compose-up compose-down compose-build image lint
 
 help:
 	@echo "Cibles Vibed :"
@@ -8,6 +8,7 @@ help:
 	@echo "  make frontend-build    — build production du front"
 	@echo "  make backend-run       — lance le serveur Go (nécessite DATABASE_URL / .env)"
 	@echo "  make backend-test      — go test ./..."
+	@echo "  make backend-vet       — go vet ./..."
 	@echo "  make backend-build     — go build"
 	@echo "  make test              — tests backend + lint front"
 	@echo "  make build             — build front + backend"
@@ -33,6 +34,9 @@ backend-run:
 
 backend-test:
 	cd backend && go test ./...
+
+backend-vet:
+	cd backend && go vet ./...
 
 backend-build:
 	cd backend && go build -o bin/server ./cmd/server

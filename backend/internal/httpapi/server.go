@@ -36,6 +36,7 @@ type Server struct {
 	store                *authstore.Store
 	apiKeyLookup         func(context.Context, string) (authstore.APIKey, authstore.User, error)
 	biz                  *biz.Store
+	publicDocs           publicDocStore
 	box                  *crypto.Box
 	legal                *legal.Service
 	gmailMail            gmailMailer
@@ -54,6 +55,7 @@ type Server struct {
 	legalGuestLimiter    *RateLimiter
 	guestLimiter         *RateLimiter
 	previewLimiter       *RateLimiter
+	publicLinkLimiter    *RateLimiter
 	webhookIPLimiter     *RateLimiter
 	webhookGlobalLimiter *RateLimiter
 	trustedProxies       []*net.IPNet
@@ -82,9 +84,11 @@ type gmailMailer interface {
 }
 
 type Options struct {
-	DB                Pinger
-	Store             *authstore.Store
-	Biz               *biz.Store
+	DB    Pinger
+	Store *authstore.Store
+	Biz   *biz.Store
+	// PublicDocs overrides the data source of the public document link (tests); defaults to Biz.
+	PublicDocs        publicDocStore
 	Box               *crypto.Box
 	Legal             *legal.Service
 	GmailMail         gmailMailer
@@ -129,6 +133,7 @@ func New(opts Options) *Server {
 		legalGuestLimiter:    NewRateLimiter(30, time.Minute),
 		guestLimiter:         NewRateLimiter(20, time.Minute),
 		previewLimiter:       NewRateLimiter(120, time.Minute),
+		publicLinkLimiter:    NewRateLimiter(60, time.Minute),
 		webhookIPLimiter:     NewRateLimiter(60, time.Minute),
 		webhookGlobalLimiter: NewRateLimiter(600, time.Minute),
 		trustedProxies:       opts.TrustedProxies,
@@ -137,6 +142,11 @@ func New(opts Options) *Server {
 		payments:             opts.Payments,
 		stripeConnect:        opts.StripeConnect,
 		docLinkSecret:        opts.DocLinkSecret,
+	}
+	if opts.PublicDocs != nil {
+		s.publicDocs = opts.PublicDocs
+	} else if opts.Biz != nil {
+		s.publicDocs = opts.Biz
 	}
 	if s.store != nil {
 		s.apiKeyLookup = func(ctx context.Context, hash string) (authstore.APIKey, authstore.User, error) {
@@ -175,6 +185,7 @@ func New(opts Options) *Server {
 		r.Get("/healthz", s.handleHealthz)
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)
+		r.Get("/public/documents/{token}/pdf", s.handleDocumentLink)
 		if s.payments != nil {
 			r.Post("/payments/webhooks/{provider}", s.handlePaymentWebhook)
 		}
@@ -261,7 +272,6 @@ func New(opts Options) *Server {
 		})
 	})
 
-	r.Get("/d/{token}", s.handleDocumentLink)
 	s.mountStatic(r)
 	s.router = r
 	return s

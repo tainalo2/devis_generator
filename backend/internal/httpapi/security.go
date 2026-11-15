@@ -17,11 +17,28 @@ const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 
 	"img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; " +
 	"base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
+// publicDocumentCSP est la politique de la seule route SPA /d/{token} : elle
+// reprend la politique globale à l'identique, sauf object-src et frame-src qui
+// autorisent blob: pour l'aperçu <object> du PDF chargé en mémoire par la page
+// (Chromium vérifie aussi frame-src pour le visualiseur PDF imbriqué).
+// Aucune autre source n'est ajoutée.
+var publicDocumentCSP = strings.Replace(contentSecurityPolicy, "object-src 'none'", "object-src blob:; frame-src blob:", 1)
+
+// isPublicDocumentPage vrai pour exactement /d/{token} (un seul segment).
+func isPublicDocumentPage(p string) bool {
+	rest, ok := strings.CutPrefix(p, "/d/")
+	return ok && rest != "" && !strings.Contains(rest, "/")
+}
+
 // securityHeaders ajoute les en-têtes de durcissement à toutes les réponses.
 func (s *Server) securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
-		h.Set("Content-Security-Policy", contentSecurityPolicy)
+		csp := contentSecurityPolicy
+		if isPublicDocumentPage(r.URL.Path) {
+			csp = publicDocumentCSP
+		}
+		h.Set("Content-Security-Policy", csp)
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
