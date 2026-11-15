@@ -218,6 +218,19 @@ func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in Documen
 // est réservée dans la même transaction que la création (voir idempotency.go) ;
 // le booléen indique alors un rejeu d'une création déjà effectuée.
 func (s *Store) createDocument(ctx context.Context, userID uuid.UUID, in DocumentInput, idem *Idempotency) (Document, bool, error) {
+	// Une clé existante se résout avant tout prérequis mutable (client, document lié).
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
+	return s.insertDocument(ctx, userID, in, idem)
+}
+
+// insertDocument : chemin de création (clé nouvelle ou absente). La
+// réservation atomique de la clé dans la transaction couvre la course où la
+// clé apparaît après la résolution préalable.
+func (s *Store) insertDocument(ctx context.Context, userID uuid.UUID, in DocumentInput, idem *Idempotency) (Document, bool, error) {
 	if err := validateDocInput(in, false); err != nil {
 		return Document{}, false, err
 	}
@@ -243,12 +256,7 @@ func (s *Store) createDocument(ctx context.Context, userID uuid.UUID, in Documen
 			if err := tx.Commit(ctx); err != nil {
 				return Document{}, false, err
 			}
-			d, err := s.GetDocument(ctx, userID, existing)
-			if errors.Is(err, ErrNotFound) {
-				// Tombstone : la clé survit à la suppression du brouillon.
-				return Document{}, false, ErrIdempotencyDocumentDeleted
-			}
-			return d, true, err
+			return s.replayIdempotentDocument(ctx, userID, existing)
 		}
 	}
 
@@ -436,6 +444,11 @@ func (s *Store) ConvertQuoteToInvoiceIdempotent(ctx context.Context, userID, quo
 }
 
 func (s *Store) convertQuoteToInvoice(ctx context.Context, userID, quoteID uuid.UUID, idem *Idempotency) (Document, bool, error) {
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
 	src, err := s.GetDocument(ctx, userID, quoteID)
 	if err != nil {
 		return Document{}, false, err
@@ -454,7 +467,7 @@ func (s *Store) convertQuoteToInvoice(ctx context.Context, userID, quoteID uuid.
 		RelatedDocumentID: &src.ID,
 		Lines:             src.Lines,
 	}
-	return s.createDocument(ctx, userID, in, idem)
+	return s.insertDocument(ctx, userID, in, idem)
 }
 
 func (s *Store) CreateLinkedDocument(ctx context.Context, userID, originID uuid.UUID, kind string, lines []DocLine) (Document, error) {
@@ -468,6 +481,11 @@ func (s *Store) CreateLinkedDocumentIdempotent(ctx context.Context, userID, orig
 }
 
 func (s *Store) createLinkedDocument(ctx context.Context, userID, originID uuid.UUID, kind string, lines []DocLine, idem *Idempotency) (Document, bool, error) {
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
 	src, err := s.GetDocument(ctx, userID, originID)
 	if err != nil {
 		return Document{}, false, err
@@ -498,7 +516,7 @@ func (s *Store) createLinkedDocument(ctx context.Context, userID, originID uuid.
 		RelatedDocumentID: &src.ID,
 		Lines:             useLines,
 	}
-	return s.createDocument(ctx, userID, in, idem)
+	return s.insertDocument(ctx, userID, in, idem)
 }
 
 func nextNumber(ctx context.Context, tx pgx.Tx, issuerKey, kind string, year int) (string, error) {

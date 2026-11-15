@@ -185,3 +185,27 @@ func TestIdempotencyPurgeLoopRunsOnStartAndEachTickAndStopsOnContext(t *testing.
 		t.Fatalf("journalisation du nombre de lignes purgées et des erreurs manquante: %s", out)
 	}
 }
+
+func TestRequestHashCanonicalizesTaxRateByRegime(t *testing.T) {
+	withRate := func(regime string, rate int) DocumentInput {
+		in := baseInput()
+		in.VATRegime = regime
+		for i := range in.Lines {
+			in.Lines[i].TaxRateBps = rate
+		}
+		return in
+	}
+	// Franchise : le taux est forcé à 0 par billing.Compute ; omis == 0 == 2000.
+	f0, f2000, f210 := hashOf(t, withRate("franchise_293b", 0)), hashOf(t, withRate("franchise_293b", 2000)), hashOf(t, withRate("franchise_293b", 210))
+	if f0 != f2000 || f0 != f210 {
+		t.Fatal("franchise_293b : taux omis, 0 et 2000 produisent le même document, le hash doit être identique")
+	}
+	// Hors franchise, le taux change le document.
+	if hashOf(t, withRate("standard", 2000)) == hashOf(t, withRate("standard", 0)) {
+		t.Fatal("standard : 2000 et 0 sont deux documents différents")
+	}
+	// Le régime reste une différence métier.
+	if f0 == hashOf(t, withRate("standard", 0)) {
+		t.Fatal("le régime doit rester dans le hash")
+	}
+}

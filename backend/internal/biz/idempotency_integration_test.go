@@ -461,3 +461,152 @@ func TestPurgeExpiredIdempotencyGlobalAcrossAccountsInBatches(t *testing.T) {
 		t.Fatalf("PurgeExpiredIdempotency idempotent: n=%d err=%v", n, err)
 	}
 }
+
+func franchiseInput(rate int) DocumentInput {
+	in := quoteInput(10000)
+	in.VATRegime = "franchise_293b"
+	in.Lines[0].TaxRateBps = rate
+	return in
+}
+
+// En franchise, taux omis == 0 == 2000 : même document, donc rejeu et non 409.
+func TestIdempotentFranchiseTaxRateVariantsReplay(t *testing.T) {
+	store, pool, ctx := newIdempotencyStore(t)
+	owner := seedIdempotencyUser(t, ctx, pool)
+	first, _, err := store.CreateDocumentIdempotent(ctx, owner, franchiseInput(0), idem(t, OpCreateDocument, "fr", franchiseInput(0)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rate := range []int{2000, 0} {
+		in := franchiseInput(rate)
+		d, replayed, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "fr", in))
+		if err != nil || !replayed || d.ID != first.ID {
+			t.Fatalf("rate=%d: replayed=%v err=%v", rate, replayed, err)
+		}
+	}
+	// Hors franchise, 2000 puis 0 sous la même clé : requêtes différentes => 409.
+	a, b := quoteInput(10000), quoteInput(10000)
+	b.Lines[0].TaxRateBps = 0
+	if _, _, err := store.CreateDocumentIdempotent(ctx, owner, a, idem(t, OpCreateDocument, "std", a)); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := store.CreateDocumentIdempotent(ctx, owner, b, idem(t, OpCreateDocument, "std", b)); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("err=%v, want conflict", err)
+	}
+	if n := countDocuments(t, ctx, pool); n != 2 {
+		t.Fatalf("documents=%d, want 2", n)
+	}
+}
+
+func seedClient(t *testing.T, ctx context.Context, store *Store, owner uuid.UUID, name string) uuid.UUID {
+	t.Helper()
+	c, err := store.CreateClient(ctx, owner, ClientInput{Name: name})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c.ID
+}
+
+// Le rejeu d'une clé existante ne dépend pas du client d'origine : supprimé
+// depuis, le retry identique renvoie le document déjà créé.
+func TestIdempotentReplaySurvivesClientDeletion(t *testing.T) {
+	store, pool, ctx := newIdempotencyStore(t)
+	owner := seedIdempotencyUser(t, ctx, pool)
+	clientID := seedClient(t, ctx, store, owner, "C")
+	in := quoteInput(10000)
+	in.ClientID = &clientID
+	first, _, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "cl", in))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteClient(ctx, owner, clientID); err != nil {
+		t.Fatal(err)
+	}
+	again, replayed, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "cl", in))
+	if err != nil || !replayed || again.ID != first.ID {
+		t.Fatalf("retry après suppression du client: replayed=%v err=%v", replayed, err)
+	}
+	// Hash différent => 409, même client supprimé.
+	other := quoteInput(20000)
+	other.ClientID = &clientID
+	if _, _, err := store.CreateDocumentIdempotent(ctx, owner, other, idem(t, OpCreateDocument, "cl", other)); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("err=%v, want conflict", err)
+	}
+	// Clé NOUVELLE avec client inexistant : erreur normale, clé non consommée.
+	if _, _, err := store.CreateDocumentIdempotent(ctx, owner, in, idem(t, OpCreateDocument, "cl-new", in)); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("err=%v, want ErrInvalidInput (client inconnu)", err)
+	}
+	var keys int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM document_idempotency_keys WHERE idempotency_key='cl-new'`).Scan(&keys); err != nil || keys != 0 {
+		t.Fatalf("la clé ne doit pas être consommée par un échec: keys=%d err=%v", keys, err)
+	}
+	if n := countDocuments(t, ctx, pool); n != 1 {
+		t.Fatalf("documents=%d, want 1", n)
+	}
+}
+
+// Conversion et créations liées : l'origine supprimée ensuite ne bloque pas le rejeu.
+func TestIdempotentLinkedReplaySurvivesOriginDeletion(t *testing.T) {
+	store, pool, ctx := newIdempotencyStore(t)
+	owner := seedIdempotencyUser(t, ctx, pool)
+	mkQuote := func() Document {
+		q, err := store.CreateDocument(ctx, owner, quoteInput(10000))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return q
+	}
+	convQuote, depQuote := mkQuote(), mkQuote()
+	conv := func(key string, q Document) (Document, bool, error) {
+		i, err := NewConvertIdempotency(key, q.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return store.ConvertQuoteToInvoiceIdempotent(ctx, owner, q.ID, i)
+	}
+	lines := []DocLine{{Description: "Acompte", QuantityMilli: 1000, UnitPriceCents: 3000, TaxRateBps: 2000}}
+	dep := func(key string, q Document) (Document, bool, error) {
+		i, err := NewLinkedIdempotency(OpCreateDeposit, key, q.ID, lines)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return store.CreateLinkedDocumentIdempotent(ctx, owner, q.ID, "deposit_invoice", lines, i)
+	}
+	inv, _, err := conv("c", convQuote)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dp, _, err := dep("d", depQuote)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, q := range []Document{convQuote, depQuote} {
+		if err := store.DeleteDocument(ctx, owner, q.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if d, replayed, err := conv("c", convQuote); err != nil || !replayed || d.ID != inv.ID {
+		t.Fatalf("convert retry: replayed=%v err=%v", replayed, err)
+	}
+	if d, replayed, err := dep("d", depQuote); err != nil || !replayed || d.ID != dp.ID {
+		t.Fatalf("deposit retry: replayed=%v err=%v", replayed, err)
+	}
+	// Clé nouvelle sur origine supprimée : 404 normal, rien n'est créé.
+	if _, _, err := conv("c-new", convQuote); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err=%v, want ErrNotFound", err)
+	}
+	if _, _, err := dep("d-new", depQuote); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err=%v, want ErrNotFound", err)
+	}
+	// Document créé supprimé, origine supprimée : tombstone 409, jamais 404.
+	if err := store.DeleteDocument(ctx, owner, inv.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := conv("c", convQuote); !errors.Is(err, ErrIdempotencyDocumentDeleted) {
+		t.Fatalf("err=%v, want tombstone", err)
+	}
+	// Hash différent (autre devis) sous la même clé => 409.
+	if _, _, err := conv("c", mkQuote()); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("err=%v, want conflict", err)
+	}
+}

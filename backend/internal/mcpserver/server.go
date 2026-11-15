@@ -175,7 +175,7 @@ func linesSchema() map[string]any {
 				},
 				"tax_rate_bps": map[string]any{
 					"type": "integer", "enum": taxRates, "default": 0,
-					"description": "Taux de TVA en points de base : 0, 210, 550, 1000 ou 2000 (défaut 0). Ignoré (forcé à 0) en régime franchise_293b.",
+					"description": "Taux de TVA en points de base : 0, 210, 550, 1000 ou 2000 (défaut 0). Ignoré (forcé à 0) en régime franchise_293b : omis, 0 ou toute autre valeur y donnent le même document et la même empreinte d'idempotence.",
 				},
 				"discount_bps": map[string]any{
 					"type": "integer", "minimum": 0, "maximum": 10000, "default": 0,

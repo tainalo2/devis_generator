@@ -74,7 +74,7 @@ refusée, y compris `quantity_milli` et `unit_price_cents`) :
 | `description` | chaîne | oui | 1 à 2000 caractères, non vide |
 | `quantite` | chaîne décimale | oui | **strictement positive**. Motif du schéma non signé : `^\+?([0-9]+(\.[0-9]*)?\|\.[0-9]+)$` (le `\|` est une alternation) (« + » optionnel, pas de `-`, pas de virgule). `0`/`0.0` satisfont le motif mais sont refusés à l'exécution, comme toute valeur arrondie à zéro au millième |
 | `prix_unitaire_ht` | chaîne décimale | oui | prix négatif autorisé (ligne de crédit) ; motif signé `^[+-]?…$` |
-| `tax_rate_bps` | entier | non (défaut 0) | `0`, `210`, `550`, `1000` ou `2000` ; forcé à 0 en régime `franchise_293b` |
+| `tax_rate_bps` | entier | non (défaut 0) | `0`, `210`, `550`, `1000` ou `2000` ; forcé à 0 en régime `franchise_293b` (la valeur fournie y est ignorée, y compris pour l'idempotence) |
 | `discount_bps` | entier | non (défaut 0) | de 0 à 10000 |
 
 `lignes` contient au plus 500 lignes. Une ligne invalide est rejetée par le
@@ -104,10 +104,24 @@ une clé au format invalide donne `status: "error"`.
   le rejeu réussit) ; seuls les champs d'entrée métier comptent (type, titre,
   dates, client, régime TVA, notes, conditions, document lié et, par ligne :
   description, quantité, prix unitaire, remise, taux de TVA, dans l'ordre des
-  lignes). Les champs dérivés ou sans effet (`id`, `position`, `tax_cents`,
-  `total_cents`) et l'ordre des clés JSON sont ignorés. Une vraie différence
-  (quantité, prix, description…) donne un hash différent, donc HTTP 409. Pour
-  `create_acompte`, la requête comparée est (devis d'origine, lignes fournies).
+  lignes). Le taux de TVA haché est le taux **effectif** (règle de
+  `billing.Compute`) : en `franchise_293b`, taux omis, `0` et `2000` donnent le
+  même hash (rejeu réussi) ; hors franchise, `2000` et `0` sont deux requêtes
+  différentes (HTTP 409). Les champs dérivés ou sans effet (`id`, `position`,
+  `tax_cents`, `total_cents`) et l'ordre des clés JSON sont ignorés. Une vraie
+  différence (quantité, prix, description…) donne un hash différent, donc HTTP
+  409. Pour `create_acompte`, la requête comparée est (document d'origine, lignes
+  fournies) ; le régime TVA vient de l'origine et n'est pas lu pour calculer le
+  hash : les taux de ces lignes sont donc hachés tels quels (un acompte sur
+  origine en franchise rejoué avec un `tax_rate_bps` différent donne un 409).
+- **Ordre de résolution** : une clé **existante** (même compte, opération, clé,
+  non expirée) est résolue AVANT les prérequis mutables (existence du client ou
+  du document lié, chargement du document d'origine d'une conversion ou d'un
+  acompte) : même hash => rejeu du document créé, même si le client ou
+  l'origine ont été supprimés depuis ; hash différent => 409 ; document créé
+  supprimé => 409 (tombstone). Seule une clé **nouvelle** vérifie ces
+  prérequis (client ou origine inconnus => erreur normale, clé non consommée) ;
+  sa réservation reste atomique dans la transaction de création.
 - Une création en échec (rollback) ne consomme pas la clé : elle peut être retentée.
 - **Suppression du document = tombstone** : supprimer un brouillon créé avec une
   clé ne supprime pas la clé (`document_id` n'a aucune clé étrangère). Rejouer la

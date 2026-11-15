@@ -134,3 +134,24 @@ func TestComputeLimits(t *testing.T) {
 		t.Fatalf("arrondi négatif : %d (%v)", res.SubtotalCents, err)
 	}
 }
+
+func TestEffectiveTaxRateBpsIsTheRuleUsedByCompute(t *testing.T) {
+	for _, rate := range []int{0, 210, 2000, 1234} {
+		if got, ok := EffectiveTaxRateBps(RegimeFranchise293B, rate); got != 0 || !ok {
+			t.Fatalf("franchise %d: got (%d,%v), want (0,true)", rate, got, ok)
+		}
+		res, err := Compute(RegimeFranchise293B, []LineInput{{Description: "x", QuantityMilli: 1000, UnitPriceCents: 100, TaxRateBps: rate}})
+		if err != nil || res.Lines[0].TaxRateBps != 0 {
+			t.Fatalf("Compute franchise %d: %+v %v", rate, res, err)
+		}
+	}
+	if got, ok := EffectiveTaxRateBps(RegimeStandard, 2000); got != 2000 || !ok {
+		t.Fatalf("standard 2000: (%d,%v)", got, ok)
+	}
+	if _, ok := EffectiveTaxRateBps(RegimeStandard, 1234); ok {
+		t.Fatal("standard 1234 doit être refusé")
+	}
+	if _, ok := EffectiveTaxRateBps("inconnu", 0); ok {
+		t.Fatal("régime inconnu doit être refusé")
+	}
+}

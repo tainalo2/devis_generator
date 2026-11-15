@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/tainalo2/devis_generator/backend/internal/billing"
 )
 
 // Opérations couvertes par l'idempotence de création. Chaque opération a son
@@ -60,10 +61,19 @@ type canonicalLine struct {
 	TaxRateBps     int    `json:"tax_rate_bps"`
 }
 
-func canonicalLines(lines []DocLine) []canonicalLine {
+// canonicalLines applique le taux de TVA effectif (billing.EffectiveTaxRateBps,
+// la règle de billing.Compute) : en franchise_293b le taux fourni est ignoré,
+// donc omis, 0 ou 2000 donnent la même représentation. Hors franchise, ou si
+// le régime n'est pas connu de la requête (acompte/avoir : il vient du
+// document d'origine), le taux fourni est conservé tel quel.
+func canonicalLines(regime string, lines []DocLine) []canonicalLine {
 	out := make([]canonicalLine, 0, len(lines))
 	for _, l := range lines {
-		out = append(out, canonicalLine{l.Description, l.QuantityMilli, l.UnitPriceCents, l.DiscountBps, l.TaxRateBps})
+		rate := l.TaxRateBps
+		if eff, ok := billing.EffectiveTaxRateBps(regime, rate); ok {
+			rate = eff
+		}
+		out = append(out, canonicalLine{l.Description, l.QuantityMilli, l.UnitPriceCents, l.DiscountBps, rate})
 	}
 	return out
 }
@@ -112,7 +122,7 @@ func NewDocumentIdempotency(operation, key string, in DocumentInput) (Idempotenc
 	return newIdempotency(operation, key, canonicalDocument{
 		ClientID: in.ClientID, Kind: in.Kind, Title: in.Title, IssueDate: in.IssueDate, DueDate: in.DueDate,
 		Currency: defaultCurrency(in.Currency), VATRegime: in.VATRegime, Notes: in.Notes, PaymentTerms: in.PaymentTerms,
-		RelatedDocumentID: in.RelatedDocumentID, Lines: canonicalLines(in.Lines),
+		RelatedDocumentID: in.RelatedDocumentID, Lines: canonicalLines(in.VATRegime, in.Lines),
 	})
 }
 
@@ -123,15 +133,54 @@ func NewConvertIdempotency(key string, quoteID uuid.UUID) (Idempotency, error) {
 
 // NewLinkedIdempotency : acompte ou avoir. Les lignes fournies (vides = copie
 // des lignes du document d'origine) et l'origine déterminent le résultat ;
-// le type est porté par l'opération.
+// le type est porté par l'opération. Le régime TVA vient du document
+// d'origine (état mutable, volontairement non lu pour calculer le hash) : les
+// taux fournis sont donc hachés tels quels, sans normalisation franchise.
 func NewLinkedIdempotency(operation, key string, originID uuid.UUID, lines []DocLine) (Idempotency, error) {
-	return newIdempotency(operation, key, canonicalLinked{OriginID: originID, Lines: canonicalLines(lines)})
+	return newIdempotency(operation, key, canonicalLinked{OriginID: originID, Lines: canonicalLines("", lines)})
 }
 
 // CreateDocumentIdempotent crée un document une seule fois par (compte,
 // opération, clé). Le booléen vaut true quand le document existait déjà.
 func (s *Store) CreateDocumentIdempotent(ctx context.Context, userID uuid.UUID, in DocumentInput, idem Idempotency) (Document, bool, error) {
 	return s.createDocument(ctx, userID, in, &idem)
+}
+
+// resolveExistingIdempotency résout une clé DÉJÀ enregistrée (non expirée),
+// avant tout prérequis mutable (client, document d'origine) : un rejeu doit
+// rester possible même si ceux-ci ont été supprimés depuis. found=false si la
+// clé est absente ou expirée ; hash différent => ErrIdempotencyConflict ;
+// document supprimé => ErrIdempotencyDocumentDeleted. Lecture seule : la
+// réservation atomique des clés nouvelles reste dans reserveIdempotencyKey.
+func (s *Store) resolveExistingIdempotency(ctx context.Context, userID uuid.UUID, idem Idempotency) (Document, bool, error) {
+	var hash string
+	var docID *uuid.UUID
+	err := s.pool.QueryRow(ctx, `
+		SELECT request_hash, document_id FROM document_idempotency_keys
+		WHERE user_id = $1 AND operation = $2 AND idempotency_key = $3 AND expires_at >= NOW()
+	`, userID, idem.Operation, idem.Key).Scan(&hash, &docID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Document{}, false, nil
+	}
+	if err != nil {
+		return Document{}, false, err
+	}
+	if hash != idem.RequestHash {
+		return Document{}, false, ErrIdempotencyConflict
+	}
+	if docID == nil {
+		return Document{}, false, errors.New("idempotence: création précédente sans document")
+	}
+	return s.replayIdempotentDocument(ctx, userID, *docID)
+}
+
+func (s *Store) replayIdempotentDocument(ctx context.Context, userID, docID uuid.UUID) (Document, bool, error) {
+	d, err := s.GetDocument(ctx, userID, docID)
+	if errors.Is(err, ErrNotFound) {
+		// Tombstone : la clé survit à la suppression du brouillon.
+		return Document{}, false, ErrIdempotencyDocumentDeleted
+	}
+	return d, true, err
 }
 
 // reserveIdempotencyKey insère la clé dans la transaction de création. Une
