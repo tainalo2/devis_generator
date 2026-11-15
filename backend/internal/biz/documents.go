@@ -223,21 +223,55 @@ func (s *Store) GetDocumentPublic(ctx context.Context, docID uuid.UUID) (Documen
 }
 
 func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in DocumentInput) (Document, error) {
+	d, _, err := s.createDocument(ctx, userID, in, nil)
+	return d, err
+}
+
+// createDocument crée un document. Si idem est non nil, la clé d'idempotence
+// est réservée dans la même transaction que la création (voir idempotency.go) ;
+// le booléen indique alors un rejeu d'une création déjà effectuée.
+func (s *Store) createDocument(ctx context.Context, userID uuid.UUID, in DocumentInput, idem *Idempotency) (Document, bool, error) {
+	// Une clé existante se résout avant tout prérequis mutable (client, document lié).
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
+	return s.insertDocument(ctx, userID, in, idem)
+}
+
+// insertDocument : chemin de création (clé nouvelle ou absente). La
+// réservation atomique de la clé dans la transaction couvre la course où la
+// clé apparaît après la résolution préalable.
+func (s *Store) insertDocument(ctx context.Context, userID uuid.UUID, in DocumentInput, idem *Idempotency) (Document, bool, error) {
 	if err := validateDocInput(in, false); err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	if err := s.checkOwnedRefs(ctx, userID, in); err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	calc, err := computeInput(in)
 	if err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	defer tx.Rollback(ctx)
+
+	if idem != nil {
+		existing, found, err := reserveIdempotencyKey(ctx, tx, userID, *idem)
+		if err != nil {
+			return Document{}, false, err
+		}
+		if found {
+			if err := tx.Commit(ctx); err != nil {
+				return Document{}, false, err
+			}
+			return s.replayIdempotentDocument(ctx, userID, existing)
+		}
+	}
 
 	var id uuid.UUID
 	err = tx.QueryRow(ctx, `
@@ -249,15 +283,21 @@ func (s *Store) CreateDocument(ctx context.Context, userID uuid.UUID, in Documen
 		in.Notes, in.PaymentTerms, in.RelatedDocumentID, calc.SubtotalCents, calc.TaxCents, calc.TotalCents,
 	).Scan(&id)
 	if err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	if err := insertLines(ctx, tx, id, calc); err != nil {
-		return Document{}, err
+		return Document{}, false, err
+	}
+	if idem != nil {
+		if err := attachIdempotencyDocument(ctx, tx, userID, *idem, id); err != nil {
+			return Document{}, false, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
-	return s.GetDocument(ctx, userID, id)
+	d, err := s.GetDocument(ctx, userID, id)
+	return d, false, err
 }
 
 func (s *Store) UpdateDocument(ctx context.Context, userID, id uuid.UUID, in DocumentInput) (Document, error) {
@@ -407,12 +447,27 @@ func (s *Store) IssueDocument(ctx context.Context, userID, id uuid.UUID) (Docume
 }
 
 func (s *Store) ConvertQuoteToInvoice(ctx context.Context, userID, quoteID uuid.UUID) (Document, error) {
+	d, _, err := s.convertQuoteToInvoice(ctx, userID, quoteID, nil)
+	return d, err
+}
+
+// ConvertQuoteToInvoiceIdempotent convertit un devis en facture une seule fois par clé.
+func (s *Store) ConvertQuoteToInvoiceIdempotent(ctx context.Context, userID, quoteID uuid.UUID, idem Idempotency) (Document, bool, error) {
+	return s.convertQuoteToInvoice(ctx, userID, quoteID, &idem)
+}
+
+func (s *Store) convertQuoteToInvoice(ctx context.Context, userID, quoteID uuid.UUID, idem *Idempotency) (Document, bool, error) {
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
 	src, err := s.GetDocument(ctx, userID, quoteID)
 	if err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	if src.Kind != "quote" {
-		return Document{}, fmt.Errorf("%w: seul un devis peut être converti", ErrInvalidInput)
+		return Document{}, false, fmt.Errorf("%w: seul un devis peut être converti", ErrInvalidInput)
 	}
 	in := DocumentInput{
 		ClientID:          src.ClientID,
@@ -425,19 +480,34 @@ func (s *Store) ConvertQuoteToInvoice(ctx context.Context, userID, quoteID uuid.
 		RelatedDocumentID: &src.ID,
 		Lines:             src.Lines,
 	}
-	return s.CreateDocument(ctx, userID, in)
+	return s.insertDocument(ctx, userID, in, idem)
 }
 
 func (s *Store) CreateLinkedDocument(ctx context.Context, userID, originID uuid.UUID, kind string, lines []DocLine) (Document, error) {
+	d, _, err := s.createLinkedDocument(ctx, userID, originID, kind, lines, nil)
+	return d, err
+}
+
+// CreateLinkedDocumentIdempotent crée un acompte ou un avoir une seule fois par clé.
+func (s *Store) CreateLinkedDocumentIdempotent(ctx context.Context, userID, originID uuid.UUID, kind string, lines []DocLine, idem Idempotency) (Document, bool, error) {
+	return s.createLinkedDocument(ctx, userID, originID, kind, lines, &idem)
+}
+
+func (s *Store) createLinkedDocument(ctx context.Context, userID, originID uuid.UUID, kind string, lines []DocLine, idem *Idempotency) (Document, bool, error) {
+	if idem != nil {
+		if d, found, err := s.resolveExistingIdempotency(ctx, userID, *idem); err != nil || found {
+			return d, found, err
+		}
+	}
 	src, err := s.GetDocument(ctx, userID, originID)
 	if err != nil {
-		return Document{}, err
+		return Document{}, false, err
 	}
 	if kind != "deposit_invoice" && kind != "credit_note" {
-		return Document{}, ErrInvalidInput
+		return Document{}, false, ErrInvalidInput
 	}
 	if kind == "credit_note" && src.Kind != "invoice" && src.Kind != "deposit_invoice" {
-		return Document{}, fmt.Errorf("%w: un avoir doit être lié à une facture", ErrInvalidInput)
+		return Document{}, false, fmt.Errorf("%w: un avoir doit être lié à une facture", ErrInvalidInput)
 	}
 	useLines := lines
 	if len(useLines) == 0 {
@@ -459,7 +529,7 @@ func (s *Store) CreateLinkedDocument(ctx context.Context, userID, originID uuid.
 		RelatedDocumentID: &src.ID,
 		Lines:             useLines,
 	}
-	return s.CreateDocument(ctx, userID, in)
+	return s.insertDocument(ctx, userID, in, idem)
 }
 
 func nextNumber(ctx context.Context, tx pgx.Tx, issuerKey, kind string, year int) (string, error) {

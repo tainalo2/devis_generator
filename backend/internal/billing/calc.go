@@ -72,6 +72,22 @@ const (
 
 var errAmountTooLarge = fmt.Errorf("montant trop élevé (maximum %d €)", MaxAmountCents/100)
 
+// EffectiveTaxRateBps renvoie le taux réellement appliqué à une ligne : 0 en
+// franchise_293b (le taux fourni est ignoré), le taux fourni en régime
+// standard. ok vaut false si ce taux n'est pas autorisé en régime standard ou
+// si le régime est inconnu ; rate est alors le taux fourni, inchangé. C'est la
+// règle unique utilisée par Compute et par la canonicalisation d'idempotence.
+func EffectiveTaxRateBps(regime string, rate int) (effective int, ok bool) {
+	switch regime {
+	case RegimeFranchise293B:
+		return 0, true
+	case RegimeStandard:
+		return rate, isAllowedRate(rate)
+	default:
+		return rate, false
+	}
+}
+
 // Compute prices a document.
 func Compute(regime string, lines []LineInput) (Result, error) {
 	if regime != RegimeFranchise293B && regime != RegimeStandard {
@@ -93,10 +109,8 @@ func Compute(regime string, lines []LineInput) (Result, error) {
 		if utf8.RuneCountInString(in.Description) > MaxDescriptionLen {
 			return Result{}, fmt.Errorf("ligne %d: désignation trop longue (%d caractères maximum)", i+1, MaxDescriptionLen)
 		}
-		rate := in.TaxRateBps
-		if regime == RegimeFranchise293B {
-			rate = 0
-		} else if !isAllowedRate(rate) {
+		rate, ok := EffectiveTaxRateBps(regime, in.TaxRateBps)
+		if !ok {
 			return Result{}, fmt.Errorf("ligne %d: taux TVA non autorisé (%d bps)", i+1, rate)
 		}
 

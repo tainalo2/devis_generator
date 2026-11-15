@@ -31,6 +31,31 @@ import (
 // Version is injected at build time via -ldflags.
 var Version = "dev"
 
+// idempotencyPurgeInterval : fréquence de la purge globale des clés d'idempotence expirées.
+const idempotencyPurgeInterval = time.Hour
+
+// idempotencyPurgeTicks émet un tick par intervalle jusqu'à l'annulation de ctx.
+func idempotencyPurgeTicks(ctx context.Context, interval time.Duration) <-chan time.Time {
+	out := make(chan time.Time)
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case now := <-t.C:
+				select {
+				case out <- now:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+	}()
+	return out
+}
+
 func main() {
 	_ = godotenv.Load()
 	_ = godotenv.Load(filepath.Join("..", ".env"))
@@ -189,6 +214,9 @@ func main() {
 		go refresher.Start(runCtx)
 		slog.Info("legal refresh started", "interval", cfg.LegalRefreshInterval.String())
 	}
+
+	go biz.RunIdempotencyPurgeLoop(runCtx, bizStore, idempotencyPurgeTicks(runCtx, idempotencyPurgeInterval), slog.Default())
+	slog.Info("idempotency purge started", "interval", idempotencyPurgeInterval.String())
 
 	go func() {
 		slog.Info("listening", "addr", cfg.Addr, "env", cfg.Environment, "version", Version)
