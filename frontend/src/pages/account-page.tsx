@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom"
 
 import { PasswordInput } from "@/components/auth-ui"
 import { PageHeader } from "@/components/page"
+import { RemindersSection } from "@/components/reminders-section"
 import { Seo } from "@/components/seo"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
@@ -201,6 +202,8 @@ export function AccountPage() {
           ]}
         />
       </Row>
+
+      <RemindersSection />
 
       <Row id="s-api-keys" title="Clés API" description="Connectez l’API publique et le serveur MCP à votre compte.">
         <div className="flex flex-wrap items-start justify-between gap-3">

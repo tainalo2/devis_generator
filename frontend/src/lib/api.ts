@@ -250,6 +250,39 @@ export async function saveIssuer(input: IssuerProfile): Promise<IssuerProfile> {
   return ((await res.json()) as { issuer: IssuerProfile }).issuer
 }
 
+export async function uploadBrandingLogo(file: File): Promise<{ logo_url: string }> {
+  const formData = new FormData()
+  formData.append("logo", file)
+  const res = await apiFetch("/api/v1/account/branding/logo", { method: "POST", body: formData })
+  if (!res.ok) throw new Error(await readError(res, "Envoi du logo échoué."))
+  return (await res.json()) as { logo_url: string }
+}
+
+export async function getBrandingLogo(): Promise<{ logo_url: string } | null> {
+  const res = await apiFetch("/api/v1/account/branding/logo")
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(await readError(res, "Récupération du logo échouée."))
+  return (await res.json()) as { logo_url: string }
+}
+
+export async function saveBrandingColors(colors: Record<string, string>): Promise<Record<string, string>> {
+  const res = await apiFetch("/api/v1/account/branding/colors", { method: "POST", body: JSON.stringify(colors) })
+  if (!res.ok) throw new Error(await readError(res, "Enregistrement des couleurs échoué."))
+  return (await res.json()) as Record<string, string>
+}
+
+export async function getBrandingColors(): Promise<Record<string, string> | null> {
+  const res = await apiFetch("/api/v1/account/branding/colors")
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(await readError(res, "Récupération des couleurs échouée."))
+  return (await res.json()) as Record<string, string>
+}
+
+export async function clearBranding(): Promise<void> {
+  const res = await apiFetch("/api/v1/account/branding", { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Suppression de la personnalisation échouée."))
+}
+
 export function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -362,4 +395,52 @@ export async function requestPasswordReset(email: string): Promise<string> {
   const res = await apiFetch("/api/v1/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) })
   if (!res.ok) throw new Error(await readError(res, "Demande impossible."))
   return ((await res.json()) as { message: string }).message
+}
+
+// Collaborators API
+
+export type Collaborator = {
+  id: string
+  email: string
+  role: string
+  created_at: string
+}
+
+export type Invitation = {
+  id: string
+  email: string
+  role: string
+  expires_at: string
+  created_at: string
+}
+
+export async function listCollaborators(): Promise<Collaborator[]> {
+  const res = await apiFetch("/api/v1/collaborators")
+  if (!res.ok) throw new Error(await readError(res, "Chargement des collaborateurs impossible."))
+  return ((await res.json()) as { collaborators: Collaborator[] }).collaborators
+}
+
+export async function listPendingInvitations(): Promise<Invitation[]> {
+  const res = await apiFetch("/api/v1/collaborators/pending")
+  if (!res.ok) throw new Error(await readError(res, "Chargement des invitations impossible."))
+  return ((await res.json()) as { invitations: Invitation[] }).invitations
+}
+
+export async function inviteCollaborator(email: string): Promise<Invitation> {
+  const res = await apiFetch("/api/v1/collaborators/invite", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Invitation impossible."))
+  return ((await res.json()) as { invitation: Invitation }).invitation
+}
+
+export async function revokeCollaborator(id: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/collaborators/${encodeURIComponent(id)}`, { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Révocation impossible."))
+}
+
+export async function cancelInvitation(id: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/collaborators/pending/${encodeURIComponent(id)}`, { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Annulation impossible."))
 }

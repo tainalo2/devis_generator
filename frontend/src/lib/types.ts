@@ -66,6 +66,12 @@ export type Document = {
   lines: DocLine[]
 }
 
+export type ColorScheme = {
+  primary_color?: string
+  accent_color?: string
+  text_color?: string
+}
+
 export type IssuerProfile = {
   legal_name: string
   trade_name: string
@@ -80,6 +86,8 @@ export type IssuerProfile = {
   iban?: string
   default_vat_regime: string
   payment_terms: string
+  branding_logo_url?: string
+  branding_colors?: ColorScheme
 }
 
 export type TotalsPreview = {

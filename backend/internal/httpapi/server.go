@@ -269,6 +269,12 @@ func New(opts Options) *Server {
 			r.Get("/email/gmail/status", s.requireAuth(s.handleGmailStatus))
 			r.Post("/email/gmail/send", s.requireAuth(s.handleGmailSend))
 			r.Delete("/email/gmail", s.requireAuth(s.handleGmailDisconnect))
+
+			r.Get("/collaborators", s.requireAuth(s.handleListCollaborators))
+			r.Post("/collaborators/invite", s.requireAuth(s.handleInviteCollaborator))
+			r.Get("/collaborators/pending", s.requireAuth(s.handleListPendingInvitations))
+			r.Delete("/collaborators/{id}", s.requireAuth(s.handleRevokeCollaborator))
+			r.Delete("/collaborators/invitations/{id}", s.requireAuth(s.handleCancelInvitation))
 		})
 	})
 

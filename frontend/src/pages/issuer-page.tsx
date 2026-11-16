@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { VATValidator } from "@/components/vat-validator"
+import { BrandingSection } from "@/components/branding-section"
 import { getIssuer, listDocuments, saveIssuer } from "@/lib/api"
 import { useMediaQuery } from "@/lib/hooks"
 import type { Document, IssuerProfile } from "@/lib/types"
@@ -25,6 +26,7 @@ const sections = [
   { id: "coordonnees", label: "Coordonnées", tone: "bg-zone-infos border-zone-infos-border", dot: "bg-zone-infos-icon" },
   { id: "banque", label: "Banque", tone: "bg-zone-terms border-zone-terms-border", dot: "bg-zone-terms-icon" },
   { id: "defauts", label: "Valeurs par défaut", tone: "bg-zone-lines border-zone-lines-border", dot: "bg-zone-lines-icon" },
+  { id: "personnalisation", label: "Personnalisation visuelle", tone: "bg-purple-50 border-purple-200 dark:bg-purple-950 dark:border-purple-800", dot: "bg-purple-500" },
 ] as const
 
 const PAYMENT_TERMS = ["Paiement à réception", "Paiement à 30 jours", "Paiement à 45 jours fin de mois", "Paiement à 60 jours"]
@@ -246,6 +248,10 @@ export function IssuerPage() {
                 Numérotation continue par type et par année. Elle ne peut pas être réinitialisée ni modifiée à la main.
               </p>
             </div>
+          </Section>
+
+          <Section id="personnalisation" title="Personnalisation visuelle" tone={sections[4].tone}>
+            <BrandingSection />
           </Section>
         </div>
       </div>
