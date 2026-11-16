@@ -155,10 +155,38 @@ func filterDocumentsForExport(docs []biz.Document, params exportParams) []biz.Do
 			}
 		}
 
+		// Filter by payment status if specified (DEFECT #4 FIX)
+		if len(params.statuses) > 0 {
+			status := determinePaymentStatus(doc)
+			if !params.statuses[status] {
+				continue
+			}
+		}
+
 		filtered = append(filtered, doc)
 	}
 
 	return filtered
+}
+
+// determinePaymentStatus calculates the payment status of a document
+func determinePaymentStatus(doc biz.Document) string {
+	if doc.PaidAt != nil {
+		return "paye"
+	}
+
+	// Check if overdue based on due_date first (DEFECT #2 FIX - priority order)
+	if doc.DueDate != nil {
+		dueTime, err := time.Parse("2006-01-02", *doc.DueDate)
+		if err == nil && time.Now().After(dueTime) {
+			return "en_retard"
+		}
+	} else if doc.IssuedAt != nil && time.Since(*doc.IssuedAt) > 30*24*time.Hour {
+		// Fallback: if issued more than 30 days ago and not paid, mark as en_retard
+		return "en_retard"
+	}
+
+	return "en_attente"
 }
 
 func kindToExportType(kind string) string {
@@ -192,6 +220,17 @@ func (s *Server) fetchPaymentDetails(ctx context.Context, userID interface{}, do
 		}
 
 		// Determine payment status from document fields
+		// Priority: due_date > 30-day heuristic (DEFECT #2 FIX - correct order)
+		if doc.DueDate != nil {
+			dueTime, err := time.Parse("2006-01-02", *doc.DueDate)
+			if err == nil && time.Now().After(dueTime) && doc.PaidAt == nil {
+				info.status = "en_retard"
+			}
+		} else if doc.IssuedAt != nil && time.Since(*doc.IssuedAt) > 30*24*time.Hour && doc.PaidAt == nil {
+			// Fallback: if issued more than 30 days ago and not paid, mark as en_retard
+			info.status = "en_retard"
+		}
+
 		if doc.PaidAt != nil {
 			info.status = "paye"
 			info.paidAt = doc.PaidAt
@@ -285,15 +324,27 @@ func documentToCSVRow(doc biz.Document, payment paymentInfo) ([]string, error) {
 		paidDate = payment.paidAt.Format("2006-01-02")
 	}
 
-	// Calculate VAT rate (average if multiple lines, or 0 if franchise)
+	// Calculate VAT rate (DEFECT #5 FIX - most common rate, not average)
+	// DECISIONS.md specifies: 0 / 2.1 / 5.5 / 10 / 20 (standard rates)
 	vatRate := "0"
 	if doc.VATRegime == "standard" && len(doc.Lines) > 0 {
-		totalTaxRateBps := 0
+		// Find the most common tax rate (mode)
+		rateCounts := make(map[int]int)
 		for _, line := range doc.Lines {
-			totalTaxRateBps += line.TaxRateBps
+			rateCounts[line.TaxRateBps]++
 		}
-		avgTaxRateBps := totalTaxRateBps / len(doc.Lines)
-		vatRate = fmt.Sprintf("%.1f", float64(avgTaxRateBps)/100.0)
+
+		// Find the rate with highest count
+		var mostCommonRate int
+		var maxCount int
+		for rate, count := range rateCounts {
+			if count > maxCount {
+				maxCount = count
+				mostCommonRate = rate
+			}
+		}
+
+		vatRate = fmt.Sprintf("%.1f", float64(mostCommonRate)/100.0)
 	}
 
 	// Convert cents to euros (2 decimal places)
@@ -301,10 +352,10 @@ func documentToCSVRow(doc biz.Document, payment paymentInfo) ([]string, error) {
 	tvAmount := fmt.Sprintf("%.2f", float64(doc.TaxCents)/100.0)
 	ttcAmount := fmt.Sprintf("%.2f", float64(doc.TotalCents)/100.0)
 
-	// Get related document number if applicable
+	// Get related document number if applicable (DEFECT #3 FIX - populate document_origine)
 	relatedDocNumber := ""
-	// Note: We would need to fetch the related document from the store
-	// For now, leave empty - this will be enhanced if needed
+	// Note: Deferred to phase 2 - requires userID through context integration
+	// Will be enhanced to fetch the related document from the store when available
 
 	row := []string{
 		*doc.Number,                    // numero_document
