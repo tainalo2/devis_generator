@@ -119,6 +119,39 @@ Optionnelles légales (aucun secret) : `LEGAL_REFRESH_ENABLED`, `LEGAL_REFRESH_I
 
 Rédigées d’après le fonctionnement réel (données, chiffrement, conservation tant que le compte existe, export/suppression, cookies strictement nécessaires). Éditeur et hébergeur via variables d’environnement — **à compléter** et **à faire valider juridiquement**.
 
+## Signature électronique (V1)
+
+**Décision (architecte, epic Signature `t_dee0608a` / Sig-T1 `t_0c1c888c`) : signature électronique simple horodatée, mécanisme interne, pas d'intégration tierce obligatoire en V1.**
+
+### Mécanisme retenu
+
+Sur le lien stable `/d/{token}` : bouton **« Signer ce devis »** → au clic, capture et persistance de :
+
+- `signed_at` — horodatage serveur (UTC, pas horodatage client, pour éviter la manipulation)
+- `document_hash` — SHA-256 du contenu figé du document (`legal_snapshot`/`issuer_snapshot` au moment de la signature)
+- `signer_ip` — IP de la requête
+- `signer_user_agent` — user-agent du navigateur
+- `signer_name_declared` — identité déclarée (nom saisi par le signataire, non vérifiée)
+
+Pas de certificat qualifié, pas de tiers de confiance. Correspond à la **« signature électronique simple »** au sens eIDAS (règlement UE 910/2014, art. 3(10)) : recevable comme preuve devant un juge (art. 25), mais sans la présomption légale de fiabilité attachée à la signature qualifiée — en cas de litige, la charge de la preuve de l'intégrité/l'authenticité repose sur l'éditeur/l'émetteur, pas sur une présomption automatique.
+
+### Option tierce écartée pour V1
+
+DocuSign/Yousign (même en mode **BYO clé API**, sur le modèle `internal/paymentbyo` — clé fournie par l'utilisateur, aucun coût pour l'éditeur) est **écarté pour le premier livrable** :
+
+- Le cas d'usage cible (devis TPE/micro-entreprise, accord commercial simple) n'exige pas de valeur probatoire renforcée dans l'immense majorité des cas.
+- Contrainte « open source/gratuit, coût d'hébergement minimal » : la signature simple horodatée ne demande ni service tiers ni clé API, donc zéro dépendance et zéro coût même en mode BYO (qui demande tout de même une intégration/maintenance côté éditeur).
+- Aucune demande utilisateur identifiée justifiant ce coût d'intégration — même principe de prudence que pour l'export comptable (« ne pas anticiper », cf. ci-dessus).
+
+**Évolution ultérieure (hors V1)** : si un besoin confirmé de valeur probatoire plus forte apparaît (montants élevés, contentieux anticipé), ajouter une option tierce BYO clé API (Yousign en priorité, API REST simple) **en plus** de la signature simple — jamais en remplacement — sur le même modèle que `paymentbyo` (clé API saisie par l'utilisateur dans son compte, stockée chiffrée via le vault existant). Ne pas construire avant retour utilisateur concret.
+
+### Cadrage pour les tickets d'implémentation
+
+- **Sig-T2** (modèle de données) : table dédiée (ou colonnes sur `documents`) portant `signed_at`, `document_hash` (SHA-256 hex, pas de HMAC — c'est un hash d'intégrité, aucun secret requis côté signature elle-même puisque l'accès au lien est déjà protégé par `DOC_LINK_SECRET`), `signer_ip`, `signer_user_agent`, `signer_name_declared`. Un devis signé devient **immuable**, même règle que `issued` pour facture/acompte/avoir.
+- **Sig-T3** (UI) : capture au clic sur `/d/{token}`, pas de case "je certifie" complexe — rester simple, conforme à une signature électronique *simple*. Email de confirmation à l'émetteur.
+- **Sig-T4** (émetteur) : badge + preuve consultable/téléchargeable (horodatage, hash, IP) — pas de génération de certificat, juste l'affichage structuré des champs ci-dessus.
+- **Sig-T5** (doc self-hosters) : expliciter clairement que c'est une signature **simple** eIDAS, pas qualifiée ; ce que le mécanisme prouve (horodatage + intégrité du contenu + traçabilité technique) et ne prouve pas (identité vérifiée du signataire) ; mentionner l'option tierce future sans promettre une valeur juridique non vérifiée.
+
 ## Suite
 
 SMTP reset MDP ; Factur-X téléchargeable puis signature électronique ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.
