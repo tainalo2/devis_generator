@@ -238,6 +238,7 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+			r.Get("/accounting-export", s.requireAuth(s.handleAccountingExport))
 			if s.payments != nil {
 				r.Get("/payments/config/{provider}", s.requireAuth(s.handleGetPaymentConfig))
 				r.Put("/payments/config/{provider}", s.requireAuth(s.handlePutPaymentConfig))
