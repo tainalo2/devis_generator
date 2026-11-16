@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react"
+import { Download } from "lucide-react"
 
 import { PageHeader } from "@/components/page"
 import { Seo } from "@/components/seo"
 import { Spinner } from "@/components/ui/spinner"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   LineChart,
   Line,
@@ -51,6 +55,12 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Export filter state
+  const [dateFrom, setDateFrom] = useState<string>("")
+  const [dateTo, setDateTo] = useState<string>("")
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -73,6 +83,53 @@ export default function AnalyticsPage() {
     }
   }, [])
 
+  const handleDownloadExport = async () => {
+    setExporting(true)
+    setExportError(null)
+
+    try {
+      // Build query parameters
+      const params = new URLSearchParams()
+      if (dateFrom) params.append("date_from", dateFrom)
+      if (dateTo) params.append("date_to", dateTo)
+
+      const url = `/api/v1/accounting-export${params.toString() ? "?" + params.toString() : ""}`
+
+      const response = await fetch(url, {
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const errorData = (await response.json().catch(() => ({}))) as { error?: string }
+        throw new Error(errorData.error || `HTTP ${response.status}`)
+      }
+
+      // Get the filename from Content-Disposition header if available
+      const contentDisposition = response.headers.get("Content-Disposition")
+      let filename = "export-comptable.csv"
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/)
+        if (match) filename = match[1]
+      }
+
+      // Convert response to blob and trigger download
+      const blob = await response.blob()
+      const downloadUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = downloadUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(downloadUrl)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Erreur lors du téléchargement"
+      setExportError(message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const d = data ?? MOCK
 
   return (
@@ -90,6 +147,72 @@ export default function AnalyticsPage() {
               Endpoints analytics indisponibles ({error}) — données démonstration affichées.
             </p>
           )}
+
+          {/* Export Comptable Section */}
+          <div className="rounded-lg border p-4">
+            <h2 className="mb-4 text-lg font-semibold">Export comptable</h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Téléchargez un fichier CSV des documents payés pour votre comptabilité.
+            </p>
+
+            {/* Period Filter */}
+            <div className="mb-4 grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+              <div>
+                <Label htmlFor="date-from" className="text-xs font-medium">
+                  Du
+                </Label>
+                <Input
+                  id="date-from"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  disabled={exporting}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="date-to" className="text-xs font-medium">
+                  Au
+                </Label>
+                <Input
+                  id="date-to"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  disabled={exporting}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={handleDownloadExport}
+                  disabled={exporting}
+                  variant="default"
+                  size="default"
+                  className="w-full"
+                >
+                  {exporting ? (
+                    <>
+                      <span className="mr-2 inline-flex h-4 w-4 items-center justify-center">
+                        <Spinner className="inline-flex h-3 w-3 text-current" label="" />
+                      </span>
+                      Téléchargement...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Télécharger
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {exportError && (
+              <p className="text-sm text-red-600">Erreur : {exportError}</p>
+            )}
+          </div>
+
           <div className="rounded-lg border p-4">
             <h2 className="mb-4 text-lg font-semibold">CA par mois</h2>
             <div className="h-64">
