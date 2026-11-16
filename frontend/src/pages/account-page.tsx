@@ -1,10 +1,11 @@
-import { Copy, Download, ExternalLink, KeyRound, Plus } from "lucide-react"
+import { Copy, Download, ExternalLink, KeyRound, Plus, CreditCard, Trash2 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useEffect, useState, type ReactNode } from "react"
 import { Link, Navigate, useNavigate } from "react-router-dom"
 
 import { PasswordInput } from "@/components/auth-ui"
 import { PageHeader } from "@/components/page"
+import { RemindersSection } from "@/components/reminders-section"
 import { Seo } from "@/components/seo"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Segmented } from "@/components/ui/segmented"
 import { useAuth } from "@/components/use-auth"
 import { useToast } from "@/components/use-toast"
-import { createAPIKey, listAPIKeys, revokeAPIKey, type APIKey } from "@/lib/api"
+import { createAPIKey, listAPIKeys, revokeAPIKey, type APIKey, getPaymentConfig, savePaymentConfig, deletePaymentConfig, type PaymentConfig } from "@/lib/api"
 import { formatDate } from "@/lib/documents"
 import { textLinkClass } from "@/lib/styles"
 import { cn } from "@/lib/utils"
@@ -55,6 +56,24 @@ export function AccountPage() {
   const [keyName, setKeyName] = useState("")
   const [createdKey, setCreatedKey] = useState("")
   const [keyPending, setKeyPending] = useState(false)
+
+  // Payment config states
+  const [paymentConfigs, setPaymentConfigs] = useState<Record<string, PaymentConfig>>({})
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedProvider, setSelectedProvider] = useState<"rib" | "stripe" | "mollie" | "paypal" | "stripe-connect" | "">("")
+  const [paymentPending, setPaymentPending] = useState(false)
+  const [paymentForm, setPaymentForm] = useState({
+    provider: "" as "rib" | "stripe" | "mollie" | "paypal" | "stripe-connect" | "",
+    env: "test" as "live" | "test",
+    stripe_secret_key: "",
+    stripe_webhook_secret: "",
+    mollie_api_key: "",
+    paypal_client_id: "",
+    paypal_client_secret: "",
+    paypal_webhook_id: "",
+  })
+  const [paymentDeleteConfirm, setPaymentDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -142,6 +161,71 @@ export function AccountPage() {
     setKeyDialogOpen(false)
     setKeyName("")
     setCreatedKey("")
+  }
+
+  async function onOpenPaymentDialog(provider: "rib" | "stripe" | "mollie" | "paypal" | "stripe-connect") {
+    setSelectedProvider(provider)
+    setPaymentForm((f) => ({ ...f, provider }))
+    // Try to load existing config
+    setPaymentPending(true)
+    try {
+      const existing = await getPaymentConfig(provider)
+      setPaymentForm((f) => ({ ...f, env: existing.env || "test" }))
+    } catch {
+      // Not configured yet, that's fine
+      setPaymentForm((f) => ({ ...f, env: "test" }))
+    } finally {
+      setPaymentPending(false)
+      setPaymentDialogOpen(true)
+    }
+  }
+
+  function closePaymentDialog() {
+    setPaymentDialogOpen(false)
+    setSelectedProvider("")
+    setPaymentForm({
+      provider: "",
+      env: "test",
+      stripe_secret_key: "",
+      stripe_webhook_secret: "",
+      mollie_api_key: "",
+      paypal_client_id: "",
+      paypal_client_secret: "",
+      paypal_webhook_id: "",
+    })
+  }
+
+  async function onSavePaymentConfig() {
+    if (!paymentForm.provider) return
+    setPaymentPending(true)
+    try {
+      await savePaymentConfig(paymentForm as any)
+      setPaymentConfigs((prev) => ({ ...prev, [paymentForm.provider]: { ...paymentForm, masked: {} } as any }))
+      toast.push(`Configuration ${paymentForm.provider} enregistrée.`, "success")
+      closePaymentDialog()
+    } catch (err) {
+      toast.push(err instanceof Error ? err.message : "Enregistrement impossible.", "error")
+    } finally {
+      setPaymentPending(false)
+    }
+  }
+
+  async function onDeletePaymentConfig(provider: string) {
+    setPaymentPending(true)
+    try {
+      await deletePaymentConfig(provider)
+      setPaymentConfigs((prev) => {
+        const next = { ...prev }
+        delete next[provider]
+        return next
+      })
+      setPaymentDeleteConfirm(null)
+      toast.push(`Configuration ${provider} supprimée.`, "success")
+    } catch (err) {
+      toast.push(err instanceof Error ? err.message : "Suppression impossible.", "error")
+    } finally {
+      setPaymentPending(false)
+    }
   }
 
   return (
@@ -250,6 +334,44 @@ export function AccountPage() {
         )}
       </Row>
 
+      <Row id="s-payments" title="Paiements" description="Configurez vos moyens d'encaissement pour recevoir les paiements.">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex max-w-xl flex-col gap-1 text-sm">
+            <p>Configurez les identifiants de vos fournisseurs de paiement (Stripe, Mollie, PayPal) ou votre RIB/IBAN pour recevoir les paiements de vos clients.</p>
+            <a className={cn(textLinkClass, "inline-flex w-fit items-center gap-1 text-[13px]")} href="https://github.com/tainalo2/devis_generator/blob/main/docs/PAYMENT_PROVIDERS_SETUP.md" target="_blank" rel="noreferrer">
+              Documentation des fournisseurs de paiement
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {["rib", "stripe", "mollie", "paypal", "stripe-connect"].map((provider) => {
+            const config = paymentConfigs[provider]
+            const isConfigured = config ? Object.keys(config.masked || {}).length > 0 : false
+            return (
+              <button
+                key={provider}
+                onClick={() => void onOpenPaymentDialog(provider as any)}
+                disabled={paymentPending}
+                className={cn(
+                  "flex flex-col gap-2 rounded-lg border p-3 text-left transition hover:border-brand disabled:opacity-50",
+                  isConfigured ? "border-brand/50 bg-brand/5" : "border-dashed border-border"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <CreditCard className="size-4" />
+                  <span className="font-medium text-sm capitalize">{provider === "stripe-connect" ? "Stripe Connect" : provider.toUpperCase()}</span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {isConfigured ? `✓ Configuré (${config.env})` : "Non configuré"}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </Row>
+
       <Row id="s-data" title="Mes données" description="Vos données vous appartiennent (RGPD).">
         <p className="text-sm">Téléchargez en un fichier JSON votre profil, la fiche Entreprise, vos clients et tous vos documents.</p>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -349,6 +471,205 @@ export function AccountPage() {
             Exporter avant
           </Button>
           <Button variant="destructive" size="lg" disabled={pending || confirmText.trim() !== CONFIRM_WORD || !password} onClick={() => void onDelete()}>
+            Supprimer définitivement
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={paymentDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && paymentPending) return
+          if (open) setPaymentDialogOpen(true)
+          else closePaymentDialog()
+        }}
+        title={selectedProvider ? `Configurer ${selectedProvider.toUpperCase()}` : "Configuration"}
+        icon={<CreditCard />}
+      >
+        {selectedProvider && (
+          <>
+            {selectedProvider === "rib" && (
+              <>
+                <Label>
+                  <span>IBAN</span>
+                  <Input
+                    placeholder="FR1420041010050500013M02606"
+                    value={paymentForm.stripe_secret_key || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, stripe_secret_key: e.target.value }))}
+                  />
+                </Label>
+              </>
+            )}
+
+            {selectedProvider === "stripe" && (
+              <>
+                <Label>
+                  <span>Mode</span>
+                  <Segmented
+                    label="Mode"
+                    value={paymentForm.env || "test"}
+                    onChange={(env: any) => setPaymentForm((f: any) => ({ ...f, env }))}
+                    options={[
+                      { value: "test", label: "Test" },
+                      { value: "live", label: "Production" },
+                    ]}
+                  />
+                </Label>
+                <Label>
+                  <span>Clé secrète</span>
+                  <Input
+                    type="password"
+                    placeholder="sk_test_..."
+                    value={paymentForm.stripe_secret_key || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, stripe_secret_key: e.target.value }))}
+                  />
+                </Label>
+                <Label>
+                  <span>Secret du webhook</span>
+                  <Input
+                    type="password"
+                    placeholder="whsec_..."
+                    value={paymentForm.stripe_webhook_secret || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, stripe_webhook_secret: e.target.value }))}
+                  />
+                </Label>
+                <p className="text-xs text-muted-foreground">Les secrets sont masqués après l'enregistrement. Copiez-les maintenant depuis votre tableau de bord Stripe.</p>
+              </>
+            )}
+
+            {selectedProvider === "mollie" && (
+              <>
+                <Label>
+                  <span>Mode</span>
+                  <Segmented
+                    label="Mode"
+                    value={paymentForm.env || "test"}
+                    onChange={(env: any) => setPaymentForm((f: any) => ({ ...f, env }))}
+                    options={[
+                      { value: "test", label: "Test" },
+                      { value: "live", label: "Production" },
+                    ]}
+                  />
+                </Label>
+                <Label>
+                  <span>Clé API</span>
+                  <Input
+                    type="password"
+                    placeholder="test_..."
+                    value={paymentForm.mollie_api_key || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, mollie_api_key: e.target.value }))}
+                  />
+                </Label>
+                <p className="text-xs text-muted-foreground">Trouvez votre clé API dans votre tableau de bord Mollie.</p>
+              </>
+            )}
+
+            {selectedProvider === "paypal" && (
+              <>
+                <Label>
+                  <span>Mode</span>
+                  <Segmented
+                    label="Mode"
+                    value={paymentForm.env || "test"}
+                    onChange={(env: any) => setPaymentForm((f: any) => ({ ...f, env }))}
+                    options={[
+                      { value: "test", label: "Sandbox" },
+                      { value: "live", label: "Production" },
+                    ]}
+                  />
+                </Label>
+                <Label>
+                  <span>Client ID</span>
+                  <Input
+                    type="password"
+                    placeholder="AVjD..."
+                    value={paymentForm.paypal_client_id || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, paypal_client_id: e.target.value }))}
+                  />
+                </Label>
+                <Label>
+                  <span>Client Secret</span>
+                  <Input
+                    type="password"
+                    placeholder="EOTi..."
+                    value={paymentForm.paypal_client_secret || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, paypal_client_secret: e.target.value }))}
+                  />
+                </Label>
+                <Label>
+                  <span>Webhook ID</span>
+                  <Input
+                    type="password"
+                    placeholder="4VH..."
+                    value={paymentForm.paypal_webhook_id || ""}
+                    onChange={(e) => setPaymentForm((f: any) => ({ ...f, paypal_webhook_id: e.target.value }))}
+                  />
+                </Label>
+                <p className="text-xs text-muted-foreground">Trouvez ces identifiants dans votre tableau de bord PayPal Developer.</p>
+              </>
+            )}
+
+            {selectedProvider === "stripe-connect" && (
+              <>
+                <p className="text-sm">
+                  Stripe Connect vous permet de recevoir les paiements directement sur votre compte bancaire. Aucune configuration supplémentaire n'est nécessaire.
+                </p>
+              </>
+            )}
+
+            <div className="flex flex-wrap justify-between gap-2 border-t border-border pt-3">
+              {paymentConfigs[selectedProvider] && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={paymentPending}
+                  onClick={() => setPaymentDeleteConfirm(selectedProvider)}
+                >
+                  <Trash2 className="size-4" />
+                  Supprimer
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  disabled={paymentPending}
+                  onClick={closePaymentDialog}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  disabled={paymentPending || (!selectedProvider || selectedProvider === "")}
+                  onClick={() => void onSavePaymentConfig()}
+                >
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={Boolean(paymentDeleteConfirm)}
+        onOpenChange={(open) => {
+          if (!open) setPaymentDeleteConfirm(null)
+        }}
+        title="Supprimer la configuration ?"
+        description="Cette configuration sera supprimée. Vous pourrez la reconfigurer plus tard."
+      >
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            disabled={paymentPending}
+            onClick={() => setPaymentDeleteConfirm(null)}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={paymentPending}
+            onClick={() => void onDeletePaymentConfig(paymentDeleteConfirm || "")}
+          >
             Supprimer définitivement
           </Button>
         </div>
