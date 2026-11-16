@@ -1,8 +1,8 @@
 // Package pdfgen renders Devis Generator : VIBED documents to PDF.
 //
-// La mise en page reprend l’aperçu A4 (couleurs, hiérarchie, colonnes).
+// La mise en page reprend l'aperçu A4 (couleurs, hiérarchie, colonnes).
 // Les polices Go sont embarquées en UTF-8 : Helvetica (WinAnsi) cassait
-// les accents, l’euro et les apostrophes typographiques, et ne pouvait
+// les accents, l'euro et les apostrophes typographiques, et ne pouvait
 // ni poser le logo ni suivre la maquette.
 package pdfgen
 
@@ -64,8 +64,10 @@ type sheet struct {
 	foot     string
 }
 
-// Render builds an A4 PDF for a document and its parties.
-func Render(doc biz.Document, issuer biz.IssuerProfile, client biz.Client, mentions legal.Mentions) ([]byte, error) {
+// RenderWithBranding builds an A4 PDF for a document with optional branding.
+// Logo is registered if provided in branding.LogoPNG.
+// Color customization is cosmetic and never affects Factur-X compliance or legal fields.
+func RenderWithBranding(doc biz.Document, issuer biz.IssuerProfile, client biz.Client, mentions legal.Mentions, branding BrandingData) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	title := displayTitle(doc.Kind)
 	pdf.SetTitle(title, true)
@@ -138,6 +140,12 @@ func Render(doc biz.Document, issuer biz.IssuerProfile, client biz.Client, menti
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// Render builds an A4 PDF for a document and its parties.
+// Backward-compatible wrapper that delegates to RenderWithBranding with empty branding.
+func Render(doc biz.Document, issuer biz.IssuerProfile, client biz.Client, mentions legal.Mentions) ([]byte, error) {
+	return RenderWithBranding(doc, issuer, client, mentions, BrandingData{})
 }
 
 func loadFonts(pdf *gofpdf.Fpdf) error {
@@ -311,7 +319,7 @@ func (s *sheet) drawLine(cols []col, line biz.DocLine, franchise bool) {
 
 	const lh = 4.3
 	const pad = 1.45
-	// Une ligne qui tient sur une page vierge n’est pas coupée : sinon la fin
+	// Une ligne qui tient sur une page vierge n'est pas coupée : sinon la fin
 	// de la désignation se retrouve seule, sans montant, en haut de la page suivante.
 	rowH := pad*2 + float64(len(rich))*lh
 	if rowH <= 230 && s.room() < rowH {
@@ -734,7 +742,7 @@ func metaLines(doc biz.Document) []string {
 		if doc.Kind == "quote" {
 			label = "Valable jusqu\u2019au"
 		}
-		out = append(out, label+" : "+formatDate(*doc.DueDate))
+		out = append(out, label+": "+formatDate(*doc.DueDate))
 	}
 	return out
 }
