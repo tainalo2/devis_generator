@@ -14,6 +14,7 @@ Une plateforme gratuite pour signer les factures en France. L’application prod
 | Technique | [docs/technique.md](docs/technique.md) |
 | Agent / IA | [docs/ia.md](docs/ia.md) |
 | **Paiement** | **[docs/PAIEMENT.md](docs/PAIEMENT.md)** |
+| **Export comptable** | **[docs/EXPORT_COMPTABLE.md](docs/EXPORT_COMPTABLE.md)** |
 
 Présentation : [docs/index.html](docs/index.html), publiée sur GitHub Pages depuis la branche `vibed`.
 

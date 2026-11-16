@@ -105,6 +105,35 @@ Job périodique (défaut 24 h) protégé par **`pg_try_advisory_lock`** (sûr av
 - Mentions : `legal.Service.MentionsForIssue` (cache vérifié / manuel) sinon `defaults-v1`
 - Factures : conditions de paiement, pénalités de retard, indemnité forfaitaire **40 €**
 
+## Signature électronique (V1)
+
+**Mécanisme** : signature électronique simple horodatée au sens eIDAS (art. 3(10), Règlement UE 910/2014).
+
+- **Pas qualifiée** : sans certificat numérique qualifié, sans tiers de confiance obligatoire intégré.
+- **Composants** : clic utilisateur + hash SHA-256 du document (immuable) + horodatage serveur + IP source + user-agent + nom signataire déclaré.
+- **Stockage** : table `document_signatures` : `signed_at`, `document_hash`, `signer_ip`, `signer_user_agent`, `signer_name_declared`.
+
+**Preuves fournies** :
+- **Horodatage** : valeur `signed_at` serveur (incontestable a posteriori via audit logs).
+- **Intégrité du contenu** : hash SHA-256 du document vérifié au moment de la signature (repasse sur le même hash → document inchangé).
+- **Traçabilité technique** : IP et user-agent du signataire, nom déclaré (permet une enquête technique ultérieure).
+
+**Preuves non fournies** :
+- **Identité vérifiée du signataire** : pas d'authentification tiers, pas de certificat personnel. Seul le nom déclaré est enregistré.
+- **Non-répudiation juridique** : la signature ne prouve pas qui a réellement cliqué (IP partagée, session hijackée, etc.). Elle prouve seulement qu'une action a eu lieu sur un compte/IP.
+
+**Valeur juridique** :
+- Acceptable comme preuve de causalité technique pour usages courants (TPE/micro-entrepreneurs, devis/factures).
+- **Pas adaptée** si une signature légalement contraignante est exigée (cadre judiciaire, contrats complexes).
+- À considérer comme une preuve de niveau 1 : nécessaire mais non suffisante pour les litiges graves.
+
+**Option tierce (future)** :
+- **Yousign (mode BYO clé API)** : documentée dans [SIGNATURE.md](SIGNATURE.md) § Configuration tierce. Non implémentée en V1 (demande utilisateur non confirmée).
+- Modèle : même pattern que `PAYMENT_BYO_ENABLED` — utilisateur fournit sa clé API Yousign, signatures optionnellement relayées.
+- **Aucune promesse juridique supplémentaire** ne doit être faite au-delà de ce document sans validation légale explicite.
+
+Voir [SIGNATURE.md](SIGNATURE.md) pour guide de déploiement et configuration.
+
 ## Variables d’environnement (prod)
 
 | Variable | Rôle |

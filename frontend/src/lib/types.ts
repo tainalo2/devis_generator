@@ -46,6 +46,8 @@ export type Document = {
   vat_regime: string
   notes: string
   payment_terms: string
+  branding_logo_data?: string | null
+  branding_colors?: ColorScheme | null
   related_document_id: string | null
   subtotal_cents: number
   tax_cents: number
@@ -66,6 +68,12 @@ export type Document = {
   lines: DocLine[]
 }
 
+export type ColorScheme = {
+  primary_color: string
+  accent_color: string
+  text_color: string
+}
+
 export type IssuerProfile = {
   legal_name: string
   trade_name: string
@@ -80,6 +88,8 @@ export type IssuerProfile = {
   iban?: string
   default_vat_regime: string
   payment_terms: string
+  branding_logo_data?: string | null
+  branding_colors?: ColorScheme | null
 }
 
 export type TotalsPreview = {
