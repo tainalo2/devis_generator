@@ -6,6 +6,7 @@ import { CompanyAutocomplete } from "@/components/company-autocomplete"
 import { emptyIssuer } from "@/components/editor/model"
 import { PageHeader } from "@/components/page"
 import { AddressFields } from "@/components/party-fields"
+import { BrandingSection } from "@/components/branding-section"
 import { applyCompanyHit } from "@/lib/party"
 import { Seo } from "@/components/seo"
 import { useToast } from "@/components/use-toast"
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils"
 const sections = [
   { id: "identite", label: "Identité légale", tone: "bg-zone-parties border-zone-parties-border", dot: "bg-zone-parties-icon" },
   { id: "coordonnees", label: "Coordonnées", tone: "bg-zone-infos border-zone-infos-border", dot: "bg-zone-infos-icon" },
+  { id: "branding", label: "Personnalisation visuelle", tone: "bg-purple-50 border-purple-200", dot: "bg-purple-400" },
   { id: "banque", label: "Banque", tone: "bg-zone-terms border-zone-terms-border", dot: "bg-zone-terms-icon" },
   { id: "defauts", label: "Valeurs par défaut", tone: "bg-zone-lines border-zone-lines-border", dot: "bg-zone-lines-icon" },
 ] as const

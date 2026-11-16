@@ -119,6 +119,46 @@ Optionnelles légales (aucun secret) : `LEGAL_REFRESH_ENABLED`, `LEGAL_REFRESH_I
 
 Rédigées d’après le fonctionnement réel (données, chiffrement, conservation tant que le compte existe, export/suppression, cookies strictement nécessaires). Éditeur et hébergeur via variables d’environnement — **à compléter** et **à faire valider juridiquement**.
 
+## Export comptable (V1)
+
+**Décision (architecte, epic Export comptable `t_f4964981`/`t_1bed5d9d`) : CSV structuré simple, pas de FEC ni connecteur dédié en V1.**
+
+Options écartées pour le premier livrable :
+- **FEC** (Fichier des Écritures Comptables) : format réglementaire FR mais pensé pour une comptabilité en partie double (comptes, journaux, lettrage) — surdimensionné pour un simple export factures/paiements, coûteux à maintenir correctement (risque d'un FEC mal formé = pire qu'aucun FEC).
+- **Connecteur direct** (Pennylane ou équivalent) : séduisant mais verrouille sur un outil, demande une intégration/API-maintenance par fournisseur, et aucun client n'a encore exprimé ce besoin précis.
+- **Pas d'obligation légale** : les TPE/PME cibles n'ont pas d'obligation de facturation électronique chaînée (Factur-X obligatoire en émission pour micro-entrepreneurs seulement à partir du 1ᵉʳ sept. 2027, cf. ci-dessus) ; un export lisible/importable suffit pour alimenter leur compta ou leur expert-comptable.
+- Contrainte d'hébergement minimal : pas de nouvelle dépendance lourde, pas de job de synchronisation externe à maintenir.
+
+**Retenu : CSV UTF-8, un fichier = une période/un filtre de statut, encodage avec BOM pour compatibilité Excel FR.**
+
+Séparateur `;` (convention FR/Excel), décimales avec `.` (montants en euros, 2 décimales) pour rester import-friendly aussi bien en logiciel compta FR qu'en Excel/Google Sheets.
+
+### Schéma des colonnes
+
+| Colonne | Exemple | Notes |
+|---|---|---|
+| `numero_document` | `F-2026-0001` | Numéro métier (voir Numérotation ci-dessus) |
+| `type_document` | `facture` | `devis` \| `facture` \| `facture_acompte` \| `avoir` — export limité par défaut aux documents **émis** (`issued`) |
+| `date_emission` | `2026-01-15` | ISO 8601 |
+| `client_nom` | `Dupont SARL` | Raison sociale / nom client au moment de l'émission (`legal_snapshot`) |
+| `client_siret` | `12345678900012` | Vide si non renseigné |
+| `montant_ht` | `1000.00` | Euros, 2 décimales |
+| `taux_tva` | `20.0` | Point de base ; `0` si franchise art. 293 B |
+| `montant_tva` | `200.00` | Euros |
+| `montant_ttc` | `1200.00` | Euros |
+| `statut_paiement` | `paye` | `en_attente` \| `paye` \| `en_retard` \| `annule` |
+| `date_paiement` | `2026-01-20` | Vide si non payé |
+| `mode_paiement` | `virement` | Si connu (Stripe, virement, chèque...) ; vide sinon |
+| `document_origine` | `D-2026-0003` | Pour acomptes/avoirs : numéro du document source ; vide sinon |
+
+### Filtrage par défaut
+
+Export sur une plage de dates (optionnelle), filtrable par statut de paiement et type de document. Inclut factures **et** acomptes payés par défaut (cf. Export-T2).
+
+### Évolution ultérieure (hors V1)
+
+Si la demande client existe : ajouter un export **FEC** en option (bouton distinct, pas en remplacement du CSV) et/ou un connecteur Pennylane, mais seulement après retour utilisateur confirmant le besoin — ne pas anticiper.
+
 ## Suite
 
 SMTP reset MDP ; Factur-X téléchargeable puis signature électronique ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.
