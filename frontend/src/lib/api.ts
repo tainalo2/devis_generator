@@ -363,3 +363,37 @@ export async function requestPasswordReset(email: string): Promise<string> {
   if (!res.ok) throw new Error(await readError(res, "Demande impossible."))
   return ((await res.json()) as { message: string }).message
 }
+
+// Branding API endpoints
+
+export async function uploadBrandingLogo(file: File): Promise<{ logo_data: string }> {
+  const formData = new FormData()
+  formData.append("file", file)
+  const res = await apiFetch("/api/v1/account/branding/logo", { method: "POST", body: formData })
+  if (!res.ok) throw new Error(await readError(res, "Upload du logo impossible."))
+  return (await res.json()) as { logo_data: string }
+}
+
+export async function getBrandingLogo(): Promise<{ logo_data: string | null }> {
+  const res = await apiFetch("/api/v1/account/branding/logo")
+  if (!res.ok) throw new Error(await readError(res, "Récupération du logo impossible."))
+  return (await res.json()) as { logo_data: string | null }
+}
+
+export async function saveBrandingColors(colors: ColorScheme): Promise<ColorScheme> {
+  const res = await apiFetch("/api/v1/account/branding/colors", { method: "POST", body: JSON.stringify(colors) })
+  if (!res.ok) throw new Error(await readError(res, "Sauvegarde des couleurs impossible."))
+  return (await res.json()) as ColorScheme
+}
+
+export async function getBrandingColors(): Promise<ColorScheme | null> {
+  const res = await apiFetch("/api/v1/account/branding/colors")
+  if (res.status === 404) return null
+  if (!res.ok) throw new Error(await readError(res, "Récupération des couleurs impossible."))
+  return (await res.json()) as ColorScheme
+}
+
+export async function clearBranding(): Promise<void> {
+  const res = await apiFetch("/api/v1/account/branding", { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Réinitialisation du branding impossible."))
+}
