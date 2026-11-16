@@ -1,0 +1,5 @@
+numero_document;type_document;date_emission;client_nom;client_siret;montant_ht;taux_tva;montant_tva;montant_ttc;statut_paiement;date_paiement;mode_paiement;document_origine
+F-2026-0001;facture;2026-01-15;Dupont SARL;12345678900012;1000.00;20.0;200.00;1200.00;paye;2026-01-20;virement;
+FA-2026-0001;facture_acompte;2026-02-01;Martin Consulting;;500.00;0;0.00;500.00;paye;2026-02-03;stripe;D-2026-0003
+F-2026-0002;facture;2026-02-10;Dupont SARL;12345678900012;750.00;20.0;150.00;900.00;en_attente;;;
+A-2026-0001;avoir;2026-02-15;Martin Consulting;;-100.00;20.0;-20.00;-120.00;paye;2026-02-15;virement;F-2026-0002
