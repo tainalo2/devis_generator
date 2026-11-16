@@ -363,3 +363,18 @@ export async function requestPasswordReset(email: string): Promise<string> {
   if (!res.ok) throw new Error(await readError(res, "Demande impossible."))
   return ((await res.json()) as { message: string }).message
 }
+
+export async function signQuotePublicLink(token: string, signerNameDeclared: string): Promise<void> {
+  const res = await fetch(`/api/v1/public/documents/${encodeURIComponent(token)}/sign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ signer_name_declared: signerNameDeclared }),
+  })
+  const data = (await res.json().catch(() => ({}))) as { error?: string }
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 410) throw new Error(PUBLIC_LINK_UNAVAILABLE)
+    if (res.status === 409) throw new Error("Ce devis a déjà été signé.")
+    throw new Error(data.error ?? "Erreur lors de la signature.")
+  }
+}
