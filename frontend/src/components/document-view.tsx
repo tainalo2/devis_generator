@@ -7,6 +7,7 @@ import { DocumentPreview, type PreviewData } from "@/components/editor/preview"
 import { docHT, emptyIssuer, type EditorKind } from "@/components/editor/model"
 import { CardSection, CardTitle } from "@/components/page"
 import { useToast } from "@/components/use-toast"
+import { SignatureProofBanner } from "@/components/signature-proof-banner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -426,6 +427,7 @@ export function DocumentView({ doc, onChange }: { doc: Document; onChange: (d: D
         </div>
         <div className="flex flex-wrap items-center gap-2.5 pb-1 pl-3 lg:hidden">{statusLine}</div>
       </header>
+      {doc.signed_at && <SignatureProofBanner documentId={doc.id} />}
 
       {desktop ? (
         <div className="flex min-h-0 flex-1">

@@ -53,6 +53,8 @@ export type Document = {
   issued_at?: string | null
   sent_at?: string | null
   accepted_at?: string | null
+  /** Horodatage de la signature électronique du devis (null si non signé). */
+  signed_at?: string | null
   paid_at?: string | null
   created_at?: string
   updated_at?: string

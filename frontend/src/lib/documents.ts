@@ -55,6 +55,7 @@ export function documentStatus(doc: Document): { label: string; variant: BadgeVa
     return { label: "À encaisser", variant: "secondary" }
   }
   if (doc.kind === "quote") {
+    if (doc.status === "accepted" && doc.signed_at) return { label: "Signé", variant: "success" }
     if (doc.status === "accepted") return { label: "Accepté", variant: "success" }
     if (doc.status === "rejected") return { label: "Refusé", variant: "muted" }
     if (doc.status === "sent") return { label: "Envoyé", variant: "outline" }
