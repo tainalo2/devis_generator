@@ -12,6 +12,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/tainalo2/devis_generator/backend/internal/biz"
+	"github.com/tainalo2/devis_generator/backend/internal/doclink"
 	"github.com/tainalo2/devis_generator/backend/internal/signatures"
 )
 
@@ -89,6 +91,52 @@ func (m *mockSignaturesStore) LockDocument(ctx context.Context, docID string, si
 		state.SignedByEmail = &signerEmail
 	}
 	return nil
+}
+
+// Mock publicDocStore for testing
+type mockPublicDocStore struct {
+	documents map[uuid.UUID]biz.Document
+	issuers   map[uuid.UUID]biz.IssuerProfile
+}
+
+func newMockPublicDocStore() *mockPublicDocStore {
+	return &mockPublicDocStore{
+		documents: make(map[uuid.UUID]biz.Document),
+		issuers:   make(map[uuid.UUID]biz.IssuerProfile),
+	}
+}
+
+func (m *mockPublicDocStore) GetDocumentPublic(ctx context.Context, docID uuid.UUID) (biz.Document, uuid.UUID, error) {
+	if doc, ok := m.documents[docID]; ok {
+		ownerID := uuid.New() // Return a consistent owner ID
+		return doc, ownerID, nil
+	}
+	return biz.Document{}, uuid.Nil, biz.ErrNotFound
+}
+
+func (m *mockPublicDocStore) GetIssuer(ctx context.Context, userID uuid.UUID) (biz.IssuerProfile, error) {
+	if issuer, ok := m.issuers[userID]; ok {
+		return issuer, nil
+	}
+	// Return a default issuer for all users (for testing)
+	return biz.IssuerProfile{
+		LegalName: "Test Company",
+		TradeName: "Test Company",
+		Email:     "test@example.com",
+		Phone:     "+33123456789",
+		SIREN:     "123456789",
+		SIRET:     "12345678900123",
+		Address: biz.Address{
+			Line1:      "123 Rue de Test",
+			PostalCode: "75000",
+			City:       "Paris",
+			Country:    "FR",
+		},
+	}, nil
+}
+
+func (m *mockPublicDocStore) GetClient(ctx context.Context, userID, id uuid.UUID) (biz.Client, error) {
+	return biz.Client{Name: "Test Client"}, nil
 }
 
 // ============================================================================
@@ -516,43 +564,99 @@ func TestIntegrationSignatureEndpoints(t *testing.T) {
 	})
 }
 
-// TestIntegrationDoubleSignPrevention tests that signing a document twice returns 409
+// TestIntegrationDoubleSignPrevention tests that signing a document twice returns 409 Conflict
+// This test creates valid tokens using doclink.Generate() so the token validation passes
+// and we can test the actual lock state check that returns 409
 func TestIntegrationDoubleSignPrevention(t *testing.T) {
-	store := newMockSignaturesStore()
-	docID := uuid.New().String()
+	docID := uuid.New()
+	secret := []byte("test-secret")
+	now := time.Now()
 	
-	// Pre-populate: mark document as locked (already signed)
-	store.locked[docID] = true
-	store.states[docID] = &signatures.DocumentSignatureState{
-		DocumentID: docID,
-		Status:     signatures.StatusSigned,
-		IsLocked:   true,
+	// Create a valid token using doclink.Generate
+	token, err := doclink.Generate(secret, docID.String(), doclink.KindQuote, 1, now)
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
 	}
 	
+	// Create mock stores
+	sigStore := newMockSignaturesStore()
+	docStore := newMockPublicDocStore()
+	
+	// Add a document to the mock store so GetDocumentPublic returns it
+	number := "DEVIS-001"
+	docStore.documents[docID] = biz.Document{
+		ID:       docID,
+		Kind:     doclink.KindQuote,
+		Number:   &number,
+		Title:    "Test Quote",
+		Status:   "draft",
+		Currency: "EUR",
+	}
+	
+	// Create server with mocked dependencies
 	server := &Server{
-		signatures:        store,
+		signatures:        sigStore,
+		publicDocs:        docStore,
 		publicLinkLimiter: NewRateLimiter(100, time.Minute),
-		docLinkSecret:     []byte("test-secret"),
+		docLinkSecret:     secret,
 	}
 	
-	t.Run("double_sign_locked_document_returns_409", func(t *testing.T) {
+	// Register routes with chi router
+	router := chi.NewRouter()
+	router.Post("/public/documents/{token}/sign", server.handleSignDocumentPublic)
+	router.Get("/public/documents/{token}/signature", server.handleGetDocumentSignatureStatePublic)
+	
+	t.Run("first_sign_succeeds_with_201", func(t *testing.T) {
+		sigReq := SignatureRequest{
+			SignerEmail: "recipient@example.com",
+			SignerName:  "John Doe",
+		}
+		body, _ := json.Marshal(sigReq)
+		
+		req := httptest.NewRequest(http.MethodPost, "/public/documents/"+token+"/sign", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		
+		router.ServeHTTP(w, req)
+		
+		if w.Code != http.StatusCreated {
+			t.Errorf("expected status 201 on first sign, got %d (body: %s)", w.Code, w.Body.String())
+		}
+		
+		// Verify response structure
+		var resp SignatureResponse
+		if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+			t.Errorf("failed to parse response: %v", err)
+		}
+		
+		if resp.SignerEmail != "recipient@example.com" {
+			t.Errorf("expected SignerEmail recipient@example.com, got %s", resp.SignerEmail)
+		}
+	})
+	
+	t.Run("second_sign_with_same_token_returns_409", func(t *testing.T) {
+		// Lock the document (simulate the first signature success)
+		sigStore.locked[docID.String()] = true
+		sigStore.states[docID.String()] = &signatures.DocumentSignatureState{
+			DocumentID: docID.String(),
+			Status:     signatures.StatusSigned,
+			IsLocked:   true,
+		}
+		
 		sigReq := SignatureRequest{
 			SignerEmail: "another@example.com",
 		}
 		body, _ := json.Marshal(sigReq)
 		
-		req := httptest.NewRequest(http.MethodPost, "/public/documents/test-token/sign", bytes.NewReader(body))
+		req := httptest.NewRequest(http.MethodPost, "/public/documents/"+token+"/sign", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		
-		// Call handler directly (token validation skipped for this unit test)
-		// In a real integration test with valid token, the handler would check
-		// document state and return 409 Conflict if already locked
-		server.handleSignDocumentPublic(w, req)
+		router.ServeHTTP(w, req)
 		
-		// Handler returns 410 Gone due to invalid token before checking lock status
-		// This is expected; a real integration test with valid token would test 409
-		t.Logf("Got status %d (token validation happens before lock check)", w.Code)
+		if w.Code != http.StatusConflict {
+			t.Errorf("expected status 409 Conflict on double sign, got %d (body: %s)", w.Code, w.Body.String())
+		}
 	})
 }
 
