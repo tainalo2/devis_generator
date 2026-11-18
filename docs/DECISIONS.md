@@ -119,6 +119,18 @@ Optionnelles légales (aucun secret) : `LEGAL_REFRESH_ENABLED`, `LEGAL_REFRESH_I
 
 Rédigées d’après le fonctionnement réel (données, chiffrement, conservation tant que le compte existe, export/suppression, cookies strictement nécessaires). Éditeur et hébergeur via variables d’environnement — **à compléter** et **à faire valider juridiquement**.
 
+## Signature électronique (V1)
+
+Signature électronique **simple** horodatée (eIDAS art. 3(10)), mécanisme interne, sans tiers ni clé API. Elle porte sur les **devis** ; une facture n'est pas signable.
+
+- Sur le lien public `/d/{token}` d'un devis émis ou envoyé : « Signer ce devis », nom déclaré (2 à 200 caractères, non vérifié).
+- Le serveur capte seul : `signed_at` (UTC), IP (`clientIP`, donc `TRUSTED_PROXIES` respecté), user-agent et `document_hash`. Le client n'envoie rien d'autre que son nom (champs inconnus refusés).
+- `document_hash` = SHA-256 du contenu figé relu côté serveur (`biz.ContentHash` : numéro, montants, lignes, instantanés émetteur/client/mentions légales ; ni statut ni dates de suivi).
+- Une seule signature par document (`UNIQUE`, ligne en ajout seul, `UPDATE` interdit par trigger). La signature passe le devis en `accepted` dans la même transaction, sous verrou de la ligne : deux signatures concurrentes, une seule réussit (409 pour l'autre).
+- Non signable : brouillon, facture, devis refusé, devis remplacé par une nouvelle version, lien expiré ou invalide (404 uniforme, comme le PDF).
+- L'émetteur voit la preuve complète (`GET /api/v1/documents/{id}/signature`) avec un contrôle d'intégrité qui recalcule le hash sur le contenu actuel. La vue publique n'expose ni IP, ni user-agent, ni hash.
+- Limites assumées : pas de certificat qualifié, pas de vérification d'identité ; en litige la charge de la preuve reste à l'émetteur. Évolution possible (hors V1) : tiers BYO clé API en plus, jamais en remplacement.
+
 ## Suite
 
 SMTP reset MDP ; Factur-X téléchargeable puis signature électronique ; brancher Insee/PISTE si comptes fournis ; renseigner identité éditeur/hébergeur et `DONATE_URL`.
