@@ -26,6 +26,7 @@ import (
 	"github.com/tainalo2/devis_generator/backend/internal/payments"
 	"github.com/tainalo2/devis_generator/backend/internal/paymentsecrets"
 	"github.com/tainalo2/devis_generator/backend/internal/reminders"
+	"github.com/tainalo2/devis_generator/backend/internal/signatures"
 	"github.com/tainalo2/devis_generator/backend/internal/smtpconfig"
 	"github.com/tainalo2/devis_generator/backend/internal/stripeconnect"
 )
@@ -43,6 +44,7 @@ type Server struct {
 	microsoftMail        microsoftMailer
 	smtp                 *smtpconfig.Service
 	reminders            *reminders.Service
+	signatures           signatures.Store
 	publicConfig         *PublicSiteConfig
 	staticDir            string
 	version              string
@@ -95,6 +97,7 @@ type Options struct {
 	MicrosoftMail     microsoftMailer
 	SMTP              *smtpconfig.Service
 	Reminders         *reminders.Service
+	Signatures        signatures.Store
 	PublicConfig      *PublicSiteConfig
 	StaticDir         string
 	Version           string
@@ -122,6 +125,7 @@ func New(opts Options) *Server {
 		microsoftMail:        opts.MicrosoftMail,
 		smtp:                 opts.SMTP,
 		reminders:            opts.Reminders,
+		signatures:           opts.Signatures,
 		publicConfig:         opts.PublicConfig,
 		staticDir:            opts.StaticDir,
 		version:              opts.Version,
@@ -238,6 +242,7 @@ func New(opts Options) *Server {
 			r.Post("/documents/{id}/deposit-invoice", s.requireAuth(s.handleCreateDeposit))
 			r.Post("/documents/{id}/credit-note", s.requireAuth(s.handleCreateCreditNote))
 			r.Get("/documents/{id}/pdf", s.requireAuth(s.handleDocumentPDF))
+			r.Get("/documents/{id}/signature", s.requireAuth(s.handleGetDocumentSignatureStateForUser))
 			if s.payments != nil {
 				r.Get("/payments/config/{provider}", s.requireAuth(s.handleGetPaymentConfig))
 				r.Put("/payments/config/{provider}", s.requireAuth(s.handlePutPaymentConfig))
@@ -275,6 +280,13 @@ func New(opts Options) *Server {
 			r.Get("/collaborators/pending", s.requireAuth(s.handleListPendingInvitations))
 			r.Delete("/collaborators/{id}", s.requireAuth(s.handleRevokeCollaborator))
 			r.Delete("/collaborators/invitations/{id}", s.requireAuth(s.handleCancelInvitation))
+
+			// Public signature endpoints
+			if s.signatures != nil {
+				r.Get("/public/documents/{token}/signature", s.handleGetDocumentSignatureStatePublic)
+				r.Post("/public/documents/{token}/sign", s.handleSignDocumentPublic)
+				r.Get("/public/signature-proof/{proof_token}", s.handleGetSignatureProof)
+			}
 		})
 	})
 
