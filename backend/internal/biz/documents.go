@@ -35,7 +35,8 @@ func (s *Store) ListDocuments(ctx context.Context, userID uuid.UUID) ([]Document
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
 		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, reminder_count, last_reminder_at, created_at, updated_at,
-		       COALESCE(client_snapshot->>'name', '')
+		       COALESCE(client_snapshot->>'name', ''),
+		       (SELECT sg.signed_at FROM document_signatures sg WHERE sg.document_id = documents.id)
 		FROM documents WHERE user_id = $1 ORDER BY created_at DESC
 	`, userID)
 	if err != nil {
@@ -65,7 +66,7 @@ func scanDocHeader(row scannable) (Document, error) {
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
 		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.ReminderCount, &d.LastReminderAt, &d.CreatedAt, &d.UpdatedAt,
-		&d.ClientName,
+		&d.ClientName, &d.SignedAt,
 	)
 	if err != nil {
 		return Document{}, err
@@ -82,7 +83,8 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		       currency, vat_regime::text, COALESCE(notes,''), COALESCE(payment_terms,''),
 		       COALESCE(legal_mentions,''), related_document_id,
 		       subtotal_cents, tax_cents, total_cents, issued_at, sent_at, accepted_at, paid_at, reminder_count, last_reminder_at, issuer_snapshot, legal_snapshot,
-		       created_at, updated_at, client_snapshot
+		       created_at, updated_at, client_snapshot,
+		       (SELECT sg.signed_at FROM document_signatures sg WHERE sg.document_id = documents.id)
 		FROM documents WHERE id = $1 AND user_id = $2
 	`, id, userID)
 	var d Document
@@ -93,7 +95,7 @@ func (s *Store) GetDocument(ctx context.Context, userID, id uuid.UUID) (Document
 		&issue, &due, &d.Currency, &d.VATRegime, &d.Notes, &d.PaymentTerms,
 		&d.LegalMentions, &d.RelatedDocumentID,
 		&d.SubtotalCents, &d.TaxCents, &d.TotalCents, &d.IssuedAt, &d.SentAt, &d.AcceptedAt, &d.PaidAt, &d.ReminderCount, &d.LastReminderAt, &d.IssuerSnapshot, &d.LegalSnapshot,
-		&d.CreatedAt, &d.UpdatedAt, &clientSnap,
+		&d.CreatedAt, &d.UpdatedAt, &clientSnap, &d.SignedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Document{}, ErrNotFound

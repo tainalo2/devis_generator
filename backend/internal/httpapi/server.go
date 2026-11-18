@@ -37,6 +37,8 @@ type Server struct {
 	apiKeyLookup         func(context.Context, string) (authstore.APIKey, authstore.User, error)
 	biz                  *biz.Store
 	publicDocs           publicDocStore
+	publicSigner         publicSigner
+	signLimiter          *RateLimiter
 	box                  *crypto.Box
 	legal                *legal.Service
 	gmailMail            gmailMailer
@@ -88,7 +90,9 @@ type Options struct {
 	Store *authstore.Store
 	Biz   *biz.Store
 	// PublicDocs overrides the data source of the public document link (tests); defaults to Biz.
-	PublicDocs        publicDocStore
+	PublicDocs publicDocStore
+	// PublicSigner overrides the signature store of the public link (tests); defaults to Biz.
+	PublicSigner      publicSigner
 	Box               *crypto.Box
 	Legal             *legal.Service
 	GmailMail         gmailMailer
@@ -134,6 +138,7 @@ func New(opts Options) *Server {
 		guestLimiter:         NewRateLimiter(20, time.Minute),
 		previewLimiter:       NewRateLimiter(120, time.Minute),
 		publicLinkLimiter:    NewRateLimiter(60, time.Minute),
+		signLimiter:          NewRateLimiter(10, time.Minute),
 		webhookIPLimiter:     NewRateLimiter(60, time.Minute),
 		webhookGlobalLimiter: NewRateLimiter(600, time.Minute),
 		trustedProxies:       opts.TrustedProxies,
@@ -147,6 +152,11 @@ func New(opts Options) *Server {
 		s.publicDocs = opts.PublicDocs
 	} else if opts.Biz != nil {
 		s.publicDocs = opts.Biz
+	}
+	if opts.PublicSigner != nil {
+		s.publicSigner = opts.PublicSigner
+	} else if opts.Biz != nil {
+		s.publicSigner = opts.Biz
 	}
 	if s.store != nil {
 		s.apiKeyLookup = func(ctx context.Context, hash string) (authstore.APIKey, authstore.User, error) {
@@ -186,6 +196,8 @@ func New(opts Options) *Server {
 		r.Get("/readyz", s.handleReadyz)
 		r.Get("/public/config", s.handlePublicConfig)
 		r.Get("/public/documents/{token}/pdf", s.handleDocumentLink)
+		r.Get("/public/documents/{token}/signature", s.handlePublicSignatureState)
+		r.Post("/public/documents/{token}/sign", s.handlePublicSign)
 		if s.payments != nil {
 			r.Post("/payments/webhooks/{provider}", s.handlePaymentWebhook)
 		}
@@ -230,6 +242,7 @@ func New(opts Options) *Server {
 			r.Post("/documents", s.requireAuth(s.handleCreateDocument))
 			r.Get("/documents/{id}", s.requireAuth(s.handleGetDocument))
 			r.Get("/documents/{id}/link", s.requireAuth(s.handleCreateDocumentLink))
+			r.Get("/documents/{id}/signature", s.requireAuth(s.handleGetSignatureProof))
 			r.Put("/documents/{id}", s.requireAuth(s.handleUpdateDocument))
 			r.Delete("/documents/{id}", s.requireAuth(s.handleDeleteDocument))
 			r.Post("/documents/{id}/issue", s.requireAuth(s.handleIssueDocument))

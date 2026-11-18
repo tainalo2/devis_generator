@@ -99,6 +99,7 @@ type Document struct {
 	IssuedAt          *time.Time      `json:"issued_at"`
 	SentAt            *time.Time      `json:"sent_at"`
 	AcceptedAt        *time.Time      `json:"accepted_at"`
+	SignedAt          *time.Time      `json:"signed_at"`
 	PaidAt            *time.Time      `json:"paid_at"`
 	ReminderCount     int             `json:"reminder_count"`
 	LastReminderAt    *time.Time      `json:"last_reminder_at,omitempty"`

@@ -209,6 +209,53 @@ export async function fetchPublicDocumentPDF(token: string): Promise<Blob> {
   return res.blob()
 }
 
+export type PublicSignatureState = {
+  signed: boolean
+  signable: boolean
+  signed_at?: string
+  signer_name?: string
+}
+
+export async function fetchPublicSignatureState(token: string): Promise<PublicSignatureState> {
+  const res = await apiFetch(`/api/v1/public/documents/${encodeURIComponent(token)}/signature`)
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 410) throw new Error(PUBLIC_LINK_UNAVAILABLE)
+    throw new Error("Signature indisponible.")
+  }
+  return (await res.json()) as PublicSignatureState
+}
+
+export type PublicSignResult = { signed_at: string; signer_name: string }
+
+/** Signe le devis du lien public. Le serveur capte seul l'heure, l'IP et le navigateur. */
+export async function signPublicDocument(token: string, name: string): Promise<PublicSignResult> {
+  const res = await apiFetch(`/api/v1/public/documents/${encodeURIComponent(token)}/sign`, {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 410) throw new Error(PUBLIC_LINK_UNAVAILABLE)
+    throw new Error(await readError(res, "Signature impossible."))
+  }
+  return (await res.json()) as PublicSignResult
+}
+
+export type SignatureProof = {
+  document_id: string
+  signed_at: string
+  document_hash: string
+  signer_name: string
+  signer_ip: string
+  signer_user_agent: string
+  integrity_ok: boolean
+}
+
+export async function getSignatureProof(documentId: string): Promise<SignatureProof> {
+  const res = await apiFetch(`/api/v1/documents/${encodeURIComponent(documentId)}/signature`)
+  if (!res.ok) throw new Error(await readError(res, "Preuve de signature indisponible."))
+  return (await res.json()) as SignatureProof
+}
+
 export async function previewTotals(vatRegime: string, lines: DocLine[]): Promise<TotalsPreview> {
   const res = await apiFetch("/api/v1/billing/preview", {
     method: "POST",
