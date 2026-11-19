@@ -57,10 +57,10 @@ type Invoice struct {
 	UpdatedAt time.Time
 }
 type Template struct {
-	ID        uuid.UUID
-	OwnerID   uuid.UUID
-	Subject   string
-	HTML      string
+	ID        uuid.UUID `json:"id"`
+	OwnerID   uuid.UUID `json:"-"`
+	Subject   string    `json:"subject"`
+	HTML      string    `json:"html"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
