@@ -167,7 +167,13 @@ func main() {
 		paymentbyo.ProviderStripeConnect: &paymentbyo.StripeConnectAdapter{Stripe: stripeAdapter, PlatformSecretKey: connectCfg.PlatformSecretKey, WebhookSecret: connectCfg.WebhookSecret, ComplianceAck: connectCfg.ComplianceAck, FeeBPS: connectCfg.FeeBPS, FeeFixedCents: connectCfg.FeeFixedCents, FeeCapCents: connectCfg.FeeCapCents},
 	})
 
-	api := httpapi.New(httpapi.Options{
+	emailSvc, err := buildEmailServices(pool, paymentSecretsVault, cfg)
+	if err != nil {
+		slog.Error("services d'envoi des relances", "error", err)
+		os.Exit(1)
+	}
+
+	apiOptions := httpapi.Options{
 		DB:    pool,
 		Store: authstore.New(pool),
 		Biz:   bizStore,
@@ -194,7 +200,17 @@ func main() {
 		PaymentFlagsStore: paymentFlagsStore,
 		Payments:          paymentSvc,
 		StripeConnect:     connectSvc,
-	})
+		Reminders:         emailSvc.Reminders,
+		SMTP:              emailSvc.SMTP,
+	}
+	// Interfaces : on n'affecte que les services réellement configurés (pas de nil typé).
+	if emailSvc.Gmail != nil {
+		apiOptions.GmailMail = emailSvc.Gmail
+	}
+	if emailSvc.Microsoft != nil {
+		apiOptions.MicrosoftMail = emailSvc.Microsoft
+	}
+	api := httpapi.New(apiOptions)
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,

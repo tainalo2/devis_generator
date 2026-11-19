@@ -22,6 +22,8 @@ vi.mock("@/lib/api", async (importOriginal) => {
   }
 })
 
+vi.mock("@/components/reminders-settings", () => ({ RemindersSettings: () => <div>Réglages des relances</div> }))
+
 const key: api.APIKey = {
   id: "key-1",
   name: "MCP préproduction",
@@ -141,5 +143,20 @@ describe("Account API keys", () => {
     await waitFor(() => expect(api.revokeAPIKey).toHaveBeenCalledWith("key-1"))
     expect(within(row!).getByText("Révoquée")).toBeInTheDocument()
     expect(within(row!).queryByRole("button", { name: "Révoquer" })).not.toBeInTheDocument()
+  })
+
+  it("mounts the reminders settings in their own labelled section", async () => {
+    vi.mocked(api.listAPIKeys).mockResolvedValue([])
+    render(
+      <MemoryRouter>
+        <AuthContext.Provider value={auth}>
+          <ToastContext.Provider value={{ push: vi.fn() }}>
+            <AccountPage />
+          </ToastContext.Provider>
+        </AuthContext.Provider>
+      </MemoryRouter>,
+    )
+    const section = await screen.findByRole("region", { name: "Relances" })
+    expect(within(section).getByText("Réglages des relances")).toBeInTheDocument()
   })
 })

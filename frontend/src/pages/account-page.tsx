@@ -5,6 +5,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom"
 
 import { PasswordInput } from "@/components/auth-ui"
 import { PageHeader } from "@/components/page"
+import { RemindersSettings } from "@/components/reminders-settings"
 import { Seo } from "@/components/seo"
 import { Button } from "@/components/ui/button"
 import { Dialog } from "@/components/ui/dialog"
@@ -248,6 +249,10 @@ export function AccountPage() {
             })}
           </ul>
         )}
+      </Row>
+
+      <Row id="s-relances" title="Relances" description="Configurez l’envoi des relances de factures depuis votre propre compte e-mail.">
+        <RemindersSettings />
       </Row>
 
       <Row id="s-data" title="Mes données" description="Vos données vous appartiennent (RGPD).">

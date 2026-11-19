@@ -99,6 +99,10 @@ func (s *Server) handleGetReminderDeliveryMode(w http.ResponseWriter, r *http.Re
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
 		return
 	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
+		return
+	}
 	mode, err := s.reminders.Mode(r.Context(), u.ID)
 	if errors.Is(err, reminders.ErrDeliveryMode) {
 		writeAPIError(w, http.StatusNotFound, "Mode d’envoi non configuré.")
@@ -115,6 +119,10 @@ func (s *Server) handleSetReminderDeliveryMode(w http.ResponseWriter, r *http.Re
 	u, ok := UserFromContext(r.Context())
 	if !ok {
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
 		return
 	}
 	var body struct {

@@ -16,6 +16,10 @@ func (s *Server) handleListReminderTemplates(w http.ResponseWriter, r *http.Requ
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
 		return
 	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
+		return
+	}
 	items, err := s.reminders.ListTemplates(r.Context(), u.ID)
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, "Erreur interne.")
@@ -27,6 +31,10 @@ func (s *Server) handleCreateReminderTemplate(w http.ResponseWriter, r *http.Req
 	u, ok := UserFromContext(r.Context())
 	if !ok {
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
 		return
 	}
 	var v reminders.Template
@@ -50,6 +58,10 @@ func (s *Server) handleUpdateReminderTemplate(w http.ResponseWriter, r *http.Req
 	u, ok := UserFromContext(r.Context())
 	if !ok {
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
 		return
 	}
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -82,6 +94,10 @@ func (s *Server) handleDeleteReminderTemplate(w http.ResponseWriter, r *http.Req
 	u, ok := UserFromContext(r.Context())
 	if !ok {
 		writeAPIError(w, http.StatusUnauthorized, "Non authentifié.")
+		return
+	}
+	if s.reminders == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "Service indisponible.")
 		return
 	}
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
