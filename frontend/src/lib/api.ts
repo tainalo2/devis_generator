@@ -144,6 +144,44 @@ export async function revokeAPIKey(id: string): Promise<void> {
   if (!res.ok) throw new Error(await readError(res, "Révocation de la clé API impossible."))
 }
 
+export type PaymentConfig = {
+  provider: "rib" | "stripe" | "mollie" | "paypal" | "stripe-connect"
+  env?: "live" | "test"
+  masked: Record<string, string>
+}
+
+export type PaymentConfigInput = {
+  provider: "rib" | "stripe" | "mollie" | "paypal" | "stripe-connect"
+  env?: "live" | "test"
+  stripe_secret_key?: string
+  stripe_webhook_secret?: string
+  mollie_api_key?: string
+  paypal_client_id?: string
+  paypal_client_secret?: string
+  paypal_webhook_id?: string
+}
+
+export async function getPaymentConfig(provider: string): Promise<PaymentConfig> {
+  const res = await apiFetch(`/api/v1/payments/config/${encodeURIComponent(provider)}`)
+  if (res.status === 404) throw new Error(`Configuration de paiement non trouvée.`)
+  if (!res.ok) throw new Error(await readError(res, "Chargement de la configuration de paiement impossible."))
+  return (await res.json()) as PaymentConfig
+}
+
+export async function savePaymentConfig(input: PaymentConfigInput): Promise<PaymentConfig> {
+  const res = await apiFetch(`/api/v1/payments/config/${encodeURIComponent(input.provider)}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) throw new Error(await readError(res, "Enregistrement de la configuration de paiement impossible."))
+  return (await res.json()) as PaymentConfig
+}
+
+export async function deletePaymentConfig(provider: string): Promise<void> {
+  const res = await apiFetch(`/api/v1/payments/config/${encodeURIComponent(provider)}`, { method: "DELETE" })
+  if (!res.ok) throw new Error(await readError(res, "Suppression de la configuration de paiement impossible."))
+}
+
 export async function listClients(): Promise<Client[]> {
   const res = await apiFetch("/api/v1/clients")
   if (!res.ok) throw new Error(await readError(res, "Chargement clients impossible."))
